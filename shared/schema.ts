@@ -10,6 +10,7 @@ import {
   boolean,
   decimal,
   pgEnum,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
@@ -105,7 +106,7 @@ export const conversationAssessments = pgTable("conversation_assessments", {
   conversationTranscript: jsonb("conversation_transcript").notNull(), // Array of {role, content, timestamp, metadata}
   aiCheckpoints: jsonb("ai_checkpoints"), // Interim AI insights per turn
   summaryInsights: jsonb("summary_insights"), // Final AI analysis
-  assessmentId: varchar("assessment_id").references(() => assessments.id), // Link to final assessment
+  assessmentId: varchar("assessment_id").references((): any => assessments.id), // Link to final assessment
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -121,7 +122,7 @@ export const assessments = pgTable("assessments", {
   aiAnalysis: text("ai_analysis"), // AI-generated analysis
   recommendations: jsonb("recommendations"), // AI recommendations
   riskFactors: jsonb("risk_factors"), // Identified risk factors
-  conversationAssessmentId: varchar("conversation_assessment_id").references(() => conversationAssessments.id), // Link to conversation
+  conversationAssessmentId: varchar("conversation_assessment_id").references((): any => conversationAssessments.id), // Link to conversation
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -1463,7 +1464,6 @@ export type InsertMealPlan = z.infer<typeof insertMealPlanSchema>;
 export type SupplementProtocol = typeof supplementProtocols.$inferSelect;
 export type InsertSupplementProtocol = z.infer<typeof insertSupplementProtocolSchema>;
 
-/**
 // ============================================
 // AI COMPANION TABLES
 // ============================================
@@ -1531,8 +1531,7 @@ export const conversationInsightsRelations = relations(conversationInsights, ({ 
 export const aiCompanionSettingsRelations = relations(aiCompanionSettings, ({ one }) => ({
   user: one(users, { fields: [aiCompanionSettings.userId], references: [users.id] }),
 }));
-**/
-
+// End of AI COMPANION TABLES
 // Add to existing users relations
 // (Handled by making sure these are defined and standard relations pattern)
 
