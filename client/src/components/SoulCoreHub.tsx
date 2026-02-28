@@ -78,7 +78,7 @@ export default function SoulCoreHub() {
             </AnimatePresence>
 
             {/* Floating Action Container */}
-            <div className="fixed bottom-8 right-8 z-[70] flex items-center justify-center">
+            <div className="fixed bottom-[100px] lg:bottom-8 right-6 lg:right-8 z-[70] flex items-center justify-center">
 
                 {/* Expanded Tool Nodes */}
                 <AnimatePresence>
