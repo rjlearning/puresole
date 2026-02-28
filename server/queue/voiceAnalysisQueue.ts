@@ -8,17 +8,24 @@ import Redis from 'ioredis';
  * and mental health analysis using the Python ML service.
  */
 
-// Redis connection configuration
-const redisConfig = {
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
-  password: process.env.REDIS_PASSWORD || undefined,
-  maxRetriesPerRequest: null, // Required for Bull
-  enableReadyCheck: false,
-};
-
 // Create Redis clients for Bull (it needs separate clients)
-const createRedisClient = () => new Redis(redisConfig);
+const createRedisClient = () => {
+  if (process.env.REDIS_URL) {
+    return new Redis(process.env.REDIS_URL, {
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
+    });
+  }
+
+  const redisConfig = {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379'),
+    password: process.env.REDIS_PASSWORD || undefined,
+    maxRetriesPerRequest: null, // Required for Bull
+    enableReadyCheck: false,
+  };
+  return new Redis(redisConfig);
+};
 
 // Initialize the voice analysis queue
 export const voiceAnalysisQueue: Queue = new Bull('voice-analysis', {
