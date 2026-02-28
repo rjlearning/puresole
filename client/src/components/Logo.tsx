@@ -1,3 +1,5 @@
+import React from 'react';
+
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   showText?: boolean;
@@ -6,30 +8,20 @@ interface LogoProps {
 }
 
 /**
- * PureSoul logo — "Soulwave" concept
- * A soundwave / frequency bars mark — clean, modern, Spotify/Endel-inspired.
- * Aurora gradient (violet → pink → cyan), transparent background.
+ * PureSoul logo — Minimalist Orbit Concept
+ * Solid main circle with three ascending floating colored dots.
+ * Bold, high-contrast dark text.
  */
 export default function Logo({ size = 'md', showText = true, className = '', light = false }: LogoProps) {
   const sizes = {
-    sm: { icon: 30, text: 'text-base', gap: 'gap-2' },
-    md: { icon: 40, text: 'text-xl', gap: 'gap-2.5' },
-    lg: { icon: 54, text: 'text-3xl', gap: 'gap-3' },
-    xl: { icon: 72, text: 'text-5xl', gap: 'gap-4' },
+    sm: { icon: 28, text: 'text-xl', gap: 'gap-2' },
+    md: { icon: 36, text: 'text-2xl', gap: 'gap-2.5' },
+    lg: { icon: 48, text: 'text-4xl', gap: 'gap-3' },
+    xl: { icon: 64, text: 'text-6xl', gap: 'gap-4' },
   };
 
   const s = sizes[size];
-  const id = `sw${size}`;
-
-  // Bar heights (center bar tallest) — creates a gentle wave peak
-  const bars = [
-    { x: 12, h: 36, y: 32 },
-    { x: 25, h: 52, y: 24 },
-    { x: 38, h: 70, y: 15 },
-    { x: 51, h: 60, y: 20 },
-    { x: 64, h: 44, y: 28 },
-    { x: 77, h: 28, y: 36 },
-  ];
+  const color = light ? '#FFFFFF' : '#000000';
 
   return (
     <div className={`flex items-center ${s.gap} ${className}`}>
@@ -40,63 +32,21 @@ export default function Logo({ size = 'md', showText = true, className = '', lig
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         aria-label="PureSoul"
+        className="shrink-0"
       >
-        <defs>
-          <linearGradient id={`${id}g`} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#7C3AED" />
-            <stop offset="50%" stopColor="#EC4899" />
-            <stop offset="100%" stopColor="#22D3EE" />
-          </linearGradient>
-          <radialGradient id={`${id}glow`} cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#A855F7" stopOpacity="0.1" />
-            <stop offset="100%" stopColor="#A855F7" stopOpacity="0" />
-          </radialGradient>
-        </defs>
+        {/* Main Solid Circle */}
+        <circle cx="40" cy="50" r="40" fill={color} />
 
-        {/* Ambient glow */}
-        <circle cx="50" cy="50" r="46" fill={`url(#${id}glow)`} />
-
-        {/* Equalizer bars — rounded, filled with aurora gradient */}
-        {bars.map((bar, i) => (
-          <rect
-            key={i}
-            x={bar.x}
-            y={bar.y}
-            width="9"
-            height={bar.h}
-            rx="4.5"
-            ry="4.5"
-            fill={`url(#${id}g)`}
-            opacity={0.75 + i * 0.04}
-          />
-        ))}
-
-        {/* Baseline subtle line */}
-        <line
-          x1="10" y1="88" x2="90" y2="88"
-          stroke={`url(#${id}g)`}
-          strokeWidth="2"
-          strokeLinecap="round"
-          opacity="0.2"
-        />
-
-        {/* Tiny sparkle dot — top right */}
-        <circle cx="90" cy="14" r="4" fill="#EC4899" opacity="0.9" />
-        <circle cx="82" cy="10" r="2.5" fill="#7C3AED" opacity="0.6" />
-        <circle cx="94" cy="22" r="2" fill="#22D3EE" opacity="0.6" />
+        {/* Floating Bubble Dots */}
+        <circle cx="72" cy="12" r="4.5" fill="#A855F7" /> {/* Purple */}
+        <circle cx="88" cy="22" r="6" fill="#F472B6" /> {/* Pink */}
+        <circle cx="82" cy="38" r="3.5" fill="#22D3EE" /> {/* Cyan */}
       </svg>
 
       {showText && (
         <span
-          className={`font-extrabold tracking-tight select-none leading-none ${s.text}`}
-          style={light
-            ? { color: '#ffffff' }
-            : {
-              background: 'linear-gradient(120deg, #7C3AED 0%, #EC4899 52%, #22D3EE 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}
+          className={`font-black tracking-tighter select-none leading-none ${s.text}`}
+          style={{ color }}
         >
           PureSoul
         </span>
