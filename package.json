@@ -9,6 +9,9 @@
     "type": "git",
     "url": "https://github.com/yourusername/puresoul.git"
   },
+  "engines": {
+    "node": ">=20.11.0"
+  },
   "scripts": {
     "dev": "NODE_ENV=development tsx watch server/index.ts",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
