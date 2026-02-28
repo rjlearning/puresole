@@ -10,19 +10,31 @@ import Redis from 'ioredis';
 
 // Create Redis clients for Bull (it needs separate clients)
 const createRedisClient = () => {
-  if (process.env.REDIS_URL) {
-    return new Redis(process.env.REDIS_URL, {
-      maxRetriesPerRequest: null,
-      enableReadyCheck: false,
-    });
+  try {
+    if (process.env.REDIS_URL) {
+      return new Redis(process.env.REDIS_URL, {
+        maxRetriesPerRequest: null,
+        enableReadyCheck: false,
+        retryStrategy: (times) => {
+          if (times > 3) return null; // Stop retrying after 3 attempts
+          return Math.min(times * 50, 2000);
+        }
+      });
+    }
+  } catch (error) {
+    console.warn(`[Redis] Failed to initialize from REDIS_URL: ${error}`);
   }
 
   const redisConfig = {
-    host: process.env.REDIS_HOST || 'localhost',
+    host: process.env.REDIS_HOST || '127.0.0.1',
     port: parseInt(process.env.REDIS_PORT || '6379'),
     password: process.env.REDIS_PASSWORD || undefined,
-    maxRetriesPerRequest: null, // Required for Bull
+    maxRetriesPerRequest: null,
     enableReadyCheck: false,
+    retryStrategy: (times: number) => {
+      if (times > 3) return null; // Stop retrying and fail gracefully
+      return Math.min(times * 50, 2000);
+    }
   };
   return new Redis(redisConfig);
 };
