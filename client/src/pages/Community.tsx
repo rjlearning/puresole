@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, MouseEvent } from "react";
 import { Link } from "wouter";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
   Wind,
@@ -8,7 +9,8 @@ import {
   BookHeart,
   HeartHandshake,
   Sparkles,
-  Send
+  Send,
+  Navigation
 } from "lucide-react";
 import {
   Card,
@@ -30,12 +32,24 @@ const VALID_SPARKS = [
   "Be kind to yourself today."
 ];
 
+// Interactive Ripple Interface
+interface Ripple {
+  id: number;
+  x: number;
+  y: number;
+  color: string;
+}
+
 export default function Community() {
   const [stats, setStats] = useState<any>(null);
   const [loadingStats, setLoadingStats] = useState(true);
   const [debugMode, setDebugMode] = useState(false);
-  const [sendingSpark, setSendingSpark] = useState(false);
-  const [sparkSentStatus, setSparkSentStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  // Interactive Network State
+  const [ripples, setRipples] = useState<Ripple[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [hoveringNetwork, setHoveringNetwork] = useState(false);
+
   const clickCount = useRef(0);
   const lastClick = useRef(0);
 
@@ -45,6 +59,18 @@ export default function Community() {
     const interval = setInterval(fetchStats, 30000);
     return () => clearInterval(interval);
   }, [debugMode]);
+
+  // Randomly generate background network ripples based on active users
+  useEffect(() => {
+    if (!stats?.totalOnline) return;
+    const interval = setInterval(() => {
+      // Spawn a random ripple to simulate network activity
+      if (Math.random() > 0.3) {
+        spawnRandomRipple();
+      }
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [stats]);
 
   const fetchStats = async () => {
     try {
@@ -60,275 +86,258 @@ export default function Community() {
     }
   };
 
+  const spawnRandomRipple = () => {
+    if (!containerRef.current) return;
+    const { width, height } = containerRef.current.getBoundingClientRect();
+    const colors = ['#818CF8', '#F472B6', '#2DD4BF', '#FBBF24'];
+
+    setRipples(prev => [...prev, {
+      id: Date.now() + Math.random(),
+      x: Math.random() * width,
+      y: Math.random() * height,
+      color: colors[Math.floor(Math.random() * colors.length)]
+    }].slice(-15)); // Keep max 15 on screen
+  };
+
+  const handleNetworkClick = (e: MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Add user ripple (always gold/rose to stand out)
+    setRipples(prev => [...prev, {
+      id: Date.now(),
+      x,
+      y,
+      color: '#FB7185' // Rose glow for the user's explicit interaction
+    }].slice(-15));
+
+    // Send a random spark payload to the backend
+    const randomMsg = VALID_SPARKS[Math.floor(Math.random() * VALID_SPARKS.length)];
+    sendSpark(randomMsg);
+  };
+
   const sendSpark = async (message: string) => {
-    setSendingSpark(true);
-    setSparkSentStatus('idle');
     try {
-      const res = await fetch('/api/community/sparks', {
+      await fetch('/api/community/sparks', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message })
       });
-
-      if (res.ok) {
-        setSparkSentStatus('success');
-        setTimeout(() => setSparkSentStatus('idle'), 5000);
-      } else {
-        setSparkSentStatus('error');
-      }
     } catch (error) {
       console.error("Failed to send spark:", error);
-      setSparkSentStatus('error');
-    } finally {
-      setSendingSpark(false);
     }
   };
 
   return (
-    <div className="flex h-screen bg-rose-50/30 overflow-hidden">
+    <div className="flex h-screen bg-[#0F172A] overflow-hidden text-slate-200">
       <MainNavigation />
 
-      <main className="flex-1 overflow-y-auto w-full md:pb-0 pb-20 pt-20">
+      <main className="flex-1 overflow-y-auto w-full md:pb-0 pb-20 pt-16 lg:pt-8 custom-scrollbar">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-          {/* Header */}
-          <div className="max-w-3xl mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-100/80 text-rose-700 text-sm font-medium mb-4">
-              <Users className="w-4 h-4" />
-              Shared Journeys
+
+          {/* INTERACTIVE NETWORK CANVAS */}
+          <div
+            ref={containerRef}
+            onClick={handleNetworkClick}
+            onMouseEnter={() => setHoveringNetwork(true)}
+            onMouseLeave={() => setHoveringNetwork(false)}
+            className="relative w-full h-[400px] rounded-3xl mb-12 overflow-hidden bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 shadow-2xl shadow-indigo-500/10 cursor-pointer group"
+          >
+            {/* Background grid texture */}
+            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
+
+            {/* Dynamic Hover Glow */}
+            <div className="absolute inset-0 bg-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 ease-out" />
+
+            {/* Content Layer */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 z-10 pointer-events-none">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-sm font-medium mb-6 backdrop-blur-md border border-indigo-500/30">
+                <Users className="w-4 h-4" />
+                Live Connection Network
+              </div>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight mb-4 drop-shadow-md">
+                You are not alone.
+              </h1>
+              <p className="text-lg md:text-xl text-slate-400 leading-relaxed max-w-2xl font-light">
+                Every ripple you see is someone taking a breath, logging a thought, or sending support right now.
+              </p>
+
+              <div className={`mt-8 px-6 py-2 rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-300 flex items-center gap-2 text-sm font-medium transition-all duration-500 ${hoveringNetwork ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                <Navigation className="w-4 h-4 mr-1 animate-pulse" />
+                Tap anywhere to release a spark
+              </div>
             </div>
-            <h1 className="text-4xl md:text-5xl font-black text-slate-800 tracking-tight mb-4">
-              You are not alone.
-            </h1>
-            <p className="text-lg md:text-xl text-slate-600 leading-relaxed max-w-2xl">
-              Mental health can feel isolating, but right now, thousands of people are taking a moment to breathe, reflect, and heal alongside you.
-            </p>
+
+            {/* Ripple Render Layer */}
+            <AnimatePresence>
+              {ripples.map(ripple => (
+                <motion.div
+                  key={ripple.id}
+                  initial={{ scale: 0, opacity: 0.8 }}
+                  animate={{ scale: 4, opacity: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 3, ease: "easeOut" }}
+                  className="absolute rounded-full pointer-events-none mix-blend-screen"
+                  style={{
+                    left: ripple.x - 30, // Center the 60px circle
+                    top: ripple.y - 30,
+                    width: 60,
+                    height: 60,
+                    border: `2px solid ${ripple.color}`,
+                    backgroundColor: `${ripple.color}20`,
+                    boxShadow: `0 0 20px ${ripple.color}`
+                  }}
+                />
+              ))}
+            </AnimatePresence>
+
+            {/* Simulated Live User Dots */}
+            {stats && Array.from({ length: Math.min(stats.totalOnline / 10, 30) }).map((_, i) => (
+              <motion.div
+                key={i}
+                animate={{
+                  y: [0, Math.random() * -20, 0],
+                  opacity: [0.1, 0.5, 0.1],
+                }}
+                transition={{
+                  duration: 3 + Math.random() * 4,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+                className="absolute w-1 h-1 bg-indigo-400 rounded-full blur-[1px]"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
+                }}
+              />
+            ))}
           </div>
 
+          {/* Activity Cards Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-            {/* Live Stats Section (Spans 2 columns on large screens) */}
-            <div className="lg:col-span-2 space-y-6 animate-in fade-in slide-in-from-bottom-6 duration-1000">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                  <span className="relative flex h-3 w-3">
-                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 ${loadingStats ? 'opacity-20' : ''}`}></span>
-                    <span className={`relative inline-flex rounded-full h-3 w-3 bg-emerald-500 ${loadingStats ? 'bg-slate-400' : ''}`}></span>
-                  </span>
-                  <span
-                    onClick={() => {
-                      const now = Date.now();
-                      if (now - lastClick.current < 500) {
-                        clickCount.current += 1;
-                        if (clickCount.current >= 3) {
-                          setDebugMode(!debugMode);
-                          clickCount.current = 0;
-                        }
-                      } else {
-                        clickCount.current = 1;
+
+            {/* Live Stats Header (Spans full width) */}
+            <div className="lg:col-span-3 flex items-center justify-between animate-in fade-in slide-in-from-bottom-6 duration-1000">
+              <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                <span className="relative flex h-3 w-3">
+                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 ${loadingStats ? 'opacity-20' : ''}`}></span>
+                  <span className={`relative inline-flex rounded-full h-3 w-3 bg-emerald-500 ${loadingStats ? 'bg-slate-400' : ''}`}></span>
+                </span>
+                <span
+                  onClick={() => {
+                    const now = Date.now();
+                    if (now - lastClick.current < 500) {
+                      clickCount.current += 1;
+                      if (clickCount.current >= 3) {
+                        setDebugMode(!debugMode);
+                        clickCount.current = 0;
                       }
-                      lastClick.current = now;
-                    }}
-                    className="cursor-default select-none"
-                  >
-                    Live Network
-                  </span>
-                </h2>
-                {stats && (
-                  <div className="flex items-center gap-2">
-                    {debugMode && (
-                      <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 animate-pulse">
-                        Clinical Debug Active
-                      </Badge>
+                    } else {
+                      clickCount.current = 1;
+                    }
+                    lastClick.current = now;
+                  }}
+                  className="cursor-default select-none"
+                >
+                  Global Pulse
+                </span>
+              </h2>
+              {stats && (
+                <div className="flex items-center gap-3">
+                  {debugMode && (
+                    <Badge variant="outline" className="bg-amber-950 text-amber-400 border-amber-800 animate-pulse">
+                      Clinical Debug Active
+                    </Badge>
+                  )}
+                  <div className="text-sm font-medium text-slate-300 bg-slate-800 px-4 py-1.5 rounded-full border border-slate-700 shadow-inner">
+                    <span className="text-white font-bold">{stats.totalOnline.toLocaleString()}</span> active now
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* The 4 Core Activity Metrics rewritten for dark mode */}
+            <Card className="border-slate-800 bg-slate-900/50 backdrop-blur-sm shadow-xl hover:bg-slate-800/80 transition-all duration-300">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400 shadow-[0_0_15px_rgba(45,212,191,0.1)]">
+                    <Wind className="w-6 h-6" />
+                  </div>
+                  <div>
+                    {loadingStats ? (
+                      <div className="h-8 w-16 bg-slate-800 rounded animate-pulse mb-1"></div>
+                    ) : (
+                      <div className="text-3xl font-black text-white">{stats?.breathing}</div>
                     )}
-                    <div className="text-sm font-medium text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200">
-                      <span className="text-slate-900 font-bold">{stats.totalOnline.toLocaleString()}</span> active now
-                    </div>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Breathing</p>
                   </div>
-                )}
-              </div>
+                </div>
+              </CardContent>
+            </Card>
 
-              {debugMode && stats?.debug && (
-                <Card className="border-amber-200 bg-amber-50/50 mb-6 animate-in slide-in-from-top-2 duration-300">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-amber-800 flex items-center gap-1">
-                        <Sparkles className="w-3 h-3" />
-                        Presence Engine Transparency
-                      </h3>
-                      <span className="text-[10px] text-amber-600 font-mono">Last Sync: {new Date(stats.debug.timestamp).toLocaleTimeString()}</span>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {Object.entries(stats.debug.real).map(([key, val]: [string, any]) => (
-                        <div key={key} className="bg-white/80 rounded p-2 border border-amber-100">
-                          <div className="text-[10px] text-slate-500 uppercase">{key}</div>
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-sm font-bold text-slate-800">{((stats[key] || 0)).toLocaleString()}</span>
-                            <span className="text-[10px] text-emerald-600 font-medium">({val} verified)</span>
-                          </div>
-                          <div className="w-full bg-slate-100 h-1 rounded-full mt-1 overflow-hidden">
-                            <div
-                              className="bg-emerald-500 h-full transition-all duration-1000"
-                              style={{ width: `${Math.min(100, (val / (stats[key] || 1)) * 100)}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-[10px] text-amber-700 mt-3 italic">
-                      Note: "Verified" counts represent actual user sessions in the last 15 minutes. Simulated data provides the emotional "Social Presence" base.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Breathing Stat */}
-                <Card className="border-teal-100 bg-gradient-to-br from-white to-teal-50/30 shadow-sm hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center text-teal-600">
-                        <Wind className="w-6 h-6" />
-                      </div>
-                      <div>
-                        {loadingStats ? (
-                          <div className="h-8 w-16 bg-slate-100 rounded animate-pulse mb-1"></div>
-                        ) : (
-                          <div className="text-3xl font-black text-slate-800">{stats?.breathing}</div>
-                        )}
-                        <p className="text-sm font-medium text-slate-500 uppercase tracking-wide">Breathing Together</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Meditating Stat */}
-                <Card className="border-purple-100 bg-gradient-to-br from-white to-purple-50/30 shadow-sm hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600">
-                        <Brain className="w-6 h-6" />
-                      </div>
-                      <div>
-                        {loadingStats ? (
-                          <div className="h-8 w-16 bg-slate-100 rounded animate-pulse mb-1"></div>
-                        ) : (
-                          <div className="text-3xl font-black text-slate-800">{stats?.meditating}</div>
-                        )}
-                        <p className="text-sm font-medium text-slate-500 uppercase tracking-wide">Finding Stillness</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Journaling Stat */}
-                <Card className="border-amber-100 bg-gradient-to-br from-white to-amber-50/30 shadow-sm hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
-                        <BookHeart className="w-6 h-6" />
-                      </div>
-                      <div>
-                        {loadingStats ? (
-                          <div className="h-8 w-16 bg-slate-100 rounded animate-pulse mb-1"></div>
-                        ) : (
-                          <div className="text-3xl font-black text-slate-800">{stats?.journaling}</div>
-                        )}
-                        <p className="text-sm font-medium text-slate-500 uppercase tracking-wide">Processing Thoughts</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Sleeping Stat */}
-                <Card className="border-indigo-100 bg-gradient-to-br from-white to-indigo-50/30 shadow-sm hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600">
-                        <Moon className="w-6 h-6" />
-                      </div>
-                      <div>
-                        {loadingStats ? (
-                          <div className="h-8 w-16 bg-slate-100 rounded animate-pulse mb-1"></div>
-                        ) : (
-                          <div className="text-3xl font-black text-slate-800">{stats?.sleeping}</div>
-                        )}
-                        <p className="text-sm font-medium text-slate-500 uppercase tracking-wide">Resting Safely</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* SOS Notice */}
-              {!loadingStats && stats?.sos > 0 && (
-                <Alert className="bg-rose-50 border-rose-100 text-rose-800">
-                  <HeartHandshake className="h-4 w-4" />
-                  <AlertTitle>Community Support</AlertTitle>
-                  <AlertDescription>
-                    <strong>{stats.sos}</strong> people are currently using the Emergency SOS Grounding feature. We are all sending them strength.
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
-
-            {/* Send a Spark Section */}
-            <div className="animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150">
-              <Card className="border-rose-100 shadow-lg h-full bg-white relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-100/50 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-                <CardHeader>
-                  <div className="w-12 h-12 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center mb-4">
-                    <Sparkles className="w-6 h-6" />
+            <Card className="border-slate-800 bg-slate-900/50 backdrop-blur-sm shadow-xl hover:bg-slate-800/80 transition-all duration-300">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.1)]">
+                    <Brain className="w-6 h-6" />
                   </div>
-                  <CardTitle className="text-2xl font-bold text-slate-800">Send a Spark</CardTitle>
-                  <CardDescription className="text-base">
-                    Anonymously send a pulse of positive energy to someone else's dashboard. You might just make their day.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {VALID_SPARKS.map((sparkMsg, idx) => (
-                      <Button
-                        key={idx}
-                        variant="outline"
-                        onClick={() => sendSpark(sparkMsg)}
-                        disabled={sendingSpark}
-                        className="w-full justify-start text-left h-auto py-3 px-4 border-slate-200 hover:border-rose-300 hover:bg-rose-50/50 font-medium text-slate-700 whitespace-normal transition-all group"
-                      >
-                        <Send className="w-4 h-4 mr-3 text-slate-400 group-hover:text-rose-500 transition-colors shrink-0" />
-                        {sparkMsg}
-                      </Button>
-                    ))}
+                  <div>
+                    {loadingStats ? (
+                      <div className="h-8 w-16 bg-slate-800 rounded animate-pulse mb-1"></div>
+                    ) : (
+                      <div className="text-3xl font-black text-white">{stats?.meditating}</div>
+                    )}
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Meditating</p>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
 
-                  {sparkSentStatus === 'success' && (
-                    <div className="mt-4 p-3 bg-emerald-50 text-emerald-700 rounded-lg text-sm font-medium flex items-start gap-2 animate-in fade-in slide-in-from-bottom-2">
-                      <Sparkles className="w-4 h-4 mt-0.5 shrink-0" />
-                      Your spark has been released into the community network!
-                    </div>
-                  )}
-                  {sparkSentStatus === 'error' && (
-                    <div className="mt-4 p-3 bg-rose-50 text-rose-700 rounded-lg text-sm font-medium">
-                      Failed to send spark. Please try again.
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+            <Card className="border-slate-800 bg-slate-900/50 backdrop-blur-sm shadow-xl hover:bg-slate-800/80 transition-all duration-300">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
+                    <BookHeart className="w-6 h-6" />
+                  </div>
+                  <div>
+                    {loadingStats ? (
+                      <div className="h-8 w-16 bg-slate-800 rounded animate-pulse mb-1"></div>
+                    ) : (
+                      <div className="text-3xl font-black text-white">{stats?.journaling}</div>
+                    )}
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">Journaling</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
           </div>
+
+          {/* SOS Notice */}
+          {!loadingStats && stats?.sos > 0 && (
+            <Alert className="bg-rose-500/10 border-rose-500/30 text-rose-300 mb-12 shadow-lg shadow-rose-500/5 backdrop-blur-md">
+              <HeartHandshake className="h-5 w-5" />
+              <AlertTitle className="text-rose-200 font-bold tracking-wide">Urgent Care Network</AlertTitle>
+              <AlertDescription className="mt-2 text-rose-300/80 leading-relaxed">
+                <strong>{stats.sos}</strong> people are currently using the Emergency SOS Grounding feature. The network is automatically prioritizing supportive energy their way.
+              </AlertDescription>
+            </Alert>
+          )}
 
           {/* Action Call */}
-          <div className="text-center mt-12 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-300">
-            <h3 className="text-xl font-bold text-slate-800 mb-4">Ready to join them?</h3>
+          <div className="text-center mt-16 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-300 border-t border-slate-800 pt-16">
+            <h3 className="text-2xl font-bold text-white mb-6">Contribute to the network</h3>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Link href="/activities">
-                <Button className="bg-slate-800 hover:bg-slate-700 text-white rounded-full px-8 py-6 h-auto text-base">
+                <Button className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-full px-8 py-6 h-auto text-base border border-indigo-500 shadow-[0_0_30px_rgba(79,70,229,0.3)] transition-all hover:scale-105">
                   Start an Activity
                 </Button>
               </Link>
-              <Link href="/journal">
-                <Button variant="outline" className="rounded-full px-8 py-6 h-auto text-base">
-                  Write in Journal
+              <Link href="/voice-journal">
+                <Button variant="outline" className="rounded-full px-8 py-6 h-auto text-base bg-slate-900 border-slate-700 hover:bg-slate-800 hover:text-white transition-all">
+                  Voice Journal
                 </Button>
               </Link>
             </div>
