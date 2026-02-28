@@ -34,13 +34,39 @@ export default function Logo({ size = 'md', showText = true, className = '', lig
         aria-label="PureSoul"
         className="shrink-0"
       >
-        {/* Main Solid Circle */}
-        <circle cx="40" cy="50" r="40" fill={color} />
+        <defs>
+          <linearGradient id="bar1" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#C084FC" />
+            <stop offset="100%" stopColor="#9333EA" />
+          </linearGradient>
+          <linearGradient id="bar2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#F472B6" />
+            <stop offset="100%" stopColor="#D946EF" />
+          </linearGradient>
+          <linearGradient id="bar3" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#FB7185" />
+            <stop offset="100%" stopColor="#EC4899" />
+          </linearGradient>
+          <linearGradient id="bar4" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#A78BFA" />
+            <stop offset="100%" stopColor="#7C3AED" />
+          </linearGradient>
+          <linearGradient id="bar5" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#22D3EE" />
+            <stop offset="100%" stopColor="#0891B2" />
+          </linearGradient>
+        </defs>
 
-        {/* Floating Bubble Dots */}
-        <circle cx="72" cy="12" r="4.5" fill="#A855F7" /> {/* Purple */}
-        <circle cx="88" cy="22" r="6" fill="#F472B6" /> {/* Pink */}
-        <circle cx="82" cy="38" r="3.5" fill="#22D3EE" /> {/* Cyan */}
+        {/* Soundwave Bars */}
+        <rect x="12" y="35" width="10" height="30" rx="5" fill="url(#bar1)" />
+        <rect x="28" y="20" width="10" height="60" rx="5" fill="url(#bar2)" />
+        <rect x="44" y="10" width="10" height="80" rx="5" fill="url(#bar3)" />
+        <rect x="60" y="20" width="10" height="60" rx="5" fill="url(#bar4)" />
+        <rect x="76" y="35" width="10" height="30" rx="5" fill="url(#bar5)" />
+
+        {/* Floating Bubble Dots (Top Right) */}
+        <circle cx="86" cy="16" r="5" fill="#F472B6" />
+        <circle cx="96" cy="24" r="3" fill="#22D3EE" />
       </svg>
 
       {showText && (
