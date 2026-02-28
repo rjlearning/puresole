@@ -92,7 +92,7 @@ export default function Header() {
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 bg-white/90 backdrop-blur-xl border-black/5 text-foreground shadow-xl" align="end" forceMount>
+                <DropdownMenuContent className="w-56 bg-white/90 backdrop-blur-xl border-black/5 text-foreground shadow-xl overflow-y-auto max-h-[85vh]" align="end" forceMount>
                   <div className="flex items-center space-x-2 p-2">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={user?.profileImageUrl} alt={`${user?.firstName} ${user?.lastName}`} />
@@ -170,10 +170,12 @@ export default function Header() {
                     <User className="h-4 w-4 mr-2" />
                     Profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem disabled className="focus:bg-primary/5 focus:text-primary opacity-50" data-testid="menu-settings">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Settings
-                  </DropdownMenuItem>
+                  <Link href="/settings">
+                    <DropdownMenuItem className="focus:bg-primary/5 focus:text-primary" data-testid="menu-settings">
+                      <Settings className="h-4 w-4 mr-2" />
+                      Settings
+                    </DropdownMenuItem>
+                  </Link>
                   <DropdownMenuSeparator className="bg-black/5" />
                   <DropdownMenuItem onClick={handleLogout} className="focus:bg-red-50 focus:text-red-600" data-testid="menu-logout">
                     <LogOut className="h-4 w-4 mr-2" />
