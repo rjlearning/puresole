@@ -25,7 +25,7 @@ export default function SoulCoreHub() {
             bgColor: 'bg-rose-500/10',
             borderColor: 'border-rose-500/20',
             hoverColor: 'hover:bg-rose-500/20',
-            position: { x: -80, y: -80 } // Top Left
+            position: { x: 0, y: -120 } // Straight Up
         },
         {
             id: 'chat',
@@ -36,7 +36,7 @@ export default function SoulCoreHub() {
             bgColor: 'bg-indigo-500/10',
             borderColor: 'border-indigo-500/20',
             hoverColor: 'hover:bg-indigo-500/20',
-            position: { x: 80, y: -80 } // Top Right
+            position: { x: -70, y: -95 } // Top Left
         },
         {
             id: 'activities',
@@ -47,7 +47,7 @@ export default function SoulCoreHub() {
             bgColor: 'bg-amber-500/10',
             borderColor: 'border-amber-500/20',
             hoverColor: 'hover:bg-amber-500/20',
-            position: { x: -80, y: 80 } // Bottom Left
+            position: { x: -110, y: -45 } // Left Top
         },
         {
             id: 'sleep',
@@ -58,7 +58,7 @@ export default function SoulCoreHub() {
             bgColor: 'bg-purple-500/10',
             borderColor: 'border-purple-500/20',
             hoverColor: 'hover:bg-purple-500/20',
-            position: { x: 80, y: 80 } // Bottom Right
+            position: { x: -120, y: 20 } // Left (slightly down)
         }
     ];
 
