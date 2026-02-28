@@ -1,0 +1,20 @@
+# Minimal requirements for testing the API without ML dependencies
+# Use this for quick setup: pip install -r requirements-minimal.txt
+
+# FastAPI and web framework
+fastapi==0.115.0
+uvicorn[standard]==0.32.1
+python-multipart==0.0.12
+pydantic==2.9.2
+pydantic-settings==2.6.1
+
+# Utilities
+python-dotenv==1.0.1
+requests==2.32.3
+
+# OpenAI API (for Whisper transcription)
+openai==1.57.4
+
+# Database
+redis==5.2.0
+psycopg2-binary==2.9.10

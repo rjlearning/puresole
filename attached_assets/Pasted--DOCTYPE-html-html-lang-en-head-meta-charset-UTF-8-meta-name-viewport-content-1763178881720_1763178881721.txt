@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Mental Wellness Slider</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* * AI Mental Wellness Palette
+         * --color-dark-blue: #252D55;
+         * --color-primary-blue: #5977C1;
+         * --color-teal-green: #66CEAF;
+         * --color-light-bg: #F2F3F3;
+         * --color-muted-grey: #A1A3AF;
+        */
+
+        :root {
+            --color-dark-blue: #252D55;
+            --color-primary-blue: #5977C1;
+            --color-teal-green: #66CEAF;
+            --color-light-bg: #F2F3F3;
+            --color-muted-grey: #A1A3AF;
+            --font-primary: 'Inter', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-primary);
+            background-color: #e0e4e7; /* A neutral bg to see the slider */
+            display: grid;
+            place-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .slider-container {
+            width: 100%;
+            max-width: 1100px;
+            height: 550px;
+            border-radius: 24px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1), 0 5px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .slides-wrapper {
+            display: flex;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.77, 0, 0.175, 1); /* Smooth slide */
+        }
+
+        .slide {
+            flex-shrink: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 40px 60px;
+            box-sizing: border-box;
+            background-color: var(--color-light-bg);
+            color: var(--color-dark-blue);
+        }
+
+        .slide h1 {
+            font-size: 3.5rem; /* 56px */
+            font-weight: 800;
+            margin: 0 0 16px;
+            color: var(--color-dark-blue);
+            line-height: 1.1;
+            max-width: 800px;
+        }
+
+        .slide p {
+            font-size: 1.25rem; /* 20px */
+            color: var(--color-muted-grey);
+            font-weight: 400;
+            max-width: 650px;
+            line-height: 1.6;
+            margin: 0 0 32px;
+        }
+
+        .slide .cta-button {
+            font-family: var(--font-primary);
+            font-size: 1rem;
+            font-weight: 700;
+            color: #FFFFFF;
+            background-color: var(--color-primary-blue);
+            border: none;
+            padding: 16px 32px;
+            border-radius: 50px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(89, 119, 193, 0.3);
+        }
+
+        .slide .cta-button:hover {
+            background-color: #4a67b0; /* Darker shade of primary blue */
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(89, 119, 193, 0.4);
+        }
+        
+        /* Slide-specific title colors */
+        .slide-2 h1 {
+            color: var(--color-primary-blue);
+        }
+
+        .slide-3 h1 {
+            color: var(--color-teal-green);
+        }
+        
+        /* Slide 4: Image Background */
+        .slide-4 {
+            background-image: linear-gradient(rgba(37, 45, 85, 0.6), rgba(37, 45, 85, 0.6)), url('http://googleusercontent.com/image_collection/image_retrieval/12254299847991133418');
+            background-size: cover;
+            background-position: center;
+            color: #FFFFFF;
+        }
+
+        .slide-4 h1 {
+            color: #FFFFFF;
+        }
+
+        .slide-4 p {
+            color: rgba(242, 243, 243, 0.9); /* Lighter text for contrast */
+        }
+        
+        .slide-4 .cta-button {
+            background-color: var(--color-teal-green);
+            box-shadow: 0 4px 15px rgba(102, 206, 175, 0.3);
+        }
+        
+        .slide-4 .cta-button:hover {
+            background-color: #55b99c; /* Darker teal */
+            box-shadow: 0 6px 20px rgba(102, 206, 175, 0.4);
+        }
+
+
+        /* Slider Dots */
+        .slider-dots {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--color-muted-grey);
+            opacity: 0.5;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dot.active {
+            background-color: var(--color-primary-blue);
+            opacity: 1;
+            transform: scale(1.2);
+        }
+        
+        /* On image slide, dots need to be clearer */
+        .slide-4-dots .dot {
+            background-color: #FFFFFF;
+            opacity: 0.6;
+        }
+        .slide-4-dots .dot.active {
+            background-color: var(--color-teal-green);
+            opacity: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .slider-container {
+                height: 500px;
+                border-radius: 16px;
+            }
+            .slide {
+                padding: 30px 25px;
+            }
+            .slide h1 {
+                font-size: 2.25rem; /* 36px */
+            }
+            .slide p {
+                font-size: 1rem; /* 16px */
+            }
+            .slide .cta-button {
+                padding: 14px 28px;
+            }
+            .slider-dots {
+                bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="slider-container" id="slider-container">
+        <div class="slides-wrapper" id="slides-wrapper">
+            <!-- Slide 1: Welcome -->
+            <div class="slide slide-1">
+                <h1>Your Path to a Clearer Mind</h1>
+                <p>Welcome to your personal AI wellness companion, designed to help you build resilience and find calm.</p>
+                <a href="#" class="cta-button">Start Your Journey</a>
+            </div>
+
+            <!-- Slide 2: The Problem (Adapted from "Stuck") -->
+            <div class="slide slide-2">
+                <h1>Feeling Overwhelmed?</h1>
+                <p>Our AI helps you navigate stress, anxiety, and complex feelings. You're not alone on this journey.</p>
+                <a href="#" class="cta-button">Learn How It Works</a>
+            </div>
+
+            <!-- Slide 3: The "Listening" Feature (Adapted from "Active Listening") -->
+            <div class="slide slide-3">
+                <h1>A Space to Be Heard</h1>
+                <p>We've built a compassionate AI trained to listen and understand, 24/7. Express yourself without judgment.</p>
+                <a href="#" class="cta-button">Explore Features</a>
+            </div>
+
+            <!-- Slide 4: The "Connection" Feature (Adapted from "Connection" & Image) -->
+            <div class="slide slide-4">
+                <h1>Find Your Calm</h1>
+                <p>Discover peace, build resilience, and reconnect with yourself. Your mental wellness is our priority.</p>
+                <a href="#" class="cta-button">Try a Free Session</a>
+            </div>
+        </div>
+
+        <div class="slider-dots" id="slider-dots">
+            <!-- Dots will be generated by JS -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const slidesWrapper = document.getElementById('slides-wrapper');
+            const dotsContainer = document.getElementById('slider-dots');
+            const sliderContainer = document.getElementById('slider-container');
+            const slides = document.querySelectorAll('.slide');
+            const slideCount = slides.length;
+            
+            let currentSlide = 0;
+            let slideInterval;
+
+            // 1. Create dots
+            for (let i = 0; i < slideCount; i++) {
+                const dot = document.createElement('div');
+                dot.classList.add('dot');
+                dot.dataset.index = i;
+                dotsContainer.appendChild(dot);
+            }
+
+            const dots = document.querySelectorAll('.dot');
+            
+            // 2. Show Slide Function
+            function showSlide(index) {
+                // Move the slide
+                slidesWrapper.style.transform = `translateX(-${index * 100}%)`;
+                
+                // Update dots
+                dots.forEach(dot => dot.classList.remove('active'));
+                dots[index].classList.add('active');
+                
+                // Update dot container class for slide 4
+                if(index === 3) { // 3 is the index for slide 4
+                    dotsContainer.classList.add('slide-4-dots');
+                } else {
+                    dotsContainer.classList.remove('slide-4-dots');
+                }
+
+                currentSlide = index;
+            }
+
+            // 3. Next Slide Function
+            function nextSlide() {
+                let newIndex = (currentSlide + 1) % slideCount;
+                showSlide(newIndex);
+            }
+
+            // 4. Dot click events
+            dots.forEach(dot => {
+                dot.addEventListener('click', () => {
+                    showSlide(parseInt(dot.dataset.index));
+                    resetInterval(); // Reset timer on manual click
+                });
+            });
+
+            // 5. Auto-play interval
+            function startInterval() {
+                slideInterval = setInterval(nextSlide, 5000); // Change slide every 5 seconds
+            }
+
+            function resetInterval() {
+                clearInterval(slideInterval);
+                startInterval();
+            }
+
+            // 6. Pause on hover
+            sliderContainer.addEventListener('mouseenter', () => clearInterval(slideInterval));
+            sliderContainer.addEventListener('mouseleave', () => startInterval());
+
+            // Initial setup
+            showSlide(0);
+            startInterval();
+        });
+    </script>
+
+</body>
+</html>

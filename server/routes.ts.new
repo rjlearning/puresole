@@ -1,0 +1,59 @@
+import type { Express } from "express";
+import { db } from "./db";
+import { setupMultiAuth } from "./multiAuth";
+import { setupSession, isAuthenticated } from "./standardAuth";
+import { OpenAI } from "openai";
+import * as schema from "@shared/schema";
+import { eq, and, desc } from "drizzle-orm";
+import { z } from "zod";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// Unified authentication middleware
+function requireAuth(req: any, res: any, next: any) {
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    return next();
+  }
+  res.status(401).json({ message: "Unauthorized" });
+}
+
+export async function registerRoutes(app: Express) {
+  // Setup authentication
+  setupSession(app);
+  await setupMultiAuth(app);
+
+  // Health check
+  app.get("/api/health", (_req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
+  // Get current user
+  app.get("/api/user", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user?.id || req.user?.claims?.sub;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const user = await db.query.users.findFirst({
+        where: eq(schema.users.id, userId),
+      });
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Remove sensitive data
+      const { passwordHash, ...safeUser } = user;
+      res.json(safeUser);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // ... rest of your routes
+  // Copy all other routes from the original file
+}

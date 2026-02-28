@@ -1,0 +1,122 @@
+# PureSoul - Docker Compose Configuration
+# Run the entire stack with: docker-compose up -d
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: puresoul-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: puresoul
+      POSTGRES_USER: puresoul
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme123}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Removed migrations mount - using Drizzle ORM instead
+      # - ./server/db/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - puresoul-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U puresoul -d puresoul" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache (optional but recommended for production)
+  redis:
+    image: redis:7-alpine
+    container_name: puresoul-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-changeme123}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - puresoul-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # PureSoul Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: puresoul-app
+    restart: unless-stopped
+    environment:
+      # Database
+      DATABASE_URL: postgresql://puresoul:${POSTGRES_PASSWORD:-changeme123}@postgres:5432/puresoul
+
+      # Redis
+      REDIS_URL: redis://:${REDIS_PASSWORD:-changeme123}@redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-changeme123}
+
+      # Application
+      NODE_ENV: production
+      DOCKER: "true"
+      PORT: 4000
+
+      # Session
+      SESSION_SECRET: ${SESSION_SECRET:-change-this-secret-in-production}
+
+      # OpenAI (for Phase IV insights)
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+
+      # Google OAuth
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+
+      # Optional: Stripe for payments
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+
+      # Optional: Email
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+
+      # App URL
+      APP_URL: ${APP_URL:-http://localhost:4000}
+    ports:
+      - "4000:4000"
+    volumes:
+      # Mount exports directory for PDF/CSV exports
+      - ./server/exports:/app/server/exports
+      # Mount uploads if needed
+      - ./uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - puresoul-network
+    healthcheck:
+      test: [ "CMD", "node", "-e", "require('http').get('http://localhost:4000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+# Networks
+networks:
+  puresoul-network:
+    driver: bridge
+
+# Volumes for data persistence
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local

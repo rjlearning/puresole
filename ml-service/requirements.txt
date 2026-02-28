@@ -1,0 +1,48 @@
+# FastAPI and web framework
+fastapi==0.115.0
+uvicorn[standard]==0.32.1
+python-multipart==0.0.12
+pydantic==2.9.2
+pydantic-settings==2.6.1
+
+# Audio processing
+librosa==0.10.2
+soundfile==0.12.1
+pydub==0.25.1
+webrtcvad==2.0.10
+audioread==3.0.1
+
+# Machine Learning (Python 3.12 compatible versions)
+numpy>=1.26.0,<2.0.0
+scipy==1.14.1
+scikit-learn==1.5.2
+tensorflow==2.18.0
+keras==3.7.0
+onnxruntime==1.20.1
+transformers==4.46.3
+torch==2.5.1
+
+# NLP and Sentiment Analysis
+nltk==3.9.1
+textblob==0.18.0.post0
+
+# OpenAI API
+openai==1.57.4
+
+# Feature extraction
+opensmile==2.4.2
+python-speech-features==0.6
+pyworld==0.3.4
+
+# Database and caching
+redis==5.2.0
+psycopg2-binary==2.9.10
+
+# Utilities
+python-dotenv==1.0.1
+python-jose[cryptography]==3.3.0
+cryptography==44.0.0
+requests==2.32.3
+
+# Monitoring and logging
+prometheus-client==0.21.0

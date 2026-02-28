@@ -1,0 +1,218 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(240, 60%, 98%);
+  --foreground: hsl(240, 20%, 10%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(240, 20%, 10%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(240, 20%, 10%);
+  --primary: hsl(270, 75%, 60%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(180, 80%, 50%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --muted: hsl(240, 50%, 96%);
+  --muted-foreground: hsl(240, 10%, 45%);
+  --accent: hsl(320, 85%, 65%);
+  --accent-foreground: hsl(0, 0%, 100%);
+  --destructive: hsl(0, 84%, 60%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --border: hsl(240, 30%, 92%);
+  --input: hsl(240, 30%, 92%);
+  --ring: hsl(270, 75%, 60%);
+  --radius: 12px;
+  --font-sans: 'Inter', sans-serif;
+  --chart-1: hsl(270, 75%, 60%);
+  --chart-2: hsl(180, 80%, 50%);
+  --chart-3: hsl(320, 85%, 65%);
+  --chart-4: hsl(280, 90%, 55%);
+  --chart-5: hsl(190, 75%, 55%);
+}
+
+.dark {
+  --background: hsl(240, 25%, 8%);
+  --foreground: hsl(240, 60%, 98%);
+  --card: hsl(240, 20%, 12%);
+  --card-foreground: hsl(240, 60%, 98%);
+  --popover: hsl(240, 20%, 12%);
+  --popover-foreground: hsl(240, 60%, 98%);
+  --primary: hsl(270, 75%, 65%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(180, 80%, 55%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --muted: hsl(240, 20%, 18%);
+  --muted-foreground: hsl(240, 30%, 70%);
+  --accent: hsl(320, 85%, 70%);
+  --accent-foreground: hsl(0, 0%, 100%);
+  --destructive: hsl(0, 84%, 60%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --border: hsl(240, 25%, 22%);
+  --input: hsl(240, 25%, 22%);
+  --ring: hsl(270, 75%, 65%);
+}
+
+@layer base {
+  * {
+    @apply border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* Custom utility classes for the self-awareness platform */
+.gradient-bg {
+  background: linear-gradient(135deg, hsl(270, 75%, 60%) 0%, hsl(180, 80%, 50%) 50%, hsl(320, 85%, 65%) 100%);
+}
+
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.1);
+}
+
+.progress-bar {
+  transition: width 0.3s ease;
+}
+
+/* Crisis warning styles */
+.crisis-warning {
+  @apply border-destructive;
+  background-color: hsl(var(--destructive) / 0.05);
+}
+
+.crisis-warning .crisis-content {
+  @apply text-destructive;
+}
+
+/* Assessment form styles */
+.assessment-question {
+  @apply p-4 rounded-lg mb-4;
+  background-color: hsl(var(--muted) / 0.3);
+}
+
+.radio-option {
+  @apply flex items-center space-x-3 p-3 border rounded-lg transition-colors cursor-pointer;
+}
+
+.radio-option:hover {
+  background-color: hsl(var(--muted) / 0.5);
+}
+
+/* Treatment plan progress indicators */
+.progress-indicator {
+  @apply w-2 h-2 rounded-full;
+}
+
+.progress-indicator.completed {
+  @apply bg-green-500;
+}
+
+.progress-indicator.current {
+  @apply bg-primary;
+}
+
+.progress-indicator.pending {
+  @apply bg-muted-foreground;
+}
+
+/* Module expansion animations */
+.module-content {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Admin dashboard specific styles */
+.admin-alert {
+  @apply rounded-lg p-4;
+  border-color: hsl(var(--destructive) / 0.2);
+  background-color: hsl(var(--destructive) / 0.05);
+}
+
+.admin-metric {
+  @apply text-center p-6 rounded-lg;
+  background-color: hsl(var(--muted) / 0.3);
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .container {
+    @apply px-4;
+  }
+  
+  .card-hover:hover {
+    transform: none;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .card-hover,
+  .progress-bar,
+  .module-content {
+    transition: none;
+  }
+}
+
+/* Focus styles for better accessibility */
+button:focus-visible,
+[role="button"]:focus-visible {
+  @apply outline-2 outline-offset-2 outline-ring;
+}
+
+/* Loading states */
+.loading-skeleton {
+  @apply bg-muted rounded animate-pulse;
+}
+
+/* Custom scrollbar for treatment modules */
+.module-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.module-scroll::-webkit-scrollbar-track {
+  @apply bg-muted;
+}
+
+.module-scroll::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground rounded-full;
+}
+
+.module-scroll::-webkit-scrollbar-thumb:hover {
+  @apply bg-foreground;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --border: hsl(0, 0%, 60%);
+    --muted: hsl(0, 0%, 90%);
+  }
+  
+  .dark {
+    --border: hsl(0, 0%, 40%);
+    --muted: hsl(0, 0%, 20%);
+  }
+}
+
+/* Print styles for treatment plans */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .gradient-bg {
+    background: hsl(0, 0%, 95%) !important;
+    color: hsl(0, 0%, 0%) !important;
+  }
+  
+  .card {
+    @apply border border-gray-300 shadow-none;
+  }
+}

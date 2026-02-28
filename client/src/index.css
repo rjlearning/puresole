@@ -1,0 +1,124 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import './styles/airtable.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Ethereal / Smooth Palette */
+
+    /* Backgrounds: Soft, Airy */
+    --background: 210 40% 98%;
+    /* #F3F6FA */
+    --foreground: 222 47% 11%;
+    /* #0F172A */
+
+    /* Cards: Frosted Glass */
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* Primary: Soft Blurple */
+    --primary: 250 84% 67%;
+    /* #818CF8 */
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary: Peachy Pink */
+    --secondary: 320 81% 80%;
+    /* #FBCFE8 */
+    --secondary-foreground: 320 90% 20%;
+
+    /* Accent: Minty Cyan */
+    --accent: 180 70% 85%;
+    /* #CCFBF1 */
+    --accent-foreground: 180 90% 20%;
+
+    /* Muted: Cool Mist */
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    /* Destructive: Soft Rose */
+    --destructive: 0 84.2% 80%;
+    --destructive-foreground: 0 90% 20%;
+
+    --border: 214.3 31.8% 90%;
+    --input: 214.3 31.8% 90%;
+    --ring: 250 84% 67%;
+
+    --radius: 2rem;
+    /* Super Rounded / Organic */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Ethereal Utilities */
+
+/* Glass Card */
+.glass-card {
+  @apply bg-white/40 backdrop-blur-xl border border-white/50 shadow-lg shadow-indigo-100/20 rounded-[2rem] transition-all duration-500 hover:shadow-xl hover:shadow-indigo-200/30 hover:-translate-y-1;
+}
+
+/* Glass Panel (Darker/More Opaque) */
+.glass-panel {
+  @apply bg-white/70 backdrop-blur-2xl border border-white/60 shadow-xl shadow-slate-200/50 rounded-[2.5rem];
+}
+
+/* Ethereal Button */
+.btn-ethereal {
+  @apply rounded-full px-8 py-3 font-medium tracking-wide transition-all duration-300 shadow-md shadow-indigo-200/30 hover:shadow-lg hover:shadow-indigo-300/40 hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm;
+}
+
+.btn-primary-soft {
+  @apply btn-ethereal bg-white text-primary border border-white/80 hover:bg-white/90;
+}
+
+.btn-secondary-soft {
+  @apply btn-ethereal bg-white/50 text-foreground border border-white/30 hover:bg-white/70;
+}
+
+/* Typography */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  @apply font-semibold tracking-tight text-slate-800;
+}
+
+.text-gradient-soft {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400;
+}
+
+/* Aurora Background */
+.aurora-bg {
+  background-color: #F3F6FA;
+  background-image:
+    radial-gradient(at 0% 0%, hsla(253, 16%, 90%, 1) 0, transparent 50%),
+    radial-gradient(at 50% 0%, hsla(225, 39%, 90%, 1) 0, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(339, 49%, 90%, 1) 0, transparent 50%);
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}

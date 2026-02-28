@@ -1,0 +1,174 @@
+import PDFDocument from 'pdfkit';
+import type { ReportData } from './reportGeneration';
+
+interface Report {
+  id: string;
+  title: string;
+  report_type: string;
+  start_date: string;
+  end_date: string;
+  data: ReportData;
+}
+
+/**
+ * Generate a PDF from wellness report data
+ */
+export function generateReportPDF(report: Report): PDFDocument {
+  const doc = new PDFDocument({
+    size: 'A4',
+    margins: { top: 50, bottom: 50, left: 50, right: 50 }
+  });
+
+  const data = report.data;
+
+  // Header
+  doc.fontSize(24).fillColor('#1e40af').text('PureSoul Wellness Report', { align: 'center' });
+  doc.moveDown(0.5);
+  doc.fontSize(18).fillColor('#374151').text(report.title, { align: 'center' });
+  doc.moveDown(0.3);
+  doc.fontSize(10).fillColor('#6b7280').text(
+    `${formatDate(report.start_date)} - ${formatDate(report.end_date)}`,
+    { align: 'center' }
+  );
+  doc.moveDown(0.3);
+  doc.fontSize(9).fillColor('#9ca3af').text(
+    `Generated on ${new Date().toLocaleDateString()}`,
+    { align: 'center' }
+  );
+
+  doc.moveDown(2);
+
+  // Wellness Scores Section
+  addSectionHeader(doc, 'Wellness Scores');
+
+  const scores = [
+    { label: 'Overall Wellness', value: data.wellnessScore.overall, color: getScoreColor(data.wellnessScore.overall) },
+    { label: 'Consistency', value: data.wellnessScore.consistency, color: getScoreColor(data.wellnessScore.consistency) },
+    { label: 'Improvement', value: data.wellnessScore.improvement, color: getScoreColor(data.wellnessScore.improvement) }
+  ];
+
+  scores.forEach((score, index) => {
+    const x = 70 + (index * 160);
+    doc.fontSize(12).fillColor('#374151').text(score.label, x, doc.y, { width: 140, align: 'center' });
+    doc.fontSize(32).fillColor(score.color).text(String(score.value), x, doc.y + 5, { width: 140, align: 'center' });
+  });
+
+  doc.moveDown(4);
+
+  // Key Insights
+  if (data.keyInsights && data.keyInsights.length > 0) {
+    addSectionHeader(doc, 'Key Insights');
+
+    data.keyInsights.forEach((insight) => {
+      doc.fontSize(12).fillColor('#1f2937').text(`• ${insight.title}`, { indent: 10 });
+      doc.fontSize(10).fillColor('#6b7280').text(insight.description, { indent: 20 });
+      doc.moveDown(0.5);
+    });
+
+    doc.moveDown(1);
+  }
+
+  // Activities Completed
+  addSectionHeader(doc, 'Activities Completed');
+  doc.fontSize(24).fillColor('#2563eb').text(String(data.activitiesCompleted.total), { align: 'center' });
+  doc.fontSize(10).fillColor('#6b7280').text('Total activities completed', { align: 'center' });
+  doc.moveDown(1);
+
+  if (data.activitiesCompleted.topActivities.length > 0) {
+    doc.fontSize(11).fillColor('#374151').text('Top Activities:', { underline: true });
+    doc.moveDown(0.5);
+
+    data.activitiesCompleted.topActivities.forEach((activity) => {
+      doc.fontSize(10).fillColor('#1f2937').text(`• ${activity.name}: ${activity.count}x`);
+      doc.moveDown(0.3);
+    });
+  }
+
+  doc.moveDown(1);
+
+  // Goals Progress
+  addSectionHeader(doc, 'Goals Progress');
+
+  const goalStats = [
+    { label: 'Total Goals', value: data.goalsProgress.totalGoals },
+    { label: 'Completed', value: data.goalsProgress.completed },
+    { label: 'In Progress', value: data.goalsProgress.inProgress }
+  ];
+
+  goalStats.forEach((stat, index) => {
+    const x = 70 + (index * 160);
+    doc.fontSize(10).fillColor('#6b7280').text(stat.label, x, doc.y, { width: 140, align: 'center' });
+    doc.fontSize(20).fillColor('#374151').text(String(stat.value), x, doc.y + 5, { width: 140, align: 'center' });
+  });
+
+  doc.moveDown(3);
+
+  if (data.goalsProgress.goals && data.goalsProgress.goals.length > 0) {
+    data.goalsProgress.goals.forEach((goal) => {
+      doc.fontSize(11).fillColor('#1f2937').text(`• ${goal.title}`);
+      doc.fontSize(9).fillColor('#6b7280').text(`  Status: ${goal.status} | Progress: ${Math.round(goal.progress)}%`);
+      doc.moveDown(0.5);
+    });
+  }
+
+  // Crisis Indicators
+  if (data.crisisIndicators && data.crisisIndicators.length > 0) {
+    doc.addPage();
+    addSectionHeader(doc, 'Crisis Indicators', '#dc2626');
+
+    data.crisisIndicators.forEach((indicator) => {
+      doc.fontSize(10).fillColor('#991b1b').text(`• ${indicator.date} - ${indicator.severity}`, { indent: 10 });
+      doc.fontSize(9).fillColor('#6b7280').text(indicator.description, { indent: 20 });
+      doc.moveDown(0.5);
+    });
+
+    doc.moveDown(1);
+  }
+
+  // Voice Insights
+  if (data.voiceInsights && data.voiceInsights.length > 0) {
+    if (data.crisisIndicators && data.crisisIndicators.length === 0) {
+      doc.addPage();
+    }
+
+    addSectionHeader(doc, 'Voice Journal Insights');
+
+    data.voiceInsights.slice(0, 5).forEach((insight) => {
+      doc.fontSize(10).fillColor('#374151').text(`• ${insight.date} - Mood: ${insight.mood}`);
+      if (insight.keyThemes.length > 0) {
+        doc.fontSize(9).fillColor('#6b7280').text(`  Themes: ${insight.keyThemes.join(', ')}`, { indent: 20 });
+      }
+      doc.moveDown(0.5);
+    });
+  }
+
+  // Footer
+  doc.fontSize(8).fillColor('#9ca3af').text(
+    'Generated by PureSoul - Your Mental Wellness Companion',
+    50,
+    doc.page.height - 50,
+    { align: 'center', width: doc.page.width - 100 }
+  );
+
+  return doc;
+}
+
+// Helper functions
+function addSectionHeader(doc: PDFDocument, title: string, color: string = '#1e40af') {
+  doc.fontSize(16).fillColor(color).text(title, { underline: true });
+  doc.moveDown(0.8);
+}
+
+function formatDate(dateString: string): string {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
+}
+
+function getScoreColor(score: number): string {
+  if (score >= 70) return '#059669'; // green
+  if (score >= 50) return '#d97706'; // yellow/orange
+  return '#dc2626'; // red
+}

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PureSoul</string>
+    <string name="title_activity_main">PureSoul</string>
+    <string name="package_name">com.puresoul.app</string>
+    <string name="custom_url_scheme">com.puresoul.app</string>
+</resources>
