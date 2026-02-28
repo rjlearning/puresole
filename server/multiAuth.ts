@@ -293,7 +293,8 @@ export function registerMultiAuthRoutes(app: Express) {
         res.json({ user: sanitizeUser(user) });
       });
     } catch (error) {
-      // SECURITY: Don't log full error (could contain sensitive data)
+      // SECURITY: Log the error on the server but don't send details to the client
+      console.error("[Auth] Registration Error:", error);
       res.status(500).json({ message: 'Registration failed' });
     }
   });
