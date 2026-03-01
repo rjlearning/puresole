@@ -26,9 +26,9 @@ const createRedisClient = () => {
   }
 
   const redisConfig = {
-    host: process.env.REDIS_HOST || '127.0.0.1',
-    port: parseInt(process.env.REDIS_PORT || '6379'),
-    password: process.env.REDIS_PASSWORD || undefined,
+    host: process.env.REDIS_URL ? undefined : (process.env.REDIS_HOST || process.env.REDISHOST || '127.0.0.1'),
+    port: process.env.REDIS_URL ? undefined : parseInt(process.env.REDIS_PORT || process.env.REDISPORT || '6379'),
+    password: process.env.REDIS_PASSWORD || process.env.REDISPASSWORD || undefined,
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
     retryStrategy: (times: number) => {
