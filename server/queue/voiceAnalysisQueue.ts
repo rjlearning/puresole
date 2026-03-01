@@ -8,9 +8,34 @@ import Redis from 'ioredis';
  * and mental health analysis using the Python ML service.
  */
 
+import { URL } from 'url';
+
+// Extract credentials gracefully
+let host = process.env.REDIS_HOST || process.env.REDISHOST || '127.0.0.1';
+let port = parseInt(process.env.REDIS_PORT || process.env.REDISPORT || '6379');
+let password = process.env.REDIS_PASSWORD || process.env.REDISPASSWORD || undefined;
+
+// If a REDIS_URL is provided, safely parse it into credentials
+if (process.env.REDIS_URL) {
+  try {
+    const parsed = new URL(process.env.REDIS_URL);
+    host = parsed.hostname;
+    port = parseInt(parsed.port || '6379');
+    password = parsed.password || undefined;
+  } catch (error) {
+    console.error("[Redis] Invalid REDIS_URL format, falling back to host/port vars");
+  }
+}
+
+// Force IPv6 (family: 6) if the host belongs to Railway's private routing network
+const forceIPv6 = host.includes('railway.internal');
+
 const bullOptions: Bull.QueueOptions = {
   redis: {
-    family: 0, // Railway's private internal network uses exclusively IPv6 (fd00::). This prevents ENOTFOUND.
+    host,
+    port,
+    password,
+    family: forceIPv6 ? 6 : 0, // Railway's private internal network uses exclusively IPv6 (fd00::).
   },
   defaultJobOptions: {
     attempts: 3,
@@ -23,17 +48,8 @@ const bullOptions: Bull.QueueOptions = {
   }
 };
 
-// Initialize the voice analysis queue gracefully handling Railway REDIS_URL or standard host/port vars
-export const voiceAnalysisQueue: Queue = process.env.REDIS_URL
-  ? new Bull('voice-analysis', process.env.REDIS_URL, bullOptions)
-  : new Bull('voice-analysis', {
-    redis: {
-      host: process.env.REDIS_HOST || process.env.REDISHOST || '127.0.0.1',
-      port: parseInt(process.env.REDIS_PORT || process.env.REDISPORT || '6379'),
-      password: process.env.REDIS_PASSWORD || process.env.REDISPASSWORD || undefined,
-    },
-    ...bullOptions
-  });
+// Initialize the voice analysis queue
+export const voiceAnalysisQueue: Queue = new Bull('voice-analysis', bullOptions);
 
 // Job data interfaces
 export interface VoiceAnalysisJobData {
