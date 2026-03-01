@@ -634,6 +634,25 @@ export const voiceEntries = pgTable("voice_entries", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Detailed medical-grade voice analyses
+export const voiceAnalyses = pgTable("voice_analyses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  journalEntryId: varchar("journal_entry_id").references(() => voiceEntries.id, { onDelete: "cascade" }),
+  primaryEmotion: varchar("primary_emotion"),
+  stressIndicators: jsonb("stress_indicators").default(sql`'{}'::jsonb`),
+  wellnessScore: integer("wellness_score"),
+  valence: numeric("valence"),
+  arousal: numeric("arousal"),
+  dominance: numeric("dominance"),
+  riskLevel: varchar("risk_level"), // 'low', 'medium', 'high'
+  emotionScores: jsonb("emotion_scores").default(sql`'{}'::jsonb`),
+  emotionConfidence: numeric("emotion_confidence"),
+  transcript: text("transcript"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Voice entries relations
 export const voiceEntriesRelations = relations(voiceEntries, ({ one }) => ({
   user: one(users, {
