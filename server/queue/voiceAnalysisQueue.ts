@@ -15,27 +15,27 @@ let host = process.env.REDIS_HOST || process.env.REDISHOST || '127.0.0.1';
 let port = parseInt(process.env.REDIS_PORT || process.env.REDISPORT || '6379');
 let password = process.env.REDIS_PASSWORD || process.env.REDISPASSWORD || undefined;
 
-// If a REDIS_URL is provided, safely parse it into credentials
-if (process.env.REDIS_URL) {
+// Prioritize Railway's external public URL over the internal DNS to bypass ENOTFOUND errors
+const targetUrl = process.env.REDIS_PUBLIC_URL || process.env.REDIS_URL;
+
+// Safely parse into credentials
+if (targetUrl) {
   try {
-    const parsed = new URL(process.env.REDIS_URL);
+    const parsed = new URL(targetUrl);
     host = parsed.hostname;
     port = parseInt(parsed.port || '6379');
     password = parsed.password || undefined;
   } catch (error) {
-    console.error("[Redis] Invalid REDIS_URL format, falling back to host/port vars");
+    console.error("[Redis] Invalid REDIS URL format, falling back to host/port vars");
   }
 }
-
-// Force IPv6 (family: 6) if the host belongs to Railway's private routing network
-const forceIPv6 = host.includes('railway.internal');
 
 const bullOptions: Bull.QueueOptions = {
   redis: {
     host,
     port,
     password,
-    family: forceIPv6 ? 6 : 0, // Railway's private internal network uses exclusively IPv6 (fd00::).
+    family: 0, // Railway's public domains resolve fine with standard configuration
   },
   defaultJobOptions: {
     attempts: 3,
