@@ -16,6 +16,9 @@ export default function SoulCoreHub() {
         setLocation(path);
     };
 
+    // Radius for the arc
+    const R = 110;
+
     const tools = [
         {
             id: 'voice',
@@ -26,7 +29,7 @@ export default function SoulCoreHub() {
             bgColor: 'bg-rose-500/10',
             borderColor: 'border-rose-500/30',
             hoverColor: 'hover:bg-rose-500/20 hover:border-rose-400',
-            position: { x: 0, y: -110 } // Straight Up
+            position: { x: 0, y: -R } // 0 degrees (Straight up)
         },
         {
             id: 'chat',
@@ -37,7 +40,7 @@ export default function SoulCoreHub() {
             bgColor: 'bg-indigo-500/10',
             borderColor: 'border-indigo-500/30',
             hoverColor: 'hover:bg-indigo-500/20 hover:border-indigo-400',
-            position: { x: -60, y: -85 } // Top Left Arc (High)
+            position: { x: -R * Math.sin(Math.PI / 6), y: -R * Math.cos(Math.PI / 6) } // 30 degrees Left
         },
         {
             id: 'activities',
@@ -48,7 +51,7 @@ export default function SoulCoreHub() {
             bgColor: 'bg-amber-500/10',
             borderColor: 'border-amber-500/30',
             hoverColor: 'hover:bg-amber-500/20 hover:border-amber-400',
-            position: { x: -95, y: -45 } // Top Left Arc (Low)
+            position: { x: -R * Math.sin(Math.PI / 3), y: -R * Math.cos(Math.PI / 3) } // 60 degrees Left
         },
         {
             id: 'sleep',
@@ -59,7 +62,7 @@ export default function SoulCoreHub() {
             bgColor: 'bg-purple-500/10',
             borderColor: 'border-purple-500/30',
             hoverColor: 'hover:bg-purple-500/20 hover:border-purple-400',
-            position: { x: -110, y: 10 } // Left (barely down)
+            position: { x: -R, y: 0 } // 90 degrees Left (Straight Left)
         }
     ];
 
