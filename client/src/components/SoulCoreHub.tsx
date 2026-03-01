@@ -19,46 +19,46 @@ export default function SoulCoreHub() {
         {
             id: 'voice',
             label: 'Voice Journal',
-            icon: <Mic className="w-6 h-6" />,
+            icon: <Mic className="w-5 h-5" />,
             path: '/voice-journal',
-            color: 'text-rose-500',
+            color: 'text-rose-400',
             bgColor: 'bg-rose-500/10',
-            borderColor: 'border-rose-500/20',
-            hoverColor: 'hover:bg-rose-500/20',
-            position: { x: 0, y: -120 } // Straight Up
+            borderColor: 'border-rose-500/30',
+            hoverColor: 'hover:bg-rose-500/20 hover:border-rose-400',
+            position: { x: 0, y: -90 } // Straight Up
         },
         {
             id: 'chat',
             label: 'AI Companion',
-            icon: <Sparkles className="w-6 h-6" />,
+            icon: <Sparkles className="w-5 h-5" />,
             path: '/ai-companion',
             color: 'text-indigo-400',
             bgColor: 'bg-indigo-500/10',
-            borderColor: 'border-indigo-500/20',
-            hoverColor: 'hover:bg-indigo-500/20',
-            position: { x: -70, y: -95 } // Top Left
+            borderColor: 'border-indigo-500/30',
+            hoverColor: 'hover:bg-indigo-500/20 hover:border-indigo-400',
+            position: { x: -65, y: -65 } // Top Left Arc
         },
         {
             id: 'activities',
             label: 'Activities',
-            icon: <Zap className="w-6 h-6" />,
+            icon: <Zap className="w-5 h-5" />,
             path: '/activities',
-            color: 'text-amber-500',
+            color: 'text-amber-400',
             bgColor: 'bg-amber-500/10',
-            borderColor: 'border-amber-500/20',
-            hoverColor: 'hover:bg-amber-500/20',
-            position: { x: -110, y: -45 } // Left Top
+            borderColor: 'border-amber-500/30',
+            hoverColor: 'hover:bg-amber-500/20 hover:border-amber-400',
+            position: { x: -90, y: 0 } // Middle Left
         },
         {
             id: 'sleep',
             label: 'Sleep & Restore',
-            icon: <Moon className="w-6 h-6" />,
+            icon: <Moon className="w-5 h-5" />,
             path: '/sleep',
-            color: 'text-purple-500',
+            color: 'text-purple-400',
             bgColor: 'bg-purple-500/10',
-            borderColor: 'border-purple-500/20',
-            hoverColor: 'hover:bg-purple-500/20',
-            position: { x: -120, y: 20 } // Left (slightly down)
+            borderColor: 'border-purple-500/30',
+            hoverColor: 'hover:bg-purple-500/20 hover:border-purple-400',
+            position: { x: -65, y: 65 } // Bottom Left Arc
         }
     ];
 
@@ -101,23 +101,32 @@ export default function SoulCoreHub() {
                                         damping: 20,
                                         delay: index * 0.05
                                     }}
-                                    className="absolute pointer-events-auto"
+                                    className="absolute pointer-events-auto shadow-2xl rounded-full"
+                                    style={{
+                                        right: '50%',
+                                        bottom: '50%',
+                                        marginRight: '-28px', // Perfectly centers a h-14/w-14 (56px) element
+                                        marginBottom: '-28px'
+                                    }}
                                 >
                                     <button
                                         onClick={() => handleNavigate(tool.path)}
                                         className={cn(
-                                            "group relative flex flex-col items-center justify-center gap-2",
-                                            "w-20 h-20 rounded-full border shadow-xl backdrop-blur-md transition-all",
-                                            tool.bgColor, tool.borderColor, tool.hoverColor
+                                            "group relative flex flex-row items-center justify-end overflow-hidden",
+                                            "h-14 min-w-[3.5rem] bg-slate-900/95 rounded-full border backdrop-blur-xl transition-all duration-300 ease-out cursor-pointer",
+                                            tool.borderColor, tool.hoverColor
                                         )}
                                     >
-                                        <div className={cn("transition-transform group-hover:scale-110", tool.color)}>
-                                            {tool.icon}
-                                        </div>
-                                        {/* Tooltip Label */}
-                                        <span className="absolute -bottom-8 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold tracking-wider uppercase rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                                        <span className={cn(
+                                            "font-bold tracking-wide whitespace-nowrap overflow-hidden transition-all duration-300 ease-out text-[13px] uppercase",
+                                            "max-w-0 opacity-0 group-hover:max-w-[160px] group-hover:opacity-100 group-hover:pl-5 group-hover:pr-3",
+                                            tool.color
+                                        )}>
                                             {tool.label}
                                         </span>
+                                        <div className={cn("flex flex-shrink-0 items-center justify-center w-14 h-14 rounded-full transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6", tool.color)}>
+                                            {tool.icon}
+                                        </div>
                                     </button>
                                 </motion.div>
                             ))}
