@@ -9,6 +9,9 @@ import Redis from 'ioredis';
  */
 
 const bullOptions: Bull.QueueOptions = {
+  redis: {
+    family: 0, // Railway's private internal network uses exclusively IPv6 (fd00::). This prevents ENOTFOUND.
+  },
   defaultJobOptions: {
     attempts: 3,
     backoff: {
