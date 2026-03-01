@@ -23,10 +23,16 @@ function configureGoogleAuth() {
     return;
   }
 
+  const callbackURL = process.env.APP_URL
+    ? `${process.env.APP_URL}/api/auth/google/callback`
+    : process.env.RAILWAY_PUBLIC_DOMAIN
+      ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/api/auth/google/callback`
+      : "/api/auth/google/callback";
+
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID!,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    callbackURL: "/api/auth/google/callback"
+    callbackURL: callbackURL
   }, async (accessToken, refreshToken, profile, done) => {
     try {
       // Check if this Google account is already linked
