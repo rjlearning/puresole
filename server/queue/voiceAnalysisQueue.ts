@@ -8,61 +8,29 @@ import Redis from 'ioredis';
  * and mental health analysis using the Python ML service.
  */
 
-// Create Redis clients for Bull (it needs separate clients)
-const createRedisClient = () => {
-  try {
-    if (process.env.REDIS_URL) {
-      return new Redis(process.env.REDIS_URL, {
-        maxRetriesPerRequest: null,
-        enableReadyCheck: false,
-        retryStrategy: (times) => {
-          if (times > 3) return null; // Stop retrying after 3 attempts
-          return Math.min(times * 50, 2000);
-        }
-      });
-    }
-  } catch (error) {
-    console.warn(`[Redis] Failed to initialize from REDIS_URL: ${error}`);
-  }
-
-  const redisConfig = {
-    host: process.env.REDIS_URL ? undefined : (process.env.REDIS_HOST || process.env.REDISHOST || '127.0.0.1'),
-    port: process.env.REDIS_URL ? undefined : parseInt(process.env.REDIS_PORT || process.env.REDISPORT || '6379'),
-    password: process.env.REDIS_PASSWORD || process.env.REDISPASSWORD || undefined,
-    maxRetriesPerRequest: null,
-    enableReadyCheck: false,
-    retryStrategy: (times: number) => {
-      if (times > 3) return null; // Stop retrying and fail gracefully
-      return Math.min(times * 50, 2000);
-    }
-  };
-  return new Redis(redisConfig);
-};
-
-// Initialize the voice analysis queue
-export const voiceAnalysisQueue: Queue = new Bull('voice-analysis', {
-  createClient: (type) => {
-    switch (type) {
-      case 'client':
-        return createRedisClient();
-      case 'subscriber':
-        return createRedisClient();
-      case 'bclient':
-        return createRedisClient();
-      default:
-        return createRedisClient();
-    }
-  },
+const bullOptions: Bull.QueueOptions = {
   defaultJobOptions: {
-    attempts: 3, // Retry failed jobs up to 3 times
+    attempts: 3,
     backoff: {
       type: 'exponential',
-      delay: 5000, // Start with 5 second delay, then exponential backoff
+      delay: 5000,
     },
-    removeOnComplete: 100, // Keep last 100 completed jobs
-    removeOnFail: 200, // Keep last 200 failed jobs for debugging
-  },
-});
+    removeOnComplete: 100,
+    removeOnFail: 200,
+  }
+};
+
+// Initialize the voice analysis queue gracefully handling Railway REDIS_URL or standard host/port vars
+export const voiceAnalysisQueue: Queue = process.env.REDIS_URL
+  ? new Bull('voice-analysis', process.env.REDIS_URL, bullOptions)
+  : new Bull('voice-analysis', {
+    redis: {
+      host: process.env.REDIS_HOST || process.env.REDISHOST || '127.0.0.1',
+      port: parseInt(process.env.REDIS_PORT || process.env.REDISPORT || '6379'),
+      password: process.env.REDIS_PASSWORD || process.env.REDISPASSWORD || undefined,
+    },
+    ...bullOptions
+  });
 
 // Job data interfaces
 export interface VoiceAnalysisJobData {
