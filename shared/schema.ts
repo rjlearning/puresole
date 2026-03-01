@@ -10,6 +10,8 @@ import {
   boolean,
   decimal,
   pgEnum,
+  serial,
+  numeric,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
@@ -201,6 +203,33 @@ export const planIntervalEnum = pgEnum('plan_interval', [
   'quarterly',
   'yearly'
 ]);
+
+// Voice Analysis Background Jobs table
+export const analysisJobs = pgTable("analysis_jobs", {
+  id: serial("id").primaryKey(),
+  entryId: varchar("entry_id").notNull().references(() => voiceEntries.id),
+  status: varchar("status").notNull(), // 'processing', 'completed', 'failed'
+  errorMessage: text("error_message"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Emotional Blueprints table for daily summaries
+export const emotionalBlueprints = pgTable("emotional_blueprints", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  date: timestamp("date", { mode: "string" }).notNull(), // using timestamp mode string for dates
+  stressScore: numeric("stress_score").default('50'),
+  anxietyScore: numeric("anxiety_score").default('40'),
+  moodScore: numeric("mood_score").default('60'),
+  energyLevel: numeric("energy_level").default('50'),
+  sleepQuality: numeric("sleep_quality").default('75'),
+  detectedEmotions: jsonb("detected_emotions").default('[]'),
+  insights: jsonb("insights").default('[]'),
+  wellnessScore: numeric("wellness_score").default('60'),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
 
 // Subscription plan types enum
 export const planTypeEnum = pgEnum('plan_type', [
