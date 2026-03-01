@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 
 export default function SoulCoreHub() {
     const [isOpen, setIsOpen] = useState(false);
+    const [hoveredTool, setHoveredTool] = useState<string | null>(null);
     const [, setLocation] = useLocation();
 
     const toggleCore = () => setIsOpen(!isOpen);
@@ -25,7 +26,7 @@ export default function SoulCoreHub() {
             bgColor: 'bg-rose-500/10',
             borderColor: 'border-rose-500/30',
             hoverColor: 'hover:bg-rose-500/20 hover:border-rose-400',
-            position: { x: 0, y: -90 } // Straight Up
+            position: { x: 0, y: -110 } // Straight Up
         },
         {
             id: 'chat',
@@ -36,7 +37,7 @@ export default function SoulCoreHub() {
             bgColor: 'bg-indigo-500/10',
             borderColor: 'border-indigo-500/30',
             hoverColor: 'hover:bg-indigo-500/20 hover:border-indigo-400',
-            position: { x: -65, y: -65 } // Top Left Arc
+            position: { x: -60, y: -85 } // Top Left Arc (High)
         },
         {
             id: 'activities',
@@ -47,7 +48,7 @@ export default function SoulCoreHub() {
             bgColor: 'bg-amber-500/10',
             borderColor: 'border-amber-500/30',
             hoverColor: 'hover:bg-amber-500/20 hover:border-amber-400',
-            position: { x: -90, y: 0 } // Middle Left
+            position: { x: -95, y: -45 } // Top Left Arc (Low)
         },
         {
             id: 'sleep',
@@ -58,7 +59,7 @@ export default function SoulCoreHub() {
             bgColor: 'bg-purple-500/10',
             borderColor: 'border-purple-500/30',
             hoverColor: 'hover:bg-purple-500/20 hover:border-purple-400',
-            position: { x: -65, y: 65 } // Bottom Left Arc
+            position: { x: -110, y: 10 } // Left (barely down)
         }
     ];
 
@@ -101,13 +102,19 @@ export default function SoulCoreHub() {
                                         damping: 20,
                                         delay: index * 0.05
                                     }}
-                                    className="absolute pointer-events-auto shadow-2xl rounded-full"
+                                    className={cn(
+                                        "absolute pointer-events-auto rounded-full transition-all duration-300",
+                                        hoveredTool && hoveredTool !== tool.id ? "opacity-30 scale-95 z-0" : "opacity-100 scale-100 z-50",
+                                        !hoveredTool && "shadow-2xl z-10"
+                                    )}
                                     style={{
                                         right: '50%',
                                         bottom: '50%',
                                         marginRight: '-28px', // Perfectly centers a h-14/w-14 (56px) element
                                         marginBottom: '-28px'
                                     }}
+                                    onMouseEnter={() => setHoveredTool(tool.id)}
+                                    onMouseLeave={() => setHoveredTool(null)}
                                 >
                                     <button
                                         onClick={() => handleNavigate(tool.path)}
