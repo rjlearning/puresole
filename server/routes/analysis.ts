@@ -136,11 +136,19 @@ async function processAnalysisAsync(entryId: string, entry: any, userId: string)
 
     console.log(`[Analysis] Completed for entry ${entryId}`);
   } catch (error: any) {
+    if (error.code === '23503') {
+      console.log(`[Analysis] Entry ${entryId} was deleted before analysis finished. Discarding results.`);
+      return;
+    }
     console.error(`[Analysis] Failed:`, error);
-    await pool.query(
-      'UPDATE analysis_jobs SET status = $1, error_message = $2 WHERE entry_id = $3',
-      ['failed', error.message, entryId]
-    );
+    try {
+      await pool.query(
+        'UPDATE analysis_jobs SET status = $1, error_message = $2 WHERE entry_id = $3',
+        ['failed', error.message, entryId]
+      );
+    } catch (jobErr) {
+      console.error(`[Analysis] Failed to update job status:`, jobErr);
+    }
   }
 }
 
