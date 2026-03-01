@@ -207,7 +207,7 @@ export const planIntervalEnum = pgEnum('plan_interval', [
 // Voice Analysis Background Jobs table
 export const analysisJobs = pgTable("analysis_jobs", {
   id: serial("id").primaryKey(),
-  entryId: varchar("entry_id").notNull().references(() => voiceEntries.id),
+  entryId: varchar("entry_id").notNull().references(() => voiceEntries.id, { onDelete: "cascade" }),
   status: varchar("status").notNull(), // 'processing', 'completed', 'failed'
   errorMessage: text("error_message"),
   completedAt: timestamp("completed_at"),

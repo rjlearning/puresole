@@ -123,7 +123,7 @@ async function processAnalysisAsync(entryId: string, entry: any, userId: string)
         userId, today,
         analysis.stressLevel, analysis.anxietyLevel, analysis.moodScore,
         analysis.energyLevel, 75,
-        analysis.emotions, analysis.insights,
+        JSON.stringify(analysis.emotions || []), JSON.stringify(analysis.insights || []),
         Math.round((analysis.moodScore * 0.3 + (100 - analysis.stressLevel) * 0.3 +
           (100 - analysis.anxietyLevel) * 0.2 + analysis.energyLevel * 0.2))
       ]
