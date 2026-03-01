@@ -78,7 +78,7 @@ export async function getChatCompletion(
         ...messages
       ],
       max_tokens: maxTokens,
-      temperature: 0.7,
+
       presence_penalty: 0.6,
       frequency_penalty: 0.3,
     });
@@ -130,7 +130,7 @@ Emotion:`;
       model: 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: emotionPrompt }],
       max_tokens: 10,
-      temperature: 0.3,
+
     });
 
     const emotion = completion.choices[0].message.content?.trim().toLowerCase() || 'neutral';
@@ -175,7 +175,7 @@ Respond with ONLY the title, nothing else.`;
       model: 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: titlePrompt }],
       max_tokens: 20,
-      temperature: 0.5,
+
     });
 
     return completion.choices[0].message.content?.trim() || 'Conversation';
@@ -225,7 +225,7 @@ Provide insights as JSON array with format:
       model: 'gpt-4',
       messages: [{ role: 'user', content: insightPrompt }],
       max_tokens: 500,
-      temperature: 0.5,
+
     });
 
     const responseText = completion.choices[0].message.content || '[]';

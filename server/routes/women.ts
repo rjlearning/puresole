@@ -109,7 +109,7 @@ router.post('/chat', async (req, res) => {
             ];
 
             const completion = await openai.chat.completions.create({
-                model: 'gpt-4o', messages, temperature: 0.72, max_tokens: 400,
+                model: 'gpt-4o', messages, max_tokens: 400,
             });
 
             let reply = completion.choices[0]?.message?.content || OFFLINE_RESPONSES[0];

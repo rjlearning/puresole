@@ -341,7 +341,7 @@ Focus on evidence-based strategies. Be empathetic but practical.`;
           content: prompt
         }
       ],
-      temperature: 0.7,
+
       max_tokens: 800
     });
 

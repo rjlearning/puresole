@@ -190,7 +190,7 @@ Guidelines:
           content: prompt
         }
       ],
-      temperature: 0.7,
+
       max_tokens: 1500,
       response_format: { type: 'json_object' }
     });
