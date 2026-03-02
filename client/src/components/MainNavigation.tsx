@@ -13,9 +13,11 @@ import {
   Users,
   LogOut,
   ChevronDown,
-  Heart
+  Heart,
+  MessageSquare
 } from 'lucide-react';
 import Logo from './Logo';
+import { FeedbackModal } from '@/components/FeedbackModal';
 
 interface UserProfile {
   id: string;
@@ -29,6 +31,7 @@ export default function MainNavigation() {
   const [location, setLocation] = useLocation();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const isActive = (href: string) => location === href;
 
@@ -105,6 +108,14 @@ export default function MainNavigation() {
             </div>
           </Link>
 
+          <div
+            className={`flex items-center gap-4 px-4 py-3 rounded-[1.5rem] cursor-pointer transition-all duration-300 ${feedbackOpen ? 'bg-white text-indigo-600 shadow-md' : 'text-slate-400 hover:bg-white/40 hover:text-slate-600'}`}
+            onClick={() => setFeedbackOpen(true)}
+          >
+            <MessageSquare className="w-5 h-5" />
+            <span className="font-medium">Provide Feedback</span>
+          </div>
+
           <Link href="/settings">
             <div className={`flex items-center gap-4 px-4 py-3 rounded-[1.5rem] cursor-pointer transition-all duration-300 ${isActive('/settings') ? 'bg-white text-indigo-600 shadow-md' : 'text-slate-400 hover:bg-white/40 hover:text-slate-600'}`}>
               <Settings className="w-5 h-5" />
@@ -149,35 +160,49 @@ export default function MainNavigation() {
             )}
           </div>
         </div>
-      </nav>
+      </nav >
 
       {/* Mobile Navigation - Glass Bar */}
-      <nav className="fixed bottom-6 left-6 right-6 lg:hidden glass-panel px-6 py-4 flex justify-between items-center z-50 shadow-2xl shadow-indigo-100/50">
-        {navItems.map((item) => {
-          const active = isActive(item.href);
-          return (
-            <Link key={item.name} href={item.href}>
-              <div className={`flex flex-col items-center gap-1 transition-all duration-300 ${active ? 'text-indigo-600 -translate-y-1' : 'text-slate-400'
-                }`}>
-                <div className={`p-2 rounded-full transition-all ${active ? 'bg-indigo-50 shadow-sm' : ''}`}>
-                  <item.icon className="w-6 h-6" />
+      < nav className="fixed bottom-6 left-6 right-6 lg:hidden glass-panel px-6 py-4 flex justify-between items-center z-50 shadow-2xl shadow-indigo-100/50" >
+        {
+          navItems.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <Link key={item.name} href={item.href}>
+                <div className={`flex flex-col items-center gap-1 transition-all duration-300 ${active ? 'text-indigo-600 -translate-y-1' : 'text-slate-400'
+                  }`}>
+                  <div className={`p-2 rounded-full transition-all ${active ? 'bg-indigo-50 shadow-sm' : ''}`}>
+                    <item.icon className="w-6 h-6" />
+                  </div>
+                  {active && <span className="text-[10px] font-bold tracking-wide">{item.name}</span>}
                 </div>
-                {active && <span className="text-[10px] font-bold tracking-wide">{item.name}</span>}
-              </div>
-            </Link>
-          );
-        })}
-        <Link href="/sos">
+              </Link>
+            );
+          })
+        }
+        < Link href="/sos" >
           <div className={`flex flex-col items-center gap-1 transition-all duration-300 ${isActive('/sos') ? 'text-rose-500 -translate-y-1' : 'text-rose-400/70'}`}>
             <div className={`p-2 rounded-full transition-all ${isActive('/sos') ? 'bg-rose-50 shadow-sm' : 'bg-rose-50/50'}`}>
               <ShieldAlert className="w-6 h-6" />
             </div>
             {isActive('/sos') && <span className="text-[10px] font-bold tracking-wide">SOS</span>}
           </div>
-        </Link>
+        </Link >
+
+        {/* Feedback Icon in Mobile Nav */}
+        < div
+          className={`flex flex-col items-center gap-1 transition-all duration-300 cursor-pointer ${feedbackOpen ? 'text-indigo-600 -translate-y-1' : 'text-slate-400'}`
+          }
+          onClick={() => setFeedbackOpen(true)}
+        >
+          <div className={`p-2 rounded-full transition-all ${feedbackOpen ? 'bg-indigo-50 shadow-sm' : ''}`}>
+            <MessageSquare className="w-6 h-6" />
+          </div>
+          {feedbackOpen && <span className="text-[10px] font-bold tracking-wide">Feedback</span>}
+        </div >
 
         {/* Mobile logout via profile icon */}
-        <div className="relative">
+        < div className="relative" >
           <div
             className={`flex flex-col items-center gap-1 transition-all duration-300 cursor-pointer ${isActive('/settings') ? 'text-indigo-600 -translate-y-1' : 'text-slate-400'}`}
             onClick={() => setShowUserMenu(v => !v)}
@@ -188,26 +213,30 @@ export default function MainNavigation() {
             {isActive('/settings') && <span className="text-[10px] font-bold tracking-wide">Me</span>}
           </div>
 
-          {showUserMenu && (
-            <div className="absolute bottom-full right-0 mb-2 w-44 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-10">
-              <Link href="/settings">
-                <div className="flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 cursor-pointer text-slate-700" onClick={() => setShowUserMenu(false)}>
-                  <Settings className="w-4 h-4" />
-                  <span className="text-sm font-medium">Settings</span>
-                </div>
-              </Link>
-              <div className="border-t border-slate-100" />
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 cursor-pointer text-red-500"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="text-sm font-medium">Log Out</span>
-              </button>
-            </div>
-          )}
-        </div>
-      </nav>
+          {
+            showUserMenu && (
+              <div className="absolute bottom-full right-0 mb-2 w-44 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-10">
+                <Link href="/settings">
+                  <div className="flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 cursor-pointer text-slate-700" onClick={() => setShowUserMenu(false)}>
+                    <Settings className="w-4 h-4" />
+                    <span className="text-sm font-medium">Settings</span>
+                  </div>
+                </Link>
+                <div className="border-t border-slate-100" />
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 cursor-pointer text-red-500"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span className="text-sm font-medium">Log Out</span>
+                </button>
+              </div>
+            )
+          }
+        </div >
+      </nav >
+
+      <FeedbackModal open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </>
   );
 }
