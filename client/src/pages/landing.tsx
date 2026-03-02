@@ -3,9 +3,27 @@ import Logo from "@/components/Logo";
 import { Link } from "wouter";
 import { ArrowRight, Sparkles, MessageCircle, Moon, Activity, Zap, Star, Heart, FileText, Brain, ShieldCheck, Lock, Scale } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
 
 export default function Landing() {
+  const [isCalm, setIsCalm] = useState(false);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIsCalm((prev) => !prev);
+    }, 3500);
+    return () => clearInterval(timer);
+  }, []);
+
+  const bubbles = [
+    { anxiousText: "Anxious", calmText: "Calm", anxiousColor: "bg-rose-500/80 border-rose-400 text-white", calmColor: "bg-indigo-500/80 border-indigo-400 text-white", ax: -120, ay: -80, cx: -180, cy: -20 },
+    { anxiousText: "Angry", calmText: "Serene", anxiousColor: "bg-red-600/80 border-red-500 text-white", calmColor: "bg-emerald-500/80 border-emerald-400 text-white", ax: 120, ay: -60, cx: 180, cy: 30 },
+    { anxiousText: "Worried", calmText: "Grounded", anxiousColor: "bg-orange-500/80 border-orange-400 text-white", calmColor: "bg-teal-500/80 border-teal-400 text-white", ax: -100, ay: 80, cx: -130, cy: 100 },
+    { anxiousText: "Sad", calmText: "Happy", anxiousColor: "bg-slate-600/80 border-slate-500 text-white", calmColor: "bg-pink-500/80 border-pink-400 text-white", ax: 100, ay: 90, cx: 140, cy: -90 },
+    { anxiousText: "Overwhelmed", calmText: "Clear", anxiousColor: "bg-zinc-700/80 border-zinc-500 text-white", calmColor: "bg-cyan-500/80 border-cyan-400 text-white", ax: 0, ay: -120, cx: 0, cy: -140 },
+  ];
+
   return (
     <div className="min-h-screen aurora-bg text-slate-800 font-sans selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden">
       {/* Navbar - Glass & Minimal */}
@@ -24,58 +42,98 @@ export default function Landing() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-48 pb-32 px-6 flex flex-col items-center text-center relative overflow-hidden">
+      <section className="pt-32 md:pt-48 pb-20 md:pb-32 px-6 flex flex-col items-center text-center relative overflow-hidden">
 
-        {/* Ambient Glows */}
-        <div className="absolute top-20 left-1/4 w-96 h-96 bg-indigo-300/30 rounded-full blur-[100px] animate-pulse-slow"></div>
-        <div className="absolute bottom-20 right-1/4 w-[500px] h-[500px] bg-pink-200/30 rounded-full blur-[100px] animate-pulse-slow delay-1000"></div>
+        {/* Ambient Glows tied to emotional state */}
+        <div className={`absolute top-20 left-1/4 w-96 h-96 rounded-full blur-[100px] animate-pulse-slow transition-colors duration-1000 ${isCalm ? 'bg-indigo-300/30' : 'bg-rose-300/20'}`}></div>
+        <div className={`absolute bottom-20 right-1/4 w-[500px] h-[500px] rounded-full blur-[100px] animate-pulse-slow delay-1000 transition-colors duration-1000 ${isCalm ? 'bg-pink-200/30' : 'bg-orange-200/20'}`}></div>
 
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="max-w-4xl relative z-10"
+          className="max-w-4xl relative z-10 w-full"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/60 border border-white/80 shadow-sm mb-6 md:mb-8 animate-fade-in-up">
-            <Sparkles className="w-4 h-4 text-indigo-500" />
-            <span className="text-sm font-medium text-slate-600">Mindfulness</span>
+          {/* Animated Emotion Bubbles Ecosystem */}
+          <div className="relative h-64 md:h-80 w-full max-w-2xl mx-auto mb-8 flex items-center justify-center">
+
+            {/* Core Center Pulse (PureSoul Engine) */}
+            <div className={`absolute z-20 w-24 h-24 md:w-32 md:h-32 rounded-full shadow-2xl flex items-center justify-center border-4 backdrop-blur-md transition-all duration-1000 ${isCalm ? 'bg-white/90 border-indigo-100 shadow-indigo-500/20' : 'bg-slate-900 border-slate-800 shadow-rose-500/30'}`}>
+              <Logo size="lg" showText={false} />
+              <div className="absolute inset-x-0 -bottom-8 text-[10px] font-black tracking-[0.3em] uppercase text-slate-400">PureSoul AI</div>
+              <motion.div
+                animate={{ scale: isCalm ? [1, 1.1, 1] : [1, 1.3, 1] }}
+                transition={{ duration: isCalm ? 4 : 2, repeat: Infinity }}
+                className={`absolute inset-0 rounded-full blur-xl -z-10 transition-colors duration-1000 ${isCalm ? 'bg-indigo-400/50' : 'bg-rose-500/40'}`}
+              ></motion.div>
+            </div>
+
+            {/* Orbiting Emotion Bubbles */}
+            {bubbles.map((b, i) => (
+              <motion.div
+                key={i}
+                className={`absolute z-10 px-4 md:px-6 py-2 md:py-3 rounded-full font-bold tracking-widest text-xs md:text-sm shadow-xl backdrop-blur-md border border-white/20 transition-colors duration-1000 ${isCalm ? b.calmColor : b.anxiousColor}`}
+                animate={{
+                  x: isCalm ? b.cx : b.ax,
+                  y: isCalm ? b.cy : b.ay,
+                  scale: isCalm ? 1 : 0.9,
+                }}
+                transition={{ duration: 1.5, type: "spring", bounce: 0.4 }}
+              >
+                <div className="flex items-center gap-2">
+                  {!isCalm && <Activity className="w-3 h-3 md:w-4 md:h-4 opacity-50" />}
+                  {isCalm ? b.calmText : b.anxiousText}
+                  {isCalm && <Sparkles className="w-3 h-3 md:w-4 md:h-4 opacity-70" />}
+                </div>
+              </motion.div>
+            ))}
+
+            {/* Flowing connection lines (SVG) */}
+            <svg className="absolute inset-0 w-full h-full -z-10 pointer-events-none opacity-40">
+              <defs>
+                <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor={isCalm ? "#818cf8" : "#fb7185"} />
+                  <stop offset="100%" stopColor="transparent" />
+                </linearGradient>
+              </defs>
+              {bubbles.map((b, i) => (
+                <motion.line
+                  key={`line-${i}`}
+                  x1="50%"
+                  y1="50%"
+                  animate={{
+                    x2: `calc(50% + ${isCalm ? b.cx : b.ax}px)`,
+                    y2: `calc(50% + ${isCalm ? b.cy : b.ay}px)`,
+                  }}
+                  transition={{ duration: 1.5, type: "spring", bounce: 0.4 }}
+                  stroke="url(#lineGrad)"
+                  strokeWidth="2"
+                  strokeDasharray="4 6"
+                />
+              ))}
+            </svg>
           </div>
 
-          <h1 className="text-5xl md:text-8xl font-semibold tracking-tight mb-6 md:mb-8 leading-[1.1] text-slate-900 drop-shadow-sm">
-            Medical Intelligence. <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Find inner calm.</span>
+          <h1 className="text-4xl md:text-7xl font-semibold tracking-tight mb-4 md:mb-6 leading-[1.1] text-slate-900 drop-shadow-sm transition-all duration-1000">
+            {isCalm ? 'Transform your' : 'Identify your'} <br />
+            <span className={`text-transparent bg-clip-text transition-all duration-1000 ${isCalm ? 'bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500' : 'bg-gradient-to-r from-rose-500 via-orange-500 to-red-500'}`}>
+              internal weather.
+            </span>
           </h1>
 
-          <p className="text-lg md:text-2xl text-slate-500 font-medium mb-10 md:mb-12 max-w-xl mx-auto leading-relaxed">
-            Clinical metrics and empathic AI for your mental wellness.
+          <p className="text-lg md:text-xl text-slate-500 font-medium mb-10 max-w-xl mx-auto leading-relaxed">
+            PureSoul instantly turns overwhelming mental friction into actionable clinical calm.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
             <Link href="/auth">
-              <Button size="lg" className="h-16 px-10 rounded-full text-xl font-medium bg-slate-900 text-white shadow-xl shadow-indigo-200 scale-100 hover:scale-105 transition-all duration-300">
-                Start Journey
+              <Button size="lg" className="h-14 md:h-16 px-8 md:px-10 rounded-full text-lg md:text-xl font-medium bg-slate-900 text-white shadow-xl shadow-indigo-200 scale-100 hover:scale-105 transition-all duration-300">
+                Start Healing
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
-            <div className="flex items-center gap-2 text-slate-500 font-medium">
-              <div className="flex -space-x-2">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="w-8 h-8 rounded-full bg-slate-200 border-2 border-white"></div>
-                ))}
-              </div>
-              <span className="text-sm">Trusted by 10k+ users</span>
-            </div>
           </div>
         </motion.div>
-
-        {/* Floating Glass Elements */}
-        <motion.div animate="float" className="absolute top-40 left-10 md:left-20 glass-card p-4 hidden md:block rotate-[-6deg]">
-          <Moon className="w-8 h-8 text-indigo-400" />
-        </motion.div>
-        <motion.div animate="float" className="absolute top-60 right-10 md:right-20 glass-card p-4 hidden md:block rotate-[12deg] delay-500">
-          <Activity className="w-8 h-8 text-pink-400" />
-        </motion.div>
-
       </section>
 
       {/* INNOVATIVE: Clinical Precision Section */}
