@@ -36,18 +36,18 @@ export default function Landing() {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="max-w-4xl relative z-10"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/60 border border-white/80 shadow-sm mb-8 animate-fade-in-up">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/60 border border-white/80 shadow-sm mb-6 md:mb-8 animate-fade-in-up">
             <Sparkles className="w-4 h-4 text-indigo-500" />
-            <span className="text-sm font-medium text-slate-600">Mindfulness Reimagined</span>
+            <span className="text-sm font-medium text-slate-600">Mindfulness</span>
           </div>
 
-          <h1 className="text-6xl md:text-8xl font-semibold tracking-tight mb-8 leading-[1.1] text-slate-900 drop-shadow-sm">
+          <h1 className="text-5xl md:text-8xl font-semibold tracking-tight mb-6 md:mb-8 leading-[1.1] text-slate-900 drop-shadow-sm">
             Medical Intelligence. <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Find your inner calm.</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">Find inner calm.</span>
           </h1>
 
-          <p className="text-xl md:text-2xl text-slate-500 font-medium mb-12 max-w-2xl mx-auto leading-relaxed">
-            PureSoul blends clinical-grade metrics with an empathetic interface to empower your mental wellness journey.
+          <p className="text-lg md:text-2xl text-slate-500 font-medium mb-10 md:mb-12 max-w-xl mx-auto leading-relaxed">
+            Clinical metrics and empathic AI for your mental wellness.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
@@ -91,16 +91,16 @@ export default function Landing() {
             viewport={{ once: true }}
             className="max-w-xl"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-xs font-bold uppercase tracking-wider mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-xs font-bold uppercase tracking-wider mb-4 md:mb-6">
               <Zap className="w-3 h-3" />
               Clinical Intelligence
             </div>
-            <h2 className="text-5xl md:text-6xl font-bold mb-8 text-slate-900 leading-tight font-serif italic">
+            <h2 className="text-4xl md:text-6xl font-bold mb-6 md:mb-8 text-slate-900 leading-tight font-serif italic">
               Precision <br />
               <span className="text-indigo-600 not-italic">Postpartum.</span>
             </h2>
-            <p className="text-xl text-slate-600 mb-10 leading-relaxed font-medium">
-              We decode the biological complexity of early motherhood through real-time telemetry and AI-driven diagnostics.
+            <p className="text-lg md:text-xl text-slate-600 mb-8 md:mb-10 leading-relaxed font-medium">
+              Real-time telemetry and AI diagnostics for early motherhood.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -203,102 +203,102 @@ export default function Landing() {
 
       {/* INNOVATIVE: Cause & Effect Explanation Section */}
       <section className="px-6 py-24 max-w-6xl mx-auto">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wider mb-6">
+        <div className="text-center mb-12 md:mb-16">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wider mb-4 md:mb-6">
             <Activity className="w-3 h-3" />
-            How PureSoul Works
+            How It Works
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4 tracking-tight">
+          <h2 className="text-3xl md:text-5xl font-bold text-slate-900 mb-4 tracking-tight">
             Action. <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-pink-500">Reaction.</span>
           </h2>
-          <p className="text-xl text-slate-500 max-w-2xl mx-auto">
-            See exactly how your simple daily inputs are transformed into clinical-grade mental wellness insights.
+          <p className="text-lg md:text-xl text-slate-500 max-w-xl mx-auto px-4">
+            See how simple daily inputs turn into clinical insights.
           </p>
         </div>
 
-        <div className="space-y-12">
+        <div className="space-y-8 md:space-y-12">
 
           {/* Feature 1: Vocal Journal */}
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
-            <div className="flex-1 w-full bg-white border border-slate-100 p-8 rounded-[2rem] shadow-sm relative overflow-hidden group">
+            <div className="flex-1 w-full bg-white border border-slate-100 p-6 md:p-8 rounded-[2rem] shadow-sm relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[100px] -z-10 transition-transform group-hover:scale-110"></div>
               <Badge variant="secondary" className="mb-4 bg-slate-100 text-slate-500 border-none font-bold tracking-widest uppercase text-[10px]">Your Action</Badge>
-              <h3 className="text-2xl font-bold text-slate-800 mb-2">Speak your mind briefly.</h3>
-              <p className="text-slate-500 font-medium">Use the <strong className="text-slate-700">Vocal Journal</strong> to record a 30-second audio thought. No typing, just natural expression.</p>
+              <h3 className="text-xl md:text-2xl font-bold text-slate-800 mb-2">Speak your mind.</h3>
+              <p className="text-sm md:text-base text-slate-500 font-medium">Record a 30-second audio thought. No typing needed.</p>
             </div>
 
-            <div className="w-12 h-12 rounded-full bg-slate-900 border-4 border-white shadow-xl flex items-center justify-center text-white shrink-0 z-10 rotate-90 md:rotate-0">
-              <ArrowRight className="w-5 h-5" />
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-900 border-4 border-white shadow-xl flex items-center justify-center text-white shrink-0 z-10 rotate-90 md:rotate-0">
+              <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
             </div>
 
-            <div className="flex-1 w-full bg-indigo-50 border border-indigo-100 p-8 rounded-[2rem] relative overflow-hidden group">
+            <div className="flex-1 w-full bg-indigo-50 border border-indigo-100 p-6 md:p-8 rounded-[2rem] relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-100/50 rounded-bl-[100px] -z-10 transition-transform group-hover:scale-110"></div>
-              <Badge className="mb-4 bg-indigo-500 hover:bg-indigo-600 border-none font-bold tracking-widest uppercase text-[10px] shadow-md shadow-indigo-500/20">PureSoul's Reaction</Badge>
-              <h3 className="text-2xl font-bold text-indigo-950 mb-2">AI extracts vocal biomarkers.</h3>
-              <p className="text-indigo-800/70 font-medium">We instantly detect <strong className="text-indigo-900">stress, fatigue, and emotional shifts</strong> hidden in your pitch and tone, alerting you before burnout hits.</p>
+              <Badge className="mb-4 bg-indigo-500 hover:bg-indigo-600 border-none font-bold tracking-widest uppercase text-[10px] shadow-md shadow-indigo-500/20">The Reaction</Badge>
+              <h3 className="text-xl md:text-2xl font-bold text-indigo-950 mb-2">AI extracts biomarkers.</h3>
+              <p className="text-sm md:text-base text-indigo-800/70 font-medium">We instantly detect <strong className="text-indigo-900">stress and fatigue</strong> hidden in your tone.</p>
             </div>
           </motion.div>
 
           {/* Feature 2: Empathic AI Companion */}
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
-            <div className="flex-1 w-full bg-white border border-slate-100 p-8 rounded-[2rem] shadow-sm relative overflow-hidden group">
+            <div className="flex-1 w-full bg-white border border-slate-100 p-6 md:p-8 rounded-[2rem] shadow-sm relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[100px] -z-10 transition-transform group-hover:scale-110"></div>
               <Badge variant="secondary" className="mb-4 bg-slate-100 text-slate-500 border-none font-bold tracking-widest uppercase text-[10px]">Your Action</Badge>
-              <h3 className="text-2xl font-bold text-slate-800 mb-2">Experience a moment of anxiety.</h3>
-              <p className="text-slate-500 font-medium">You encounter a trigger or feel overwhelmed and open the <strong className="text-slate-700">Quantum AI Companion</strong> chat.</p>
+              <h3 className="text-xl md:text-2xl font-bold text-slate-800 mb-2">Feel anxious or triggered.</h3>
+              <p className="text-sm md:text-base text-slate-500 font-medium">Open the AI Companion chat when overwhelmed.</p>
             </div>
 
-            <div className="w-12 h-12 rounded-full bg-slate-900 border-4 border-white shadow-xl flex items-center justify-center text-white shrink-0 z-10 rotate-90 md:rotate-0">
-              <ArrowRight className="w-5 h-5" />
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-900 border-4 border-white shadow-xl flex items-center justify-center text-white shrink-0 z-10 rotate-90 md:rotate-0">
+              <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
             </div>
 
-            <div className="flex-1 w-full bg-amber-50 border border-amber-100 p-8 rounded-[2rem] relative overflow-hidden group">
+            <div className="flex-1 w-full bg-amber-50 border border-amber-100 p-6 md:p-8 rounded-[2rem] relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-amber-100/50 rounded-bl-[100px] -z-10 transition-transform group-hover:scale-110"></div>
-              <Badge className="mb-4 bg-amber-500 hover:bg-amber-600 text-white border-none font-bold tracking-widest uppercase text-[10px] shadow-md shadow-amber-500/20">PureSoul's Reaction</Badge>
-              <h3 className="text-2xl font-bold text-amber-950 mb-2">24/7 grounded conversation.</h3>
-              <p className="text-amber-800/80 font-medium">Our empathic AI provides <strong className="text-amber-900">instant, compassionate support</strong> tailored to your clinical profile, helping you down-regulate.</p>
+              <Badge className="mb-4 bg-amber-500 hover:bg-amber-600 text-white border-none font-bold tracking-widest uppercase text-[10px] shadow-md shadow-amber-500/20">The Reaction</Badge>
+              <h3 className="text-xl md:text-2xl font-bold text-amber-950 mb-2">24/7 grounded conversation.</h3>
+              <p className="text-sm md:text-base text-amber-800/80 font-medium">Get instant, <strong className="text-amber-900">compassionate support</strong> tailored to help you down-regulate.</p>
             </div>
           </motion.div>
 
           {/* Feature 3: Clinical Reports */}
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
-            <div className="flex-1 w-full bg-white border border-slate-100 p-8 rounded-[2rem] shadow-sm relative overflow-hidden group">
+            <div className="flex-1 w-full bg-white border border-slate-100 p-6 md:p-8 rounded-[2rem] shadow-sm relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[100px] -z-10 transition-transform group-hover:scale-110"></div>
               <Badge variant="secondary" className="mb-4 bg-slate-100 text-slate-500 border-none font-bold tracking-widest uppercase text-[10px]">Your Action</Badge>
-              <h3 className="text-2xl font-bold text-slate-800 mb-2">Log your daily check-ins.</h3>
-              <p className="text-slate-500 font-medium">You answer brief, intelligent prompts about your daily <strong className="text-slate-700">sleep, mood, and behaviors</strong> over time.</p>
+              <h3 className="text-xl md:text-2xl font-bold text-slate-800 mb-2">Log daily check-ins.</h3>
+              <p className="text-sm md:text-base text-slate-500 font-medium">Answer brief prompts about your sleep and mood.</p>
             </div>
 
-            <div className="w-12 h-12 rounded-full bg-slate-900 border-4 border-white shadow-xl flex items-center justify-center text-white shrink-0 z-10 rotate-90 md:rotate-0">
-              <ArrowRight className="w-5 h-5" />
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-900 border-4 border-white shadow-xl flex items-center justify-center text-white shrink-0 z-10 rotate-90 md:rotate-0">
+              <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
             </div>
 
-            <div className="flex-1 w-full bg-emerald-50 border border-emerald-100 p-8 rounded-[2rem] relative overflow-hidden group">
+            <div className="flex-1 w-full bg-emerald-50 border border-emerald-100 p-6 md:p-8 rounded-[2rem] relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-100/50 rounded-bl-[100px] -z-10 transition-transform group-hover:scale-110"></div>
-              <Badge className="mb-4 bg-emerald-500 hover:bg-emerald-600 border-none font-bold tracking-widest uppercase text-[10px] shadow-md shadow-emerald-500/20 text-white">PureSoul's Reaction</Badge>
-              <h3 className="text-2xl font-bold text-emerald-950 mb-2">Generates a diagnostic report.</h3>
-              <p className="text-emerald-800/80 font-medium">We compile your data into <strong className="text-emerald-900">professional-grade clinical reports</strong> that you can easily share with your therapist or doctor.</p>
+              <Badge className="mb-4 bg-emerald-500 hover:bg-emerald-600 border-none font-bold tracking-widest uppercase text-[10px] shadow-md shadow-emerald-500/20 text-white">The Reaction</Badge>
+              <h3 className="text-xl md:text-2xl font-bold text-emerald-950 mb-2">Generates a diagnostic report.</h3>
+              <p className="text-sm md:text-base text-emerald-800/80 font-medium">We compile your data into <strong className="text-emerald-900">professional reports</strong> to share with a doctor.</p>
             </div>
           </motion.div>
 
           {/* Feature 4: Sleep */}
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
-            <div className="flex-1 w-full bg-white border border-slate-100 p-8 rounded-[2rem] shadow-sm relative overflow-hidden group">
+            <div className="flex-1 w-full bg-white border border-slate-100 p-6 md:p-8 rounded-[2rem] shadow-sm relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[100px] -z-10 transition-transform group-hover:scale-110"></div>
               <Badge variant="secondary" className="mb-4 bg-slate-100 text-slate-500 border-none font-bold tracking-widest uppercase text-[10px]">Your Action</Badge>
-              <h3 className="text-2xl font-bold text-slate-800 mb-2">Struggle to fall asleep.</h3>
-              <p className="text-slate-500 font-medium">You toss and turn, feeling your mind racing at night. You open the <strong className="text-slate-700">Sleep & Restore</strong> module.</p>
+              <h3 className="text-xl md:text-2xl font-bold text-slate-800 mb-2">Struggle to sleep at night.</h3>
+              <p className="text-sm md:text-base text-slate-500 font-medium">Toss and turn? Open the Sleep module.</p>
             </div>
 
-            <div className="w-12 h-12 rounded-full bg-slate-900 border-4 border-white shadow-xl flex items-center justify-center text-white shrink-0 z-10 rotate-90 md:rotate-0">
-              <ArrowRight className="w-5 h-5" />
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-900 border-4 border-white shadow-xl flex items-center justify-center text-white shrink-0 z-10 rotate-90 md:rotate-0">
+              <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
             </div>
 
-            <div className="flex-1 w-full bg-purple-50 border border-purple-100 p-8 rounded-[2rem] relative overflow-hidden group">
+            <div className="flex-1 w-full bg-purple-50 border border-purple-100 p-6 md:p-8 rounded-[2rem] relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-purple-100/50 rounded-bl-[100px] -z-10 transition-transform group-hover:scale-110"></div>
-              <Badge className="mb-4 bg-purple-500 hover:bg-purple-600 border-none font-bold tracking-widest uppercase text-[10px] shadow-md shadow-purple-500/20 text-white">PureSoul's Reaction</Badge>
-              <h3 className="text-2xl font-bold text-purple-950 mb-2">Restorative audio journeys.</h3>
-              <p className="text-purple-800/80 font-medium">We pipe <strong className="text-purple-900">custom biological frequencies</strong> and highly-tailored sleep stories directly to help you drift off naturally.</p>
+              <Badge className="mb-4 bg-purple-500 hover:bg-purple-600 border-none font-bold tracking-widest uppercase text-[10px] shadow-md shadow-purple-500/20 text-white">The Reaction</Badge>
+              <h3 className="text-xl md:text-2xl font-bold text-purple-950 mb-2">Restorative audio.</h3>
+              <p className="text-sm md:text-base text-purple-800/80 font-medium">We play <strong className="text-purple-900">custom frequencies</strong> to help you drift off naturally.</p>
             </div>
           </motion.div>
 
@@ -310,9 +310,9 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-12">
             <div className="max-w-xl">
-              <h2 className="text-4xl font-bold mb-6">Privacy is our <br /><span className="text-indigo-400">Biological Imperative.</span></h2>
-              <p className="text-xl text-slate-400 mb-8 leading-relaxed">
-                Your data is your biological property. We use end-to-end encryption and local processing to ensure your most intimate thoughts remain yours.
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 md:mb-6">Privacy is our <br /><span className="text-indigo-400">Biological Imperative.</span></h2>
+              <p className="text-base md:text-xl text-slate-400 mb-6 md:mb-8 leading-relaxed">
+                End-to-end encryption ensures your intimate thoughts stay yours.
               </p>
               <ul className="space-y-4">
                 {[

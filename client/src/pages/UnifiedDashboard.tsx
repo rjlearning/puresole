@@ -114,12 +114,12 @@ export default function UnifiedDashboard() {
                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
                         style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #000 1px, transparent 0)', backgroundSize: '24px 24px' }} />
 
-                    <div className="max-w-6xl mx-auto space-y-8 pt-6 pb-24 relative z-10">
+                    <div className="max-w-6xl mx-auto space-y-4 md:space-y-8 pt-4 md:pt-6 pb-24 px-2 md:px-0 relative z-10">
 
                         {/* Premium Header */}
                         <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
-                                <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 mb-2">
+                                <h1 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 mb-1">
                                     {(() => {
                                         const hour = currentTime.getHours();
                                         if (hour < 12) return "Good Morning";
@@ -147,13 +147,13 @@ export default function UnifiedDashboard() {
                             {/* AI Companion Hero */}
                             <motion.div custom={0} variants={bentoVariants} initial="hidden" animate="visible" className="row-span-2 md:col-span-2 md:row-span-2">
                                 <Link href="/ai-companion">
-                                    <div className="h-full rounded-[2.5rem] bg-slate-900 p-8 flex flex-col justify-between cursor-pointer group relative overflow-hidden shadow-2xl hover:shadow-indigo-500/20 transition-all border border-slate-800">
+                                    <div className="h-full rounded-[2rem] md:rounded-[2.5rem] bg-slate-900 p-6 md:p-8 flex flex-col justify-between cursor-pointer group relative overflow-hidden shadow-2xl hover:shadow-indigo-500/20 transition-all border border-slate-800">
                                         <div className="relative z-10">
                                             <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 border border-white/5">
                                                 <Sparkles className="w-6 h-6 text-indigo-400 animate-pulse-slow" />
                                             </div>
                                             <h3 className="text-2xl md:text-3xl font-black text-white mb-2 tracking-tight group-hover:text-indigo-200 transition-colors">Quantum AI Companion</h3>
-                                            <p className="text-slate-400 text-sm leading-relaxed max-w-sm">Dive deep into your emotional state. Transform anxiety waves into grounded particles. No judgment, just pure resonance.</p>
+                                            <p className="text-slate-400 text-sm leading-relaxed max-w-sm">Analyze emotions safely, without judgment.</p>
                                         </div>
 
                                         <div className="relative z-10 flex items-center gap-2 mt-6 text-xs font-bold uppercase tracking-widest bg-white/10 text-white w-max px-4 py-2 rounded-full border border-white/10 group-hover:bg-white group-hover:text-slate-900 transition-all">
@@ -207,7 +207,7 @@ export default function UnifiedDashboard() {
                                         </div>
                                         <div>
                                             <h3 className="text-xl font-black text-slate-900 tracking-tight">Vocal Journal</h3>
-                                            <p className="text-sm text-slate-400 font-medium">Record a thought</p>
+                                            <p className="text-sm text-slate-400 font-medium">Record thought</p>
                                         </div>
                                     </div>
                                 </Link>
@@ -255,7 +255,7 @@ export default function UnifiedDashboard() {
                                         </div>
                                         <div>
                                             <h3 className="text-xl font-black text-slate-900 tracking-tight mb-1">Sleep & Restore</h3>
-                                            <p className="text-sm text-slate-500 font-medium leading-snug">Drift into deep recovery with our AI-guided sleep stories.</p>
+                                            <p className="text-sm text-slate-500 font-medium leading-snug">AI-guided sleep tracking.</p>
                                         </div>
                                     </div>
                                 </Link>
