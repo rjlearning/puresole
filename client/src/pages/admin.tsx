@@ -10,26 +10,45 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import Header from "@/components/layout/header";
-import { AlertTriangle, Users, Brain, Shield, Clock, TrendingUp, Search, FileText } from "lucide-react";
+import { AlertTriangle, Users, Brain, Shield, Clock, TrendingUp, Search, FileText, MessageSquare } from "lucide-react";
 
 export default function Admin() {
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: users, isLoading: usersLoading } = useQuery({
+  const { data: users, isLoading: usersLoading } = useQuery<any>({
     queryKey: ["/api/admin/users"],
     retry: false,
   });
 
-  const { data: assessments, isLoading: assessmentsLoading } = useQuery({
+  const { data: assessments, isLoading: assessmentsLoading } = useQuery<any>({
     queryKey: ["/api/admin/assessments"],
     retry: false,
   });
 
-  const { data: crisisAlerts, isLoading: alertsLoading } = useQuery({
+  const { data: crisisAlerts, isLoading: alertsLoading } = useQuery<any>({
     queryKey: ["/api/admin/crisis-alerts"],
     retry: false,
+  });
+
+  const { data: feedbacksData, isLoading: feedbackLoading } = useQuery<any>({
+    queryKey: ["/api/admin/feedback"],
+    retry: false,
+  });
+  const feedbacks = feedbacksData?.feedback || [];
+
+  const updateFeedbackMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      await apiRequest("PATCH", `/api/admin/feedback/${id}`, { status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/feedback"] });
+      toast({ title: "Feedback Updated", description: "Status changed successfully." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update feedback.", variant: "destructive" });
+    },
   });
 
   const resolveCrisisMutation = useMutation({
@@ -96,7 +115,7 @@ export default function Admin() {
   ) || [];
 
   const unresolvedAlerts = crisisAlerts?.filter((alert: any) => !alert.resolved) || [];
-  const severeCases = assessments?.filter((assessment: any) => 
+  const severeCases = assessments?.filter((assessment: any) =>
     assessment.severity === 'severe' || assessment.severity === 'moderately_severe'
   ) || [];
 
@@ -107,7 +126,7 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-background" data-testid="admin-page">
       <Header />
-      
+
       <main className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -183,6 +202,7 @@ export default function Admin() {
             <TabsTrigger value="alerts" data-testid="tab-alerts">Crisis Alerts</TabsTrigger>
             <TabsTrigger value="assessments" data-testid="tab-assessments">Recent Assessments</TabsTrigger>
             <TabsTrigger value="users" data-testid="tab-users">User Management</TabsTrigger>
+            <TabsTrigger value="feedback" data-testid="tab-feedback">User Feedback</TabsTrigger>
             <TabsTrigger value="audit" data-testid="tab-audit">Audit & Compliance</TabsTrigger>
           </TabsList>
 
@@ -282,13 +302,12 @@ export default function Admin() {
                       <div key={assessment.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-4">
-                            <div className={`w-3 h-3 rounded-full ${
-                              assessment.severity === 'severe' || assessment.severity === 'moderately_severe'
-                                ? 'bg-red-500'
-                                : assessment.severity === 'moderate'
+                            <div className={`w-3 h-3 rounded-full ${assessment.severity === 'severe' || assessment.severity === 'moderately_severe'
+                              ? 'bg-red-500'
+                              : assessment.severity === 'moderate'
                                 ? 'bg-yellow-500'
                                 : 'bg-green-500'
-                            }`}></div>
+                              }`}></div>
                             <div>
                               <p className="font-medium">
                                 User #{assessment.userId.substring(0, 8)}... | {assessment.type.toUpperCase()}
@@ -315,7 +334,7 @@ export default function Admin() {
                           <div className="mt-3 p-3 bg-muted/30 rounded text-sm">
                             <p className="font-medium mb-1">AI Analysis:</p>
                             <p className="text-muted-foreground">
-                              {assessment.aiAnalysis.length > 150 
+                              {assessment.aiAnalysis.length > 150
                                 ? `${assessment.aiAnalysis.substring(0, 150)}...`
                                 : assessment.aiAnalysis
                               }
@@ -396,6 +415,81 @@ export default function Admin() {
             </Card>
           </TabsContent>
 
+          <TabsContent value="feedback" className="space-y-6">
+            <Card data-testid="card-feedback-management">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <MessageSquare className="h-5 w-5" />
+                  <span>User Feedback</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {feedbackLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="h-24 bg-muted rounded animate-pulse"></div>
+                    ))}
+                  </div>
+                ) : feedbacks.length > 0 ? (
+                  <div className="space-y-4">
+                    {feedbacks.map((fb: any) => (
+                      <div key={fb.id} className="border rounded-lg p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-2">
+                              {fb.status === 'new' && <Badge variant="destructive">New</Badge>}
+                              {fb.status === 'reviewed' && <Badge variant="secondary">Reviewed</Badge>}
+                              {fb.status === 'resolved' && <Badge variant="outline">Resolved</Badge>}
+
+                              <Badge variant="outline" className="capitalize">
+                                {fb.category.replace('_', ' ')}
+                              </Badge>
+                              <span className="text-sm text-muted-foreground">
+                                From: {fb.first_name || 'Anonymous'} ({fb.email || 'No email'})
+                              </span>
+                            </div>
+                            <p className="text-sm mb-2">{fb.content}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(fb.createdAt || fb.created_at).toLocaleString()}
+                            </p>
+                          </div>
+                          <div className="flex flex-col space-y-2 ml-4">
+                            {fb.status !== 'resolved' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => updateFeedbackMutation.mutate({ id: fb.id, status: 'resolved' })}
+                                disabled={updateFeedbackMutation.isPending}
+                              >
+                                Mark Resolved
+                              </Button>
+                            )}
+                            {fb.status === 'new' && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => updateFeedbackMutation.mutate({ id: fb.id, status: 'reviewed' })}
+                                disabled={updateFeedbackMutation.isPending}
+                              >
+                                Mark Reviewed
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <MessageSquare className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Feedback Found</h3>
+                    <p className="text-muted-foreground">Users have not submitted any feedback yet.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="audit" className="space-y-6">
             <Card data-testid="card-audit-compliance">
               <CardHeader>
@@ -412,31 +506,31 @@ export default function Admin() {
                     </div>
                     <div className="text-sm text-muted-foreground">Total Assessments Completed</div>
                   </div>
-                  
+
                   <div className="text-center p-6 bg-muted/30 rounded-lg">
                     <div className="text-3xl font-bold text-secondary mb-2">100%</div>
                     <div className="text-sm text-muted-foreground">HIPAA Compliance Rate</div>
                   </div>
-                  
+
                   <div className="text-center p-6 bg-muted/30 rounded-lg">
                     <div className="text-3xl font-bold text-accent mb-2">24/7</div>
                     <div className="text-sm text-muted-foreground">Data Backup & Security</div>
                   </div>
-                  
+
                   <div className="text-center p-6 bg-muted/30 rounded-lg">
                     <div className="text-3xl font-bold text-green-600 mb-2">
                       {crisisAlerts?.filter((alert: any) => alert.resolved).length || 0}
                     </div>
                     <div className="text-sm text-muted-foreground">Crisis Alerts Resolved</div>
                   </div>
-                  
+
                   <div className="text-center p-6 bg-muted/30 rounded-lg">
                     <div className="text-3xl font-bold text-yellow-600 mb-2">
                       {severeCases.length}
                     </div>
                     <div className="text-sm text-muted-foreground">High-Severity Cases</div>
                   </div>
-                  
+
                   <div className="text-center p-6 bg-muted/30 rounded-lg">
                     <div className="text-3xl font-bold text-primary mb-2">
                       {users?.length || 0}

@@ -1583,4 +1583,44 @@ export const aiCompanionSettingsRelations = relations(aiCompanionSettings, ({ on
 // Add to existing users relations
 // (Handled by making sure these are defined and standard relations pattern)
 
+// ============================================
+// USER FEEDBACK TABLES
+// ============================================
 
+export const feedbackCategoryEnum = pgEnum('feedback_category', [
+  'bug',
+  'feature_request',
+  'general'
+]);
+
+export const feedbackStatusEnum = pgEnum('feedback_status', [
+  'new',
+  'reviewed',
+  'resolved'
+]);
+
+export const userFeedbacks = pgTable("user_feedbacks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  category: feedbackCategoryEnum("category").notNull(),
+  content: text("content").notNull(),
+  status: feedbackStatusEnum("status").notNull().default('new'),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const userFeedbacksRelations = relations(userFeedbacks, ({ one }) => ({
+  user: one(users, {
+    fields: [userFeedbacks.userId],
+    references: [users.id],
+  }),
+}));
+
+export const insertUserFeedbackSchema = createInsertSchema(userFeedbacks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type UserFeedback = typeof userFeedbacks.$inferSelect;
+export type InsertUserFeedback = z.infer<typeof insertUserFeedbackSchema>;

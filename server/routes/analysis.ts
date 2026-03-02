@@ -109,7 +109,7 @@ async function processAnalysisAsync(entryId: string, entry: any, userId: string)
         user_id, date, stress_score, anxiety_score, mood_score, 
         energy_level, sleep_quality, detected_emotions, insights, wellness_score
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-      ON CONFLICT (user_id, date) 
+      ON CONFLICT ON CONSTRAINT emotional_blueprints_user_id_date_key 
       DO UPDATE SET
         stress_score = $3,
         anxiety_score = $4,
