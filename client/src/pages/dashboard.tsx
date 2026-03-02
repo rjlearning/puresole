@@ -8,13 +8,15 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/layout/header";
 import ProgressChart from "@/components/dashboard/progress-chart";
-import { ArrowLeft, Activity, Crown, CheckCircle, Heart, Compass, HeartHandshake, Leaf, Sparkles } from "lucide-react";
+import { ArrowLeft, Activity, Crown, CheckCircle, Heart, Compass, HeartHandshake, Leaf, Sparkles, MessageSquare } from "lucide-react";
 import { Link } from "wouter";
+import { FeedbackModal } from "@/components/FeedbackModal";
 
 export default function Dashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const { data: assessments = [] } = useQuery<any[]>({
     queryKey: ["/api/assessments"],
@@ -229,6 +231,27 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Prominent Feedback Section */}
+            <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-secondary/5">
+              <CardContent className="p-6">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 shadow-sm">
+                      <MessageSquare className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg">Have ideas or found a bug?</h3>
+                      <p className="text-muted-foreground">Help us improve PureSoul by submitting your feedback, feature requests, or reporting issues.</p>
+                    </div>
+                  </div>
+                  <Button onClick={() => setFeedbackOpen(true)} className="shrink-0 w-full md:w-auto">
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Submit Feedback
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Current Treatment Plan */}
             {activePlan ? (
@@ -450,6 +473,8 @@ export default function Dashboard() {
           </TabsContent>
         </Tabs>
       </main>
+
+      <FeedbackModal open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </div>
   );
 }
