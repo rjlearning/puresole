@@ -84,116 +84,127 @@ export default function Header() {
             {isLoading ? (
               <div className="w-8 h-8 bg-black/5 rounded-full animate-pulse"></div>
             ) : isAuthenticated ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full ring-2 ring-primary/10 hover:ring-primary/30 transition-all" data-testid="user-menu">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={user?.profileImageUrl} alt={`${user?.firstName} ${user?.lastName}`} />
-                      <AvatarFallback className="bg-primary/10 text-primary">
-                        {user?.firstName?.[0]}{user?.lastName?.[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 bg-white/90 backdrop-blur-xl border-black/5 text-foreground shadow-xl overflow-y-auto max-h-[85vh]" align="end" forceMount>
-                  <div className="flex items-center space-x-2 p-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={user?.profileImageUrl} alt={`${user?.firstName} ${user?.lastName}`} />
-                      <AvatarFallback className="bg-primary/10 text-primary">
-                        {user?.firstName?.[0]}{user?.lastName?.[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">
-                        {user?.firstName} {user?.lastName}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {user?.email}
-                      </p>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFeedbackOpen(true)}
+                  className="hidden md:flex bg-primary/5 text-primary border-primary/20 hover:bg-primary/10"
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Feedback
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-10 w-10 rounded-full ring-2 ring-primary/10 hover:ring-primary/30 transition-all" data-testid="user-menu">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={user?.profileImageUrl} alt={`${user?.firstName} ${user?.lastName}`} />
+                        <AvatarFallback className="bg-primary/10 text-primary">
+                          {user?.firstName?.[0]}{user?.lastName?.[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56 bg-white/90 backdrop-blur-xl border-black/5 text-foreground shadow-xl overflow-y-auto max-h-[85vh]" align="end" forceMount>
+                    <div className="flex items-center space-x-2 p-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user?.profileImageUrl} alt={`${user?.firstName} ${user?.lastName}`} />
+                        <AvatarFallback className="bg-primary/10 text-primary">
+                          {user?.firstName?.[0]}{user?.lastName?.[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">
+                          {user?.firstName} {user?.lastName}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {user?.email}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <DropdownMenuSeparator className="bg-black/5" />
+                    <DropdownMenuSeparator className="bg-black/5" />
 
-                  {/* Mobile Navigation Items */}
-                  <div className="md:hidden">
-                    <Link href="/dashboard">
-                      <DropdownMenuItem className="focus:bg-primary/5 focus:text-primary" data-testid="mobile-nav-dashboard">
-                        <BarChart3 className="h-4 w-4 mr-2" />
-                        Dashboard
-                      </DropdownMenuItem>
-                    </Link>
-                    <Link href="/activities">
-                      <DropdownMenuItem className="focus:bg-primary/5 focus:text-primary" data-testid="mobile-nav-activities">
-                        <Activity className="h-4 w-4 mr-2" />
-                        Activities
-                      </DropdownMenuItem>
-                    </Link>
-                    <Link href="/assessment">
-                      <DropdownMenuItem className="focus:bg-primary/5 focus:text-primary" data-testid="mobile-nav-assessment">
-                        <Brain className="h-4 w-4 mr-2" />
-                        Self-Reflection
-                      </DropdownMenuItem>
-                    </Link>
-                    <Link href="/voice-journal">
-                      <DropdownMenuItem className="focus:bg-primary/5 focus:text-primary" data-testid="mobile-nav-voice-journal">
-                        <FileText className="h-4 w-4 mr-2" />
-                        Voice Journal
-                      </DropdownMenuItem>
-                    </Link>
-                    {user?.isAdmin && (
-                      <Link href="/admin">
-                        <DropdownMenuItem className="focus:bg-primary/5 focus:text-primary" data-testid="mobile-nav-admin">
-                          <Shield className="h-4 w-4 mr-2" />
-                          Admin Panel
+                    {/* Mobile Navigation Items */}
+                    <div className="md:hidden">
+                      <Link href="/dashboard">
+                        <DropdownMenuItem className="focus:bg-primary/5 focus:text-primary" data-testid="mobile-nav-dashboard">
+                          <BarChart3 className="h-4 w-4 mr-2" />
+                          Dashboard
                         </DropdownMenuItem>
                       </Link>
-                    )}
+                      <Link href="/activities">
+                        <DropdownMenuItem className="focus:bg-primary/5 focus:text-primary" data-testid="mobile-nav-activities">
+                          <Activity className="h-4 w-4 mr-2" />
+                          Activities
+                        </DropdownMenuItem>
+                      </Link>
+                      <Link href="/assessment">
+                        <DropdownMenuItem className="focus:bg-primary/5 focus:text-primary" data-testid="mobile-nav-assessment">
+                          <Brain className="h-4 w-4 mr-2" />
+                          Self-Reflection
+                        </DropdownMenuItem>
+                      </Link>
+                      <Link href="/voice-journal">
+                        <DropdownMenuItem className="focus:bg-primary/5 focus:text-primary" data-testid="mobile-nav-voice-journal">
+                          <FileText className="h-4 w-4 mr-2" />
+                          Voice Journal
+                        </DropdownMenuItem>
+                      </Link>
+                      {user?.isAdmin && (
+                        <Link href="/admin">
+                          <DropdownMenuItem className="focus:bg-primary/5 focus:text-primary" data-testid="mobile-nav-admin">
+                            <Shield className="h-4 w-4 mr-2" />
+                            Admin Panel
+                          </DropdownMenuItem>
+                        </Link>
+                      )}
+                      <DropdownMenuItem onClick={() => setFeedbackOpen(true)} className="focus:bg-primary/5 focus:text-primary">
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Provide Feedback
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator className="bg-black/5" />
+                    </div>
+
+                    <Link href="/subscribe">
+                      <DropdownMenuItem className="focus:bg-primary/5 focus:text-primary" data-testid="menu-subscription">
+                        <Crown className="h-4 w-4 mr-2" />
+                        Subscription
+                      </DropdownMenuItem>
+                    </Link>
+                    <Link href="/billing">
+                      <DropdownMenuItem className="focus:bg-primary/5 focus:text-primary" data-testid="menu-billing">
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        Billing
+                      </DropdownMenuItem>
+                    </Link>
+                    <Link href="/support">
+                      <DropdownMenuItem className="focus:bg-primary/5 focus:text-primary" data-testid="menu-support">
+                        <HelpCircle className="h-4 w-4 mr-2" />
+                        Support & Help
+                      </DropdownMenuItem>
+                    </Link>
                     <DropdownMenuItem onClick={() => setFeedbackOpen(true)} className="focus:bg-primary/5 focus:text-primary">
                       <MessageSquare className="h-4 w-4 mr-2" />
                       Provide Feedback
                     </DropdownMenuItem>
+                    <DropdownMenuItem disabled className="focus:bg-primary/5 focus:text-primary opacity-50" data-testid="menu-profile">
+                      <User className="h-4 w-4 mr-2" />
+                      Profile
+                    </DropdownMenuItem>
+                    <Link href="/settings">
+                      <DropdownMenuItem className="focus:bg-primary/5 focus:text-primary" data-testid="menu-settings">
+                        <Settings className="h-4 w-4 mr-2" />
+                        Settings
+                      </DropdownMenuItem>
+                    </Link>
                     <DropdownMenuSeparator className="bg-black/5" />
-                  </div>
-
-                  <Link href="/subscribe">
-                    <DropdownMenuItem className="focus:bg-primary/5 focus:text-primary" data-testid="menu-subscription">
-                      <Crown className="h-4 w-4 mr-2" />
-                      Subscription
+                    <DropdownMenuItem onClick={handleLogout} className="focus:bg-red-50 focus:text-red-600" data-testid="menu-logout">
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Log out
                     </DropdownMenuItem>
-                  </Link>
-                  <Link href="/billing">
-                    <DropdownMenuItem className="focus:bg-primary/5 focus:text-primary" data-testid="menu-billing">
-                      <CreditCard className="h-4 w-4 mr-2" />
-                      Billing
-                    </DropdownMenuItem>
-                  </Link>
-                  <Link href="/support">
-                    <DropdownMenuItem className="focus:bg-primary/5 focus:text-primary" data-testid="menu-support">
-                      <HelpCircle className="h-4 w-4 mr-2" />
-                      Support & Help
-                    </DropdownMenuItem>
-                  </Link>
-                  <DropdownMenuItem onClick={() => setFeedbackOpen(true)} className="focus:bg-primary/5 focus:text-primary">
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Provide Feedback
-                  </DropdownMenuItem>
-                  <DropdownMenuItem disabled className="focus:bg-primary/5 focus:text-primary opacity-50" data-testid="menu-profile">
-                    <User className="h-4 w-4 mr-2" />
-                    Profile
-                  </DropdownMenuItem>
-                  <Link href="/settings">
-                    <DropdownMenuItem className="focus:bg-primary/5 focus:text-primary" data-testid="menu-settings">
-                      <Settings className="h-4 w-4 mr-2" />
-                      Settings
-                    </DropdownMenuItem>
-                  </Link>
-                  <DropdownMenuSeparator className="bg-black/5" />
-                  <DropdownMenuItem onClick={handleLogout} className="focus:bg-red-50 focus:text-red-600" data-testid="menu-logout">
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Log out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             ) : (
               <div className="flex items-center space-x-4">
                 <Button variant="ghost" onClick={handleLogin} className="hover:bg-primary/5 hover:text-primary" data-testid="button-signin">
