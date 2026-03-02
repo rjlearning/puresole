@@ -89,7 +89,7 @@ export default function Header() {
                   variant="outline"
                   size="sm"
                   onClick={() => setFeedbackOpen(true)}
-                  className="hidden md:flex bg-primary/5 text-primary border-primary/20 hover:bg-primary/10"
+                  className="flex bg-primary/5 text-primary border-primary/20 hover:bg-primary/10"
                 >
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Feedback
