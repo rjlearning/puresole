@@ -14,9 +14,7 @@ interface Integration {
 }
 
 const AVAILABLE_INTEGRATIONS = [
-  { id: 'fitbit', name: 'Fitbit', icon: Activity, description: 'Sync steps, sleep, and heart rate' },
-  { id: 'apple_health', name: 'Apple Health', icon: Smartphone, description: 'Import health and activity data' },
-  { id: 'google_fit', name: 'Google Fit', icon: Watch, description: 'Track fitness and wellness metrics' },
+  { id: 'google_fit', name: 'Google Fit', icon: Watch, description: 'Connect fitness and wellness metrics' },
   { id: 'strava', name: 'Strava', icon: Activity, description: 'Connect your workouts and activities' }
 ];
 
@@ -75,11 +73,11 @@ export default function IntegrationHub() {
         alert(`Synced ${data.recordsSynced} records successfully!`);
         loadIntegrations();
       } else {
-        alert('Failed to sync');
+        alert('Failed to calibrate');
       }
     } catch (error) {
-      console.error('Error syncing:', error);
-      alert('Failed to sync');
+      console.error('Error calibrating:', error);
+      alert('Failed to calibrate');
     } finally {
       setSyncing(null);
     }
@@ -154,7 +152,7 @@ export default function IntegrationHub() {
           <Card className="p-4 bg-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Last Synced</p>
+                <p className="text-sm text-gray-600">Last Calibrated</p>
                 <p className="text-lg font-semibold text-gray-900">
                   {integrations.length > 0 && integrations[0].last_sync_at
                     ? formatDate(integrations[0].last_sync_at)
@@ -168,7 +166,7 @@ export default function IntegrationHub() {
           <Card className="p-4 bg-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Auto-Sync</p>
+                <p className="text-sm text-gray-600">Auto-Calibration</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {integrations.filter(i => i.is_active).length > 0 ? 'Enabled' : 'Off'}
                 </p>
@@ -216,7 +214,7 @@ export default function IntegrationHub() {
                   {connected ? (
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Last synced:</span>
+                        <span className="text-gray-600">Last calibrated:</span>
                         <span className="font-medium text-gray-900">
                           {formatDate(connected.last_sync_at)}
                         </span>
@@ -275,11 +273,11 @@ export default function IntegrationHub() {
         <Card className="p-6 bg-gradient-to-br from-cyan-500 to-blue-600 text-white">
           <h3 className="text-xl font-bold mb-2">💡 Why Connect Your Apps?</h3>
           <p className="opacity-90">
-            By connecting your health and fitness apps, PURESOUL can analyze correlations between your
+            By connecting your health and fitness apps, PURESOUL can calibrate correlations between your
             physical activity, sleep patterns, and mental wellness to provide personalized insights.
           </p>
         </Card>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }

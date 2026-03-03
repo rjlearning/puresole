@@ -1,265 +1,252 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { CleanCard } from "@/components/ui/CleanCard";
-import { ScrollReveal } from "@/components/interactions/ScrollReveal";
-import { Badge } from "@/components/ui/badge";
-import { Brain, Plus, TrendingUp, Calendar, AlertTriangle, ArrowRight, Sparkles } from "lucide-react";
-import Header from "@/components/layout/header";
+import {
+  Sparkles, Heart, Compass, Zap, MessageSquare,
+  ArrowRight, ShieldCheck, Activity, Star, Mic
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { WellnessHalo } from "@/components/voice/WellnessHalo";
 import type { Assessment, TreatmentPlan } from "@shared/schema";
-import { RecommendedActivities } from "@/components/dashboard/RecommendedActivities";
 
 export default function Home() {
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading } = useAuth();
+  const [pulseIndex, setPulseIndex] = useState(0);
 
-  const { data: assessments = [], isLoading: assessmentsLoading } = useQuery<Assessment[]>({
+  const { data: assessments = [] } = useQuery<Assessment[]>({
     queryKey: ["/api/assessments"],
     retry: false,
   });
 
-  const { data: treatmentPlans = [], isLoading: plansLoading } = useQuery<TreatmentPlan[]>({
+  const { data: treatmentPlans = [] } = useQuery<TreatmentPlan[]>({
     queryKey: ["/api/treatment-plans"],
     retry: false,
   });
 
-  // Redirect to home if not authenticated
+  const { data: voiceEntriesData } = useQuery<{ entries: any[] }>({
+    queryKey: ["/api/voice-entries"],
+    retry: false,
+  });
+  const latestVoiceEntry = voiceEntriesData?.entries?.[0];
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
+      toast({ title: "Session Expired", description: "Redirecting...", variant: "destructive" });
+      setTimeout(() => { window.location.href = "/api/login"; }, 500);
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  if (isLoading) return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="relative w-12 h-12">
+        <div className="absolute inset-0 border-4 border-indigo-50 rounded-full" />
+        <div className="absolute inset-0 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
       </div>
-    );
-  }
+    </div>
+  );
 
   if (!isAuthenticated) return null;
 
   const recentAssessment = assessments[0];
-  const activePlan = treatmentPlans.find((plan) => plan.status === 'active');
+  const activePlan = treatmentPlans.find((p) => p.status === 'active');
+
+  // ── Orbit Actions ────────────────────────────────────────────────────────────
+  const orbs = [
+    { label: "Reflect", path: "/assessment", icon: Heart, delay: 0.1, color: "text-rose-500", bg: "bg-rose-50" },
+    { label: "Sync", path: "/dashboard", icon: Zap, delay: 0.2, color: "text-amber-500", bg: "bg-amber-50" },
+    { label: "Hub", path: "/women", icon: Star, delay: 0.3, color: "text-indigo-500", bg: "bg-indigo-50" },
+    { label: "Journal", path: "/voice-journal", icon: MessageSquare, delay: 0.4, color: "text-emerald-500", bg: "bg-emerald-50" },
+  ];
 
   return (
-    <div className="min-h-screen relative overflow-hidden text-foreground" data-testid="home-page">
-      <Header />
+    <div className="min-h-screen bg-white mesh-bg overflow-hidden flex flex-col pt-20 sm:pt-0" data-testid="home-page">
 
-      <main className="container mx-auto px-4 py-12 space-y-24">
-        {/* Hero Section */}
-        <ScrollReveal direction="up" className="text-center space-y-6 pt-10">
-          <Badge variant="secondary" className="px-4 py-1.5 bg-orange-50 text-orange-600 font-medium border-none hover:bg-orange-100 transition-colors">
-            <Sparkles className="w-3 h-3 mr-2 text-orange-500" />
-            Your Wellness Journey
-          </Badge>
-          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight" data-testid="text-welcome">
-            Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-600">{user?.firstName}</span>
-          </h1>
-          <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed font-medium">
-            Track your progress, reflect on your day, and manage your growth plan all in one place.
-          </p>
-        </ScrollReveal>
+      {/* ── Top Bar ── */}
+      <div className="absolute top-0 inset-x-0 p-6 flex justify-between items-center z-50">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+            <Sparkles className="w-4 h-4 text-white" />
+          </div>
+          <span className="text-xs font-black uppercase tracking-[0.3em] text-slate-800">PureSoul</span>
+        </div>
+        <Link href="/settings">
+          <button className="w-10 h-10 rounded-full bg-white/50 backdrop-blur-md border border-white flex items-center justify-center shadow-sm">
+            <div className="w-6 h-6 rounded-full bg-slate-200 animate-pulse" />
+          </button>
+        </Link>
+      </div>
 
-        {/* Quick Actions Grid */}
-        <ScrollReveal threshold={0.2} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <CleanCard variant="interactive" className="group" data-testid="card-new-assessment">
-            <Link href="/assessment">
-              <div className="h-full flex flex-col justify-between">
-                <div className="space-y-4">
-                  <div className="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
-                    <Plus className="h-7 w-7 text-orange-500" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg text-slate-900">New Reflection</h3>
-                    <p className="text-sm text-slate-500 mt-1 font-medium">Explore your current state of mind</p>
-                  </div>
-                </div>
-                <div className="mt-6 flex items-center text-orange-600 text-sm font-bold">
-                  Start Now <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </div>
-              </div>
-            </Link>
-          </CleanCard>
+      <main className="flex-1 flex flex-col items-center justify-center px-4 relative">
 
-          <CleanCard variant="interactive" className="group" data-testid="card-view-dashboard">
-            <Link href="/dashboard">
-              <div className="h-full flex flex-col justify-between">
-                <div className="space-y-4">
-                  <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                    <TrendingUp className="h-7 w-7 text-blue-500" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg text-slate-900">My Journey</h3>
-                    <p className="text-sm text-slate-500 mt-1 font-medium">Visualize your personal growth</p>
-                  </div>
-                </div>
-                <div className="mt-6 flex items-center text-blue-600 text-sm font-bold">
-                  View Dashboard <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </div>
-              </div>
-            </Link>
-          </CleanCard>
+        {/* ── Cinematic Entrance ── */}
+        <div className="text-center mb-12 sm:mb-20">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className="relative mb-8 sm:mb-12"
+          >
+            <div className="scale-75 sm:scale-100">
+              <WellnessHalo stage="general" energyLevel={3} />
+            </div>
+          </motion.div>
 
-          <CleanCard variant="interactive" className="group" data-testid="card-treatment-plan">
-            <Link href={activePlan ? `/treatment-plan/${activePlan.id}` : "#"}>
-              <div className="h-full flex flex-col justify-between">
-                <div className="space-y-4">
-                  <div className="w-14 h-14 rounded-2xl bg-purple-50 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
-                    <Calendar className="h-7 w-7 text-purple-500" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg text-slate-900">Growth Plan</h3>
-                    <p className="text-sm text-slate-500 mt-1 font-medium">
-                      {activePlan ? "Continue your daily path" : "No active plan currently"}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-6 flex items-center text-purple-600 text-sm font-bold">
-                  {activePlan ? "Continue" : "Start Plan"} <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </div>
-              </div>
-            </Link>
-          </CleanCard>
-
-        </ScrollReveal>
-
-
-        {/* Insights & Progress Section */}
-        <div className="grid lg:grid-cols-2 gap-8">
-          <ScrollReveal direction="left" delay={200}>
-            <CleanCard className="h-full p-10 relative overflow-hidden bg-gradient-to-br from-orange-50/50 to-white">
-              <div className="absolute top-0 right-0 p-8 opacity-5">
-                <Brain className="w-32 h-32 text-orange-900" />
-              </div>
-              <h2 className="text-2xl font-bold mb-8 flex items-center text-slate-900">
-                <div className="p-2 bg-orange-100 rounded-lg mr-3">
-                  <Brain className="w-6 h-6 text-orange-600" />
-                </div>
-                Recent Reflection
-              </h2>
-
-              {assessmentsLoading ? (
-                <div className="space-y-4 animate-pulse">
-                  <div className="h-4 bg-slate-100 rounded w-1/3"></div>
-                  <div className="h-24 bg-slate-50 rounded"></div>
-                </div>
-              ) : recentAssessment ? (
-                <div className="space-y-8">
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary" className="capitalize bg-orange-100 text-orange-700 hover:bg-orange-200">
-                      {recentAssessment.type.replace('_', ' ')}
-                    </Badge>
-                    <Badge variant="outline" className="capitalize border-slate-200 text-slate-600">
-                      {recentAssessment.severity.replace('_', ' ')}
-                    </Badge>
-                    <span className="text-sm text-slate-400 ml-auto font-medium">
-                      {recentAssessment.createdAt ? new Date(recentAssessment.createdAt).toLocaleDateString() : 'Just now'}
-                    </span>
-                  </div>
-
-                  <div className="p-6 rounded-2xl bg-white border border-slate-100 shadow-sm leading-relaxed text-slate-600 font-medium">
-                    <p>
-                      {recentAssessment.aiAnalysis
-                        ? recentAssessment.aiAnalysis.substring(0, 150) + "..."
-                        : "No analysis available."}
-                    </p>
-                  </div>
-
-                  <Link href="/assessment">
-                    <Button variant="ghost" className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 font-bold pl-0">
-                      View Full Analysis <ArrowRight className="ml-2 w-4 h-4" />
-                    </Button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <p className="text-slate-500 mb-6 font-medium">Start your journey with a self-reflection.</p>
-                  <Link href="/assessment">
-                    <Button className="bg-slate-900 text-white hover:bg-slate-800 rounded-full px-8">Begin Reflection</Button>
-                  </Link>
-                </div>
-              )}
-            </CleanCard>
-          </ScrollReveal>
-
-          <ScrollReveal direction="right" delay={400}>
-            <CleanCard className="h-full p-10 relative overflow-hidden bg-slate-900 text-white border-none shadow-xl">
-              <div className="absolute top-0 right-0 p-8 opacity-10">
-                <Calendar className="w-32 h-32" />
-              </div>
-              <h2 className="text-2xl font-bold mb-8 flex items-center">
-                <div className="p-2 bg-white/10 rounded-lg mr-3">
-                  <Calendar className="w-6 h-6 text-white" />
-                </div>
-                Active Journey
-              </h2>
-
-              {plansLoading ? (
-                <div className="space-y-4 animate-pulse">
-                  <div className="h-4 bg-white/10 rounded w-1/3"></div>
-                  <div className="h-24 bg-white/5 rounded"></div>
-                </div>
-              ) : activePlan ? (
-                <div className="space-y-8 relative z-10">
-                  <div>
-                    <h3 className="text-xl font-bold text-white">{activePlan.title}</h3>
-                    <p className="text-sm text-slate-400 mt-2 leading-relaxed">{activePlan.description}</p>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex justify-between text-sm font-medium">
-                      <span className="text-slate-300">Progress</span>
-                      <span className="text-white">{activePlan.progressPercentage}%</span>
-                    </div>
-                    <div className="h-3 bg-white/10 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-orange-500 to-pink-500 transition-all duration-1000 ease-out"
-                        style={{ width: `${activePlan.progressPercentage}%` }}
-                      />
-                    </div>
-                    <p className="text-xs text-slate-500 text-right mt-1">
-                      Week {activePlan.currentWeek} of {activePlan.totalWeeks}
-                    </p>
-                  </div>
-
-                  <Link href={`/treatment-plan/${activePlan.id}`}>
-                    <Button className="w-full bg-white text-slate-900 hover:bg-slate-100 font-bold rounded-full h-12">
-                      Continue Session
-                    </Button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <p className="text-slate-400 mb-6 font-medium">No active growth journey found.</p>
-                  <Link href={recentAssessment ? "/treatment-plan/create" : "/assessment"}>
-                    <Button className="bg-white/10 hover:bg-white/20 text-white border-none rounded-full px-8">
-                      {recentAssessment ? "Create Plan" : "Reflect First"}
-                    </Button>
-                  </Link>
-                </div>
-              )}
-            </CleanCard>
-          </ScrollReveal>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.8 }}
+            className="text-4xl sm:text-7xl font-black text-slate-900 tracking-tight leading-none"
+          >
+            Welcome, <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-rose-500">{user?.firstName}</span>
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className="text-[10px] sm:text-xs font-black uppercase tracking-[0.4em] text-slate-400 mt-4"
+          >
+            Your conscious evolution is in flow
+          </motion.p>
         </div>
 
-        {/* Recommended Activities Section */}
-        <ScrollReveal direction="up" delay={600}>
-          <RecommendedActivities recentAssessment={recentAssessment} activePlan={activePlan} />
-        </ScrollReveal>
+        {/* ── Feature Orbs (Floating Grid) ── */}
+        <div className="grid grid-cols-2 sm:flex sm:items-center sm:gap-6 gap-4 mb-20 sm:mb-32">
+          {orbs.map((orb, i) => (
+            <Link key={orb.label} href={orb.path}>
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: orb.delay, type: "spring", stiffness: 100 }}
+                whileHover={{ scale: 1.05, y: -5 }}
+                className="flex flex-col items-center gap-3 group px-4 py-2"
+              >
+                <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-[2rem] ${orb.bg} border border-white shadow-xl shadow-indigo-100/20 flex items-center justify-center transition-all group-hover:shadow-indigo-200 group-hover:bg-white`}>
+                  <orb.icon className={`w-6 h-6 sm:w-8 sm:h-8 ${orb.color}`} />
+                </div>
+                <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-500 group-hover:text-slate-900">
+                  {orb.label}
+                </span>
+              </motion.div>
+            </Link>
+          ))}
+        </div>
+
+        {/* ── Pulse Feed (Recent Insights) ── */}
+        <AnimatePresence mode="wait">
+          <div className="w-full max-w-lg space-y-4">
+            {recentAssessment && (
+              <motion.div
+                key="pulse"
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1, duration: 1 }}
+              >
+                <div className="bg-white/40 backdrop-blur-2xl border border-white/60 p-6 sm:p-10 rounded-[3rem] shadow-2xl shadow-indigo-100/20 group relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-8 opacity-10">
+                    <Activity className="w-24 h-24 text-indigo-900" />
+                  </div>
+                  <div className="relative z-10 flex flex-col gap-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
+                          <Sparkles className="w-5 h-5 text-indigo-500" />
+                        </div>
+                        <span className="text-xs font-black uppercase tracking-widest text-slate-400">Latest Pulse</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-300">
+                        {new Date(recentAssessment.createdAt || "").toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    <p className="text-lg sm:text-xl font-bold text-slate-800 leading-[1.4] line-clamp-3 italic">
+                      "{recentAssessment.aiAnalysis?.substring(0, 120)}..."
+                    </p>
+
+                    <div className="flex items-center justify-between border-t border-slate-100 pt-6 mt-2">
+                      <div className="flex gap-2">
+                        <div className="px-3 py-1 bg-rose-50 rounded-full text-[9px] font-black text-rose-500 uppercase tracking-widest">
+                          {recentAssessment.severity.replace('_', ' ')}
+                        </div>
+                      </div>
+                      <Link href="/dashboard">
+                        <button className="flex items-center gap-2 text-indigo-600 font-black text-[10px] uppercase tracking-widest group-hover:translate-x-1 transition-transform">
+                          Full Journey <ArrowRight className="w-3 h-3" />
+                        </button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {latestVoiceEntry && (
+              <motion.div
+                key="voice-pulse"
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.2, duration: 1 }}
+              >
+                <div className="bg-slate-900 border border-slate-800 p-6 sm:p-10 rounded-[3rem] shadow-2xl group relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-8 opacity-10">
+                    <MessageSquare className="w-24 h-24 text-white" />
+                  </div>
+                  <div className="relative z-10 flex flex-col gap-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-rose-500/20 flex items-center justify-center">
+                          <Mic className="w-5 h-5 text-rose-400" />
+                        </div>
+                        <span className="text-xs font-black uppercase tracking-widest text-slate-500">Vocal Pulse</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-600">
+                        {new Date(latestVoiceEntry.recordedAt || "").toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                        <Zap className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-1">Emotion Detected</p>
+                        <p className="text-xl font-bold text-white capitalize font-serif italic">
+                          {latestVoiceEntry.emotionData?.[0]?.label || 'Stable'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-slate-800 pt-6 mt-2">
+                      <div className="flex gap-2">
+                        <div className="px-3 py-1 bg-emerald-500/10 rounded-full text-[9px] font-black text-emerald-400 uppercase tracking-widest border border-emerald-500/20">
+                          {latestVoiceEntry.duration}s Recording
+                        </div>
+                      </div>
+                      <Link href="/voice-journal">
+                        <button className="flex items-center gap-2 text-rose-400 font-black text-[10px] uppercase tracking-widest group-hover:translate-x-1 transition-transform">
+                          View Journal <ArrowRight className="w-3 h-3" />
+                        </button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </div>
+        </AnimatePresence>
 
       </main>
+
+      {/* ── Bottom Safety Bar ── */}
+      <div className="p-8 flex justify-center opacity-40">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-slate-400" />
+          <span className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">End-to-End Encrypted Growth</span>
+        </div>
+      </div>
+
     </div>
   );
 }

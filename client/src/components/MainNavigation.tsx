@@ -14,10 +14,12 @@ import {
   LogOut,
   ChevronDown,
   Heart,
-  MessageSquare
+  MessageSquare,
+  Zap
 } from 'lucide-react';
 import Logo from './Logo';
 import { FeedbackModal } from '@/components/FeedbackModal';
+import { usePhase } from '@/context/PhaseContext';
 
 interface UserProfile {
   id: string;
@@ -59,10 +61,14 @@ export default function MainNavigation() {
 
   const initials = displayName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
 
+  const { gender } = usePhase();
+
   const navItems = [
     { name: 'Home', href: '/dashboard', icon: Home },
     { name: 'World', href: '/community', icon: Users },
-    { name: 'Women', href: '/women', icon: Heart, accent: true },
+    ...(gender === 'male'
+      ? [{ name: 'Hub', href: '/men', icon: Zap, accent: true }]
+      : [{ name: 'Women', href: '/women', icon: Heart, accent: true }]),
   ];
 
   return (

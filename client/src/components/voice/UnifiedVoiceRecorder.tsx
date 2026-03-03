@@ -43,7 +43,7 @@ interface EmotionUpdate {
 }
 
 interface UnifiedVoiceRecorderProps {
-    onSave: (data: { audioBlob: Blob; duration: number; emotions: EmotionUpdate[], notes?: string }) => void;
+    onSave: (data: { audioBlob: Blob; duration: number; emotions: EmotionUpdate[], notes?: string, moodBefore?: number, moodAfter?: number }) => void;
     onCancel?: () => void;
 }
 
@@ -192,8 +192,36 @@ export function UnifiedVoiceRecorder({ onSave, onCancel }: UnifiedVoiceRecorderP
     const handleFinish = () => {
         stopRecording();
         setIsProcessing(true);
+
+        // Synthesize moodBefore (1-10) and moodAfter (1-10) from AI valence data (-1 to 1)
+        // This is required to populate the Voice Journal "Mood Analysis" overview cards
+        let moodBefore: number | undefined;
+        let moodAfter: number | undefined;
+
+        if (emotionHistory.length > 0) {
+            // Helper to convert -1 to 1 valence into a 1-10 mood score
+            const valenceToScore = (val: number) => Math.max(1, Math.min(10, Math.round(((val + 1) / 2) * 9 + 1)));
+
+            // Take the average valence of the first 30% of the session (up to 5 chunks)
+            const firstChunks = emotionHistory.slice(0, Math.max(1, Math.min(5, Math.ceil(emotionHistory.length * 0.3))));
+            const avgFirstValence = firstChunks.reduce((sum, e) => sum + e.valence, 0) / firstChunks.length;
+            moodBefore = valenceToScore(avgFirstValence);
+
+            // Take the average valence of the last 30% of the session (up to 5 chunks)
+            const lastChunks = emotionHistory.slice(-Math.max(1, Math.min(5, Math.ceil(emotionHistory.length * 0.3))));
+            const avgLastValence = lastChunks.reduce((sum, e) => sum + e.valence, 0) / lastChunks.length;
+            moodAfter = valenceToScore(avgLastValence);
+        }
+
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        onSave({ audioBlob, duration: recordingDuration, emotions: emotionHistory, notes: activePrompt ? `Prompt: ${activePrompt}` : undefined });
+        onSave({
+            audioBlob,
+            duration: recordingDuration,
+            emotions: emotionHistory,
+            notes: activePrompt ? `Prompt: ${activePrompt}` : undefined,
+            moodBefore,
+            moodAfter
+        });
         setIsProcessing(false);
     };
 
@@ -204,239 +232,178 @@ export function UnifiedVoiceRecorder({ onSave, onCancel }: UnifiedVoiceRecorderP
     };
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-6 lg:p-12">
-            {/* Left Column: Recording Controls & Visuals */}
-            <div className="lg:col-span-2 space-y-8">
-                {/* Recording Status & Controls */}
-                <Card className="glass-panel flex flex-col items-center justify-center space-y-8 p-12 relative overflow-hidden">
-                    <div className="relative z-10 flex flex-col items-center">
-                        {/* Main Record Button */}
-                        <div className="relative mb-8">
-                            {isRecording && (
-                                <>
-                                    <div className="absolute inset-0 bg-rose-100 rounded-full animate-ping opacity-75"></div>
-                                    <motion.div
-                                        className="absolute inset-0 bg-rose-400 rounded-full -z-10"
-                                        animate={{ scale: 1 + (liveVolume * 1.5), opacity: Math.max(0, 0.6 - liveVolume) }}
-                                        transition={{ type: 'spring', bounce: 0, duration: 0.1 }}
-                                    />
-                                </>
-                            )}
-                            <button
-                                onClick={isRecording ? stopRecording : startRecording}
-                                disabled={!isConnected}
-                                className={`relative z-10 w-28 h-28 rounded-full flex items-center justify-center transition-all transform hover:scale-105 shadow-2xl ${isRecording
-                                    ? 'bg-rose-500 hover:bg-rose-600'
-                                    : 'bg-indigo-600 hover:bg-indigo-700'
-                                    }`}
-                            >
-                                {isRecording ? <MicOff className="w-10 h-10 text-white" /> : <Mic className="w-10 h-10 text-white" />}
-                            </button>
-                        </div>
+        <div className="relative w-full overflow-hidden rounded-[1.5rem] sm:rounded-[3rem] bg-slate-950 min-h-[340px] sm:min-h-[520px] flex flex-col items-center justify-center px-3 py-4 sm:p-8 shadow-2xl">
+            {/* Ambient Background Glow */}
+            <div className="absolute inset-0 z-0">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-500/10 rounded-full blur-[100px] opacity-70" />
+                {isRecording && (
+                    <motion.div
+                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-rose-500/10 rounded-full blur-[80px]"
+                        animate={{ scale: 1 + (liveVolume * 0.5), opacity: Math.max(0.2, 0.6 + liveVolume) }}
+                        transition={{ type: 'spring', bounce: 0, duration: 0.1 }}
+                    />
+                )}
+                {/* Neural grid background */}
+                <div className="absolute inset-0 pointer-events-none opacity-[0.05]" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #fff 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+            </div>
 
-                        {/* Timer & Connection */}
-                        <div className="text-center space-y-2">
-                            <div className="text-6xl font-black text-slate-800 tracking-tighter">
-                                {formatDuration(recordingDuration)}
-                            </div>
-                            <div className="flex items-center justify-center gap-2">
-                                {isConnected ? (
-                                    <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-4 py-1.5 rounded-full text-xs font-bold border border-emerald-100">
-                                        <Wifi className="w-4 h-4" /> Real-time Node Active
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center gap-2 text-red-500 bg-red-50 px-4 py-1.5 rounded-full text-xs font-bold border border-red-100">
-                                        <WifiOff className="w-4 h-4" /> Reconnecting...
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    {recordingDuration > 0 && !isRecording && (
-                        <div className="flex gap-4 pt-8 border-t border-slate-100 w-full justify-center relative z-10">
-                            <Button variant="outline" onClick={() => { setRecordingDuration(0); setEmotionHistory([]); audioChunksRef.current = []; }} className="rounded-2xl px-8 h-12 font-bold">
-                                <RefreshCw className="w-4 h-4 mr-2" /> Reset
-                            </Button>
-                            <Button onClick={handleFinish} className="rounded-2xl px-10 h-12 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl font-bold" disabled={isProcessing}>
-                                <Save className="w-4 h-4 mr-2" /> {isProcessing ? 'Processing...' : 'Sync Session'}
-                            </Button>
-                        </div>
-                    )}
-
-                    <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #000 1px, transparent 0)', backgroundSize: '32px 32px' }} />
-                </Card>
-
-                {/* Spectral Acoustic Scanner */}
-                <div className="space-y-6">
-                    <Card className="glass-panel p-8 overflow-hidden relative min-h-[420px]">
-                        <div className="relative z-10">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-                                <div className="flex items-center gap-4">
-                                    <div className={`p-4 rounded-[1.5rem] ${isRecording ? 'bg-rose-50' : 'bg-indigo-50'}`}>
-                                        <Activity className={`w-6 h-6 ${isRecording ? 'text-rose-500' : 'text-indigo-500'}`} />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">Acoustic Signal & Analysis</h3>
-                                        <p className="text-sm text-slate-500 font-medium">Precision micro-biomarker mapping</p>
-                                    </div>
-                                </div>
-                                {isRecording && (
-                                    <div className="flex items-center gap-3 bg-rose-50 px-5 py-2.5 rounded-2xl border border-rose-100">
-                                        <Sparkles className="w-4 h-4 text-rose-500 animate-pulse" />
-                                        <span className="text-xs font-black text-rose-600 uppercase tracking-widest">Spectral Capture Active</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                                <div className="lg:col-span-8 relative rounded-3xl overflow-hidden bg-slate-50/50 border border-slate-100 h-[300px]">
-                                    {/* Real-time Emotion Overlay */}
-                                    <AnimatePresence>
-                                        {currentEmotion && isRecording && (
-                                            <motion.div
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, scale: 0.95 }}
-                                                className="absolute top-6 left-6 z-20 flex items-center gap-3 bg-white/70 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/50 shadow-sm"
-                                            >
-                                                <div className={`w-2 h-2 rounded-full animate-pulse ${currentEmotion.primary_emotion === 'happy' ? 'bg-emerald-400' :
-                                                        currentEmotion.primary_emotion === 'sad' ? 'bg-blue-400' :
-                                                            currentEmotion.primary_emotion === 'anxious' ? 'bg-amber-400' :
-                                                                currentEmotion.primary_emotion === 'stressed' ? 'bg-rose-400' :
-                                                                    'bg-indigo-400'
-                                                    }`} />
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-800">
-                                                    Detecting: {currentEmotion.primary_emotion}
-                                                </span>
-                                                <span className="text-[10px] font-bold text-slate-400">
-                                                    {(currentEmotion.emotion_confidence * 100).toFixed(0)}%
-                                                </span>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-
-                                    <AuraWave
-                                        isRecording={isRecording}
-                                        volume={liveVolume}
-                                        spectralCentroid={audioFeatures.centroid}
-                                        spectralFlatness={audioFeatures.flatness}
-                                        primaryEmotion={currentEmotion?.primary_emotion || (isRecording ? 'default' : 'neutral')}
-                                    />
-                                    <div className="absolute inset-0 pointer-events-none opacity-[0.05]" style={{ backgroundImage: 'linear-gradient(to right, #000 1px, transparent 1px), linear-gradient(to bottom, #000 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-                                </div>
-
-                                <div className="lg:col-span-4 flex flex-col gap-4">
-                                    <div className="bg-white/60 backdrop-blur-xl p-6 rounded-3xl border border-white/80 shadow-sm flex-1">
-                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6">Neural Resonance</h4>
-                                        <div className="space-y-8">
-                                            <div>
-                                                <div className="flex justify-between text-xs font-bold text-slate-600 mb-3 uppercase tracking-wider">
-                                                    <span>Harmonicity</span>
-                                                    <span className="text-indigo-600">{Math.round(audioFeatures.centroid * 100)}%</span>
-                                                </div>
-                                                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                                                    <motion.div className="h-full bg-gradient-to-r from-indigo-400 to-purple-400" animate={{ width: `${audioFeatures.centroid * 100}%` }} />
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <div className="flex justify-between text-xs font-bold text-slate-600 mb-3 uppercase tracking-wider">
-                                                    <span>Spectral Stability</span>
-                                                    <span className="text-emerald-600">{Math.round((1 - audioFeatures.flatness) * 100)}%</span>
-                                                </div>
-                                                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                                                    <motion.div className="h-full bg-gradient-to-r from-emerald-400 to-teal-400" animate={{ width: `${(1 - audioFeatures.flatness) * 100}%` }} />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-slate-900 rounded-[2rem] p-6 text-white relative overflow-hidden shadow-2xl">
-                                        <div className="relative z-10 flex flex-col h-full justify-between">
-                                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 text-indigo-300">Biomarker Note</h4>
-                                            <p className="text-sm font-medium leading-relaxed italic opacity-90">
-                                                {isRecording ? "Currently parsing micro-tremors and fundamental frequency variables..." : "Ready for observation. Start recording to map your vocal state."}
-                                            </p>
-                                        </div>
-                                        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, #fff 1px, transparent 0)', backgroundSize: '16px 16px' }} />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </Card>
-
-                    {/* Timeline */}
-                    {(isRecording || emotionHistory.length > 0) && (
-                        <Card className="glass-panel p-8">
-                            <h3 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-3 tracking-tight">
-                                <Activity className="w-5 h-5 text-indigo-500" /> Emotional Flux Trajectory
-                            </h3>
-                            <div className="bg-indigo-50/30 rounded-3xl p-6 border border-indigo-100">
-                                <LiveEmotionTimeline emotionHistory={emotionHistory} />
-                            </div>
-                        </Card>
-                    )}
+            {/* Top HUD: Status & Connection — hidden on phones */}
+            <div className="absolute top-3 sm:top-8 left-3 sm:left-8 right-3 sm:right-8 flex items-center justify-between z-20 hidden sm:flex">
+                <div className="flex items-center gap-3 bg-white/5 backdrop-blur-xl px-4 py-2 rounded-full border border-white/10">
+                    <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]' : 'bg-rose-400 animate-pulse'}`} />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">
+                        {isConnected ? 'Neural Audio Link Active' : 'Connecting to Core...'}
+                    </span>
                 </div>
-
                 {error && (
-                    <div className="bg-red-50 text-red-600 p-6 rounded-3xl flex items-center gap-4 border border-red-100 shadow-sm animate-shake">
-                        <AlertTriangle className="w-6 h-6" />
-                        <span className="font-bold">{error}</span>
+                    <div className="bg-rose-500/20 text-rose-300 px-4 py-2 rounded-full text-[10px] font-bold border border-rose-500/30 backdrop-blur-md">
+                        {error}
                     </div>
                 )}
             </div>
 
-            {/* Right Column: Prompts & Guidance */}
-            <div className="lg:col-span-1">
-                <div className="sticky top-12 space-y-6">
-                    <Card className="glass-panel p-8 space-y-8">
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Contextual Guidance</h3>
+            {/* Mobile-only tiny status dot */}
+            <div className="absolute top-3 left-3 z-20 flex items-center gap-1.5 sm:hidden">
+                <div className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-emerald-400' : 'bg-rose-400 animate-pulse'}`} />
+                <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500">{isConnected ? 'Live' : 'Connecting'}</span>
+            </div>
 
-                        {activePrompt && (
-                            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="p-6 bg-indigo-600 rounded-[2rem] text-white shadow-xl shadow-indigo-200">
-                                <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-3 opacity-70 text-indigo-100">Active Inquiry</p>
-                                <p className="text-lg font-bold leading-tight mb-4">"{activePrompt}"</p>
-                                <button onClick={() => setActivePrompt(null)} className="text-[10px] font-black uppercase bg-white/20 px-4 py-2 rounded-full hover:bg-white/30 transition-colors">
-                                    Release Subject <X className="w-3 h-3 ml-2 inline" />
-                                </button>
-                            </motion.div>
-                        )}
+            {/* Float HUD Elements (Left & Right) */}
+            <AnimatePresence>
+                {isRecording && (
+                    <>
+                        {/* Left HUD: Vocal Energy & Clarity */}
+                        <motion.div
+                            initial={{ opacity: 0, x: -30 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -30 }}
+                            className="absolute left-4 sm:left-10 lg:left-20 top-1/2 -translate-y-1/2 z-20 space-y-4 sm:space-y-10 hidden sm:block"
+                        >
+                            <div className="bg-white/5 backdrop-blur-xl p-6 rounded-3xl border border-white/10">
+                                <div className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400 mb-2">Tone Brightness</div>
+                                <div className="text-4xl font-black text-indigo-300 font-mono tracking-tighter">
+                                    {Math.round(audioFeatures.centroid * 100)}<span className="text-xl text-indigo-500/50">%</span>
+                                </div>
+                            </div>
+                            <div className="bg-white/5 backdrop-blur-xl p-6 rounded-3xl border border-white/10">
+                                <div className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400 mb-2">Signal Clarity</div>
+                                <div className="text-4xl font-black text-emerald-300 font-mono tracking-tighter">
+                                    {Math.round((1 - audioFeatures.flatness) * 100)}<span className="text-xl text-emerald-500/50">%</span>
+                                </div>
+                            </div>
+                        </motion.div>
 
-                        <div className="space-y-8">
-                            {SPEAKING_PROMPTS.map((cat, i) => (
-                                <div key={i} className="space-y-4">
-                                    <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.15em]">{cat.category}</div>
-                                    <div className="flex flex-col gap-3">
-                                        {cat.prompts.map((p, j) => (
-                                            <button
-                                                key={j}
-                                                onClick={() => setActivePrompt(p)}
-                                                className={`text-left p-4 rounded-2xl text-sm font-bold transition-all border ${activePrompt === p
-                                                    ? 'bg-slate-900 border-slate-900 text-white shadow-xl'
-                                                    : 'bg-white border-slate-100 hover:border-indigo-300 text-slate-600 hover:shadow-lg'
-                                                    }`}
-                                            >
-                                                {p}
-                                            </button>
-                                        ))}
+                        {/* Right HUD: Emotion Detection */}
+                        {currentEmotion && (
+                            <motion.div
+                                initial={{ opacity: 0, x: 30 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 30 }}
+                                className="absolute right-4 sm:right-10 lg:right-20 top-1/2 -translate-y-1/2 z-20 flex flex-col items-end text-right space-y-4 sm:space-y-10 hidden sm:flex"
+                            >
+                                <div className="bg-white/5 backdrop-blur-xl p-6 rounded-3xl border border-white/10 flex flex-col items-end">
+                                    <div className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400 mb-2">Dominant State</div>
+                                    <div className="text-3xl font-black text-white capitalize tracking-tight flex items-center justify-end gap-3 font-serif italic">
+                                        <div className={`w-3 h-3 rounded-full animate-pulse shadow-xl ${currentEmotion.primary_emotion === 'happy' ? 'bg-emerald-400 shadow-emerald-400/50' :
+                                            currentEmotion.primary_emotion === 'sad' ? 'bg-blue-400 shadow-blue-400/50' :
+                                                currentEmotion.primary_emotion === 'anxious' ? 'bg-amber-400 shadow-amber-400/50' :
+                                                    currentEmotion.primary_emotion === 'stressed' ? 'bg-rose-400 shadow-rose-400/50' :
+                                                        'bg-indigo-400 shadow-indigo-400/50'
+                                            }`} />
+                                        {currentEmotion.primary_emotion}
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    </Card>
+                                <div className="bg-white/5 backdrop-blur-xl p-6 rounded-3xl border border-white/10 flex flex-col items-end">
+                                    <div className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400 mb-2">AI Confidence</div>
+                                    <div className="text-4xl font-black text-slate-300 font-mono tracking-tighter">
+                                        {(currentEmotion.emotion_confidence * 100).toFixed(0)}<span className="text-xl text-slate-600">%</span>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </>
+                )}
+            </AnimatePresence>
 
-                    <Card className="bg-indigo-50 border-none p-6 rounded-[2rem]">
-                        <div className="flex items-center gap-3 mb-4">
-                            <HeartPulse className="w-5 h-5 text-indigo-500" />
-                            <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Science of Signal</span>
-                        </div>
-                        <p className="text-xs text-indigo-900/70 font-medium leading-relaxed">
-                            Vocal biomarkers analysis tracks micro-fluctuations in pitch, timber, and cadence to reveal latent physiological and emotional states, providing objective insight into your nervous system's balance.
-                        </p>
-                    </Card>
+            {/* Central Orb / Visualizer */}
+            <div className={`relative z-10 w-full max-w-[200px] sm:max-w-[340px] h-[200px] sm:h-[340px] flex items-center justify-center transition-all duration-700 ${isRecording ? 'scale-105' : 'scale-100'}`}>
+                <AuraWave
+                    isRecording={isRecording}
+                    volume={liveVolume}
+                    spectralCentroid={audioFeatures.centroid}
+                    spectralFlatness={audioFeatures.flatness}
+                    primaryEmotion={currentEmotion?.primary_emotion || (isRecording ? 'default' : 'neutral')}
+                />
+            </div>
+
+            {/* Bottom Actions & Timer */}
+            <div className="relative z-30 flex flex-col items-center gap-2 sm:gap-6 mt-1 sm:mt-auto">
+
+                {/* Timer */}
+                <div className="h-8 sm:h-10">
+                    <AnimatePresence>
+                        {(isRecording || recordingDuration > 0) && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 6, scale: 0.9 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 6, scale: 0.9 }}
+                                className="text-3xl sm:text-5xl font-black text-white tracking-tighter font-mono"
+                            >
+                                {formatDuration(recordingDuration)}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+
+                {/* Primary Action Button Tray */}
+                <div className="flex items-center gap-2 sm:gap-6 bg-slate-900/60 backdrop-blur-2xl px-3 sm:px-6 py-2.5 sm:py-4 rounded-full border border-white/10">
+                    <AnimatePresence>
+                        {recordingDuration > 0 && !isRecording && (
+                            <motion.button
+                                initial={{ opacity: 0, x: 20, scale: 0.5 }}
+                                animate={{ opacity: 1, x: 0, scale: 1 }}
+                                exit={{ opacity: 0, x: 20, scale: 0.5 }}
+                                onClick={() => { setRecordingDuration(0); setEmotionHistory([]); audioChunksRef.current = []; setLiveVolume(0); }}
+                                className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-all border border-slate-700"
+                            >
+                                <RefreshCw className="w-5 h-5" />
+                            </motion.button>
+                        )}
+                    </AnimatePresence>
+
+                    <button
+                        id="vocal-mirror-record-btn"
+                        onClick={isRecording ? stopRecording : startRecording}
+                        disabled={!isConnected}
+                        className={`relative w-14 h-14 sm:w-20 sm:h-20 rounded-full flex items-center justify-center transition-all transform hover:scale-105 shadow-2xl border-4 ${isRecording
+                            ? 'bg-rose-500 hover:bg-rose-600 border-rose-400/50 animate-pulse'
+                            : 'bg-indigo-600 hover:bg-indigo-700 border-indigo-400/50'
+                            }`}
+                    >
+                        {isRecording ? <MicOff className="w-6 h-6 sm:w-8 sm:h-8 text-white" /> : <Mic className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
+                    </button>
+
+                    <AnimatePresence>
+                        {recordingDuration > 0 && !isRecording && (
+                            <motion.button
+                                initial={{ opacity: 0, x: -20, scale: 0.5 }}
+                                animate={{ opacity: 1, x: 0, scale: 1 }}
+                                exit={{ opacity: 0, x: -20, scale: 0.5 }}
+                                onClick={handleFinish}
+                                disabled={isProcessing}
+                                className="h-10 sm:h-14 px-4 sm:px-8 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-black tracking-[0.15em] uppercase text-[10px] sm:text-xs shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all flex items-center justify-center border border-emerald-400 relative overflow-hidden group"
+                            >
+                                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-400/0 via-white/20 to-emerald-400/0 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+                                <span className="relative z-10 flex items-center gap-2">
+                                    {isProcessing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                                    {isProcessing ? 'Syncing' : 'Analyze'}
+                                </span>
+                            </motion.button>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
+
         </div>
     );
 }

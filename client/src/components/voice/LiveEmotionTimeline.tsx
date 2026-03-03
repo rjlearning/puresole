@@ -151,21 +151,21 @@ export function LiveEmotionTimeline({
         {emotionHistory.length > 0 && (
           <>
             <div className="bg-gradient-to-br from-green-50 to-white p-3 rounded-lg border border-green-100">
-              <p className="text-xs text-gray-600 uppercase tracking-wide">Avg Valence</p>
+              <p className="text-xs text-gray-600 uppercase tracking-wide">Positivity</p>
               <p className="text-lg font-bold text-green-700 mt-1">
                 {(emotionHistory.reduce((sum, e) => sum + e.valence, 0) / emotionHistory.length).toFixed(2)}
               </p>
             </div>
 
             <div className="bg-gradient-to-br from-purple-50 to-white p-3 rounded-lg border border-purple-100">
-              <p className="text-xs text-gray-600 uppercase tracking-wide">Avg Arousal</p>
+              <p className="text-xs text-gray-600 uppercase tracking-wide">Energy Level</p>
               <p className="text-lg font-bold text-purple-700 mt-1">
                 {(emotionHistory.reduce((sum, e) => sum + e.arousal, 0) / emotionHistory.length).toFixed(2)}
               </p>
             </div>
 
             <div className="bg-gradient-to-br from-blue-50 to-white p-3 rounded-lg border border-blue-100">
-              <p className="text-xs text-gray-600 uppercase tracking-wide">Avg Dominance</p>
+              <p className="text-xs text-gray-600 uppercase tracking-wide">Emotional Control</p>
               <p className="text-lg font-bold text-blue-700 mt-1">
                 {(emotionHistory.reduce((sum, e) => sum + e.dominance, 0) / emotionHistory.length).toFixed(2)}
               </p>

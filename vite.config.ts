@@ -19,6 +19,19 @@ export default defineConfig({
   build: {
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (id.includes("node_modules")) {
+            if (id.includes("framer-motion")) return "vendor-framer";
+            if (id.includes("lucide-react")) return "vendor-lucide";
+            if (id.includes("@radix-ui")) return "vendor-radix";
+            if (id.includes("recharts")) return "vendor-recharts";
+            return "vendor";
+          }
+        },
+      },
+    },
   },
 });
 // trigger rebuild

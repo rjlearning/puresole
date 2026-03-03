@@ -40,6 +40,7 @@ import voiceSettingsRouter from './routes/voiceSettings';
 import entriesRouter from './routes/entries';
 import viewsRouter from './routes/views';
 import feedbackRouter from './routes/feedback';
+import prescriptionsRouter from './routes/prescriptions';
 
 const app = express();
 
@@ -148,10 +149,10 @@ app.use((req, res, next) => {
   app.use('/api', debugAnalyticsRouter);
   app.use('/api', debugAnalytics2Router);
   app.use('/api', debugAnalytics3Router);
-  app.use('/api', debugRouter);
   app.use('/api', entriesRouter);
   app.use('/api', viewsRouter);
   app.use('/api', feedbackRouter);
+  app.use('/api/prescriptions', prescriptionsRouter);
   app.use('/api/women', womenRouter);
   registerVoiceRoutes(app);
 

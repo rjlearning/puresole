@@ -16,7 +16,11 @@ export default function SmartBackButton() {
         '/register',
         '/auth',
         '/onboarding',
-        '/ai-companion'
+        '/ai-companion',
+        '/women',
+        '/community',
+        '/settings',
+        '/men'
     ];
 
     useEffect(() => {

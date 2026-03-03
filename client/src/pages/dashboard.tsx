@@ -2,477 +2,353 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Header from "@/components/layout/header";
 import ProgressChart from "@/components/dashboard/progress-chart";
-import { ArrowLeft, Activity, Crown, CheckCircle, Heart, Compass, HeartHandshake, Leaf, Sparkles, MessageSquare } from "lucide-react";
+import {
+  Activity, Crown, CheckCircle, Heart, Compass, HeartHandshake, Leaf,
+  Sparkles, MessageSquare, TrendingUp, ChevronRight, ArrowUpRight,
+  BarChart2, Target, Calendar, Star
+} from "lucide-react";
 import { Link } from "wouter";
 import { FeedbackModal } from "@/components/FeedbackModal";
+import { motion } from "framer-motion";
+
+const TAB_IDS = ["overview", "progress", "history", "goals"] as const;
+type TabId = typeof TAB_IDS[number];
+
+const TAB_LABELS: Record<TabId, string> = {
+  overview: "Overview",
+  progress: "Progress",
+  history: "History",
+  goals: "Goals",
+};
 
 export default function Dashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [tab, setTab] = useState<TabId>("overview");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
-  const { data: assessments = [] } = useQuery<any[]>({
-    queryKey: ["/api/assessments"],
-    retry: false,
-  });
-
-  const { data: treatmentPlans = [] } = useQuery<any[]>({
-    queryKey: ["/api/treatment-plans"],
-    retry: false,
-  });
-
-  const { data: progressData = [] } = useQuery<any[]>({
-    queryKey: ["/api/progress/user"],
-    retry: false,
-  });
-
-  const { data: subscription } = useQuery<any>({
-    queryKey: ["/api/subscription"],
-    enabled: isAuthenticated,
-    retry: false,
-  });
-
-  // Phase 1: Shared Journeys - Fetch anonymous Sparks
+  const { data: assessments = [] } = useQuery<any[]>({ queryKey: ["/api/assessments"], retry: false });
+  const { data: treatmentPlans = [] } = useQuery<any[]>({ queryKey: ["/api/treatment-plans"], retry: false });
+  const { data: progressData = [] } = useQuery<any[]>({ queryKey: ["/api/progress/user"], retry: false });
+  const { data: subscription } = useQuery<any>({ queryKey: ["/api/subscription"], enabled: isAuthenticated, retry: false });
   const { data: sparksData } = useQuery<{ sparks: string[] }>({
     queryKey: ["/api/community/sparks"],
     enabled: isAuthenticated,
-    refetchInterval: 60000, // Check for new sparks every minute
+    refetchInterval: 60000,
   });
 
-  // Redirect to home if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
+      toast({ title: "Unauthorized", description: "Redirecting to login...", variant: "destructive" });
+      setTimeout(() => { window.location.href = "/api/login"; }, 500);
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  useEffect(() => {
-    if (treatmentPlans && treatmentPlans.length > 0 && !selectedPlan) {
-      const activePlan = treatmentPlans.find((plan: any) => plan.status === 'active');
-      setSelectedPlan(activePlan?.id || treatmentPlans[0].id);
-    }
-  }, [treatmentPlans, selectedPlan]);
+  if (isLoading) return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-950">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-400" />
+    </div>
+  );
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  if (!isAuthenticated) return null;
 
-  if (!isAuthenticated) {
-    return null;
-  }
+  const activePlan = treatmentPlans?.find((p: any) => p.status === "active");
+  const recentAssessments = assessments?.slice(0, 5) || [];
 
-  const activePlan = treatmentPlans?.find((plan: any) => plan.status === 'active');
-  const recentAssessments = assessments?.slice(0, 3) || [];
-  const currentPlan = treatmentPlans?.find((plan: any) => plan.id === selectedPlan);
+  // ── Metric Tiles ─────────────────────────────────────────────────────────────
+  const metrics = [
+    { label: "Reflections", value: assessments?.length || 0, icon: Heart, color: "from-rose-500 to-pink-600", light: "bg-rose-500/10 text-rose-400", delta: "+2 this week" },
+    { label: "Active Journey", value: treatmentPlans?.filter((p: any) => p.status === "active").length || 0, icon: Compass, color: "from-indigo-500 to-blue-600", light: "bg-indigo-500/10 text-indigo-400", delta: "In progress" },
+    { label: "Days Guided", value: progressData?.length || 0, icon: Calendar, color: "from-violet-500 to-purple-600", light: "bg-violet-500/10 text-violet-400", delta: "All time" },
+    { label: "Current Focus", value: activePlan?.title || "None", icon: Target, color: "from-amber-500 to-orange-500", light: "bg-amber-500/10 text-amber-400", delta: activePlan ? "Active" : "Start one" },
+  ];
 
   return (
-    <div className="min-h-screen bg-background" data-testid="dashboard-page">
-      <Header />
+    <div className="min-h-screen bg-slate-950 text-white pb-24" data-testid="dashboard-page">
 
-      <main className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Link href="/">
-            <Button variant="ghost" className="mb-4" data-testid="button-back-home">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Home
-            </Button>
-          </Link>
-          <h1 className="text-3xl font-bold text-foreground mb-2" data-testid="text-dashboard-title">
-            Progress Dashboard
-          </h1>
-          <p className="text-muted-foreground">
-            Track your mental health journey with detailed analytics and insights.
-          </p>
-        </div>
-
-        {/* Subscription Status */}
-        {subscription && (
-          <Card className="mb-8 border-primary/20 bg-primary/5">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Crown className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="text-lg font-semibold">{subscription.plan?.name || 'Active Subscription'}</p>
-                      <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-0">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        {subscription.status}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Next billing: {subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd).toLocaleDateString() : 'N/A'}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Monthly</p>
-                  <p className="text-lg font-bold">${subscription.plan?.price || '0'}/month</p>
-                </div>
+      {/* ── Header ── */}
+      <div className="bg-slate-950 border-b border-slate-800/60 px-4 py-4 sticky top-0 z-30">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold">PureSoul</p>
+            <h1 className="text-lg font-black text-white leading-tight">My Journey</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            {subscription && (
+              <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-full">
+                <Crown className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-[10px] font-black text-amber-400 uppercase tracking-wide">
+                  {subscription.plan?.name || "Pro"}
+                </span>
               </div>
-            </CardContent>
-          </Card>
+            )}
+            <button onClick={() => setFeedbackOpen(true)}
+              className="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-all border border-slate-700">
+              <MessageSquare className="w-4 h-4 text-slate-400" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 pt-5">
+
+        {/* ── Community Spark ── */}
+        {sparksData && sparksData.sparks.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+            className="mb-5 bg-gradient-to-r from-rose-950/80 to-orange-950/80 border border-rose-800/40 rounded-2xl px-4 py-3 flex items-start gap-3">
+            <Sparkles className="w-4 h-4 text-rose-400 mt-0.5 flex-shrink-0 animate-pulse" />
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-rose-500 mb-0.5">Community Spark</p>
+              <p className="text-sm text-rose-200 italic leading-snug">"{sparksData.sparks[0]}"</p>
+            </div>
+          </motion.div>
         )}
 
-        {/* Compassionate Key Metrics */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card data-testid="card-total-assessments">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-rose-50 rounded-lg flex items-center justify-center">
-                  <Heart className="h-6 w-6 text-rose-500" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Moments of Reflection</p>
-                  <p className="text-2xl font-bold">{assessments?.length || 0}</p>
-                </div>
+        {/* ── Metric Grid ── */}
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          {metrics.map((m, i) => (
+            <motion.div key={m.label}
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.07 }}
+              className="bg-slate-900 border border-slate-800 rounded-2xl p-4 relative overflow-hidden">
+              <div className={`absolute top-0 right-0 w-16 h-16 rounded-full blur-2xl opacity-20 bg-gradient-to-br ${m.color}`} />
+              <div className={`w-8 h-8 rounded-xl ${m.light} flex items-center justify-center mb-3`}>
+                <m.icon className="w-4 h-4" />
               </div>
-            </CardContent>
-          </Card>
-
-          <Card data-testid="card-active-plans">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-indigo-50 rounded-lg flex items-center justify-center">
-                  <Compass className="h-6 w-6 text-indigo-500" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Active Journeys</p>
-                  <p className="text-2xl font-bold">
-                    {treatmentPlans?.filter((plan: any) => plan.status === 'active').length || 0}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card data-testid="card-current-week">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-amber-50 rounded-lg flex items-center justify-center">
-                  <HeartHandshake className="h-6 w-6 text-amber-500" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Days Guided</p>
-                  <p className="text-2xl font-bold">
-                    {progressData?.length || 0}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card data-testid="card-overall-progress">
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-emerald-50 rounded-lg flex items-center justify-center">
-                  <Leaf className="h-6 w-6 text-emerald-500" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Current Focus</p>
-                  <p className="text-xl font-bold truncate max-w-[120px]" title={activePlan ? activePlan.title : 'Taking space'}>
-                    {activePlan ? activePlan.title : 'Taking space'}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-0.5">{m.label}</p>
+              <p className={`font-black text-white ${typeof m.value === 'string' ? 'text-base leading-tight' : 'text-2xl'} truncate`}>
+                {m.value}
+              </p>
+              <p className="text-[11px] text-slate-600 mt-1 font-medium">{m.delta}</p>
+            </motion.div>
+          ))}
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList data-testid="tabs-dashboard">
-            <TabsTrigger value="overview" data-testid="tab-overview">Overview</TabsTrigger>
-            <TabsTrigger value="progress" data-testid="tab-progress">Progress Tracking</TabsTrigger>
-            <TabsTrigger value="assessments" data-testid="tab-assessments">Assessment History</TabsTrigger>
-            <TabsTrigger value="goals" data-testid="tab-goals">Goals & Milestones</TabsTrigger>
-          </TabsList>
+        {/* ── Tab Nav ── */}
+        <div className="flex bg-slate-900 rounded-2xl p-1 border border-slate-800 mb-5 gap-1">
+          {TAB_IDS.map(t => (
+            <button key={t} onClick={() => setTab(t)}
+              className={`flex-1 py-2 rounded-xl text-xs font-black transition-all ${tab === t
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
+                : 'text-slate-500 hover:text-slate-300'}`}>
+              {TAB_LABELS[t]}
+            </button>
+          ))}
+        </div>
 
-          <TabsContent value="overview" className="space-y-6">
-            {/* Phase 1: Shared Journeys - Received Sparks */}
-            {sparksData && sparksData.sparks.length > 0 && (
-              <Card className="border-rose-200 bg-gradient-to-r from-rose-50 to-orange-50 overflow-hidden relative animate-in fade-in slide-in-from-bottom-4 duration-700">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-rose-200/50 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-400 to-orange-400 text-white flex items-center justify-center shrink-0 shadow-md">
-                      <Sparkles className="w-6 h-6 animate-pulse" />
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="font-bold text-lg text-rose-900">A spark from the community</h3>
-                      {sparksData.sparks.map((spark, idx) => (
-                        <p key={idx} className="text-rose-800 font-medium italic">
-                          "{spark}"
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+        {/* ── Tab: Overview ── */}
+        {tab === "overview" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
 
-            {/* Prominent Feedback Section */}
-            <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-secondary/5">
-              <CardContent className="p-6">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 shadow-sm">
-                      <MessageSquare className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-lg">Have ideas or found a bug?</h3>
-                      <p className="text-muted-foreground">Help us improve PureSoul by submitting your feedback, feature requests, or reporting issues.</p>
-                    </div>
-                  </div>
-                  <Button onClick={() => setFeedbackOpen(true)} className="shrink-0 w-full md:w-auto">
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    Submit Feedback
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Current Treatment Plan */}
+            {/* Active Plan Card */}
             {activePlan ? (
-              <Card data-testid="card-current-plan">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Compass className="h-5 w-5 text-indigo-500" />
-                    <span>Current Journey</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="font-semibold text-lg">{activePlan.title}</h3>
-                      <p className="text-muted-foreground">{activePlan.description}</p>
-                    </div>
-
-                    <div className="grid md:grid-cols-3 gap-4">
-                      <div className="p-4 bg-muted/50 rounded-lg">
-                        <p className="text-sm font-medium text-muted-foreground">Week Progress</p>
-                        <p className="text-xl font-bold">{activePlan.currentWeek} / {activePlan.totalWeeks}</p>
-                      </div>
-                      <div className="p-4 bg-muted/50 rounded-lg">
-                        <p className="text-sm font-medium text-muted-foreground">Completion</p>
-                        <p className="text-xl font-bold">{activePlan.progressPercentage}%</p>
-                      </div>
-                      <div className="p-4 bg-muted/50 rounded-lg">
-                        <p className="text-sm font-medium text-muted-foreground">Status</p>
-                        <Badge className="capitalize">{activePlan.status}</Badge>
-                      </div>
-                    </div>
-
-                    <div className="w-full bg-muted rounded-full h-3">
-                      <div
-                        className="bg-primary rounded-full h-3 transition-all duration-300"
-                        style={{ width: `${activePlan.progressPercentage}%` }}
-                      ></div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-muted-foreground">
-                        Started {new Date(activePlan.createdAt).toLocaleDateString()}
-                      </p>
-                      <Link href={`/treatment-plan/${activePlan.id}`}>
-                        <Button data-testid="button-view-plan">
-                          View Full Plan
-                        </Button>
-                      </Link>
-                    </div>
+              <div className="bg-gradient-to-br from-indigo-900/60 to-slate-900 border border-indigo-700/30 rounded-2xl p-5">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-indigo-400 font-black mb-1">Current Journey</p>
+                    <h2 className="text-base font-black text-white leading-tight">{activePlan.title}</h2>
+                    <p className="text-xs text-slate-400 mt-1 line-clamp-2">{activePlan.description}</p>
                   </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card data-testid="card-no-plan">
-                <CardContent className="text-center py-12">
-                  <Compass className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Ready to Start a Journey?</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Complete a reflection check-in to generate a personalized path forward.
-                  </p>
-                  <Link href="/assessment">
-                    <Button data-testid="button-start-assessment">
-                      Begin Reflection
-                    </Button>
+                  <Link href={`/treatment-plan/${activePlan.id}`}>
+                    <button className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center flex-shrink-0 hover:bg-indigo-500 transition-all">
+                      <ArrowUpRight className="w-4 h-4 text-white" />
+                    </button>
                   </Link>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
+                  <span>Week {activePlan.currentWeek} of {activePlan.totalWeeks}</span>
+                  <span className="font-bold text-white">{activePlan.progressPercentage}%</span>
+                </div>
+                <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                  <motion.div className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full"
+                    initial={{ width: 0 }} animate={{ width: `${activePlan.progressPercentage}%` }}
+                    transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }} />
+                </div>
+                <div className="grid grid-cols-3 gap-2 mt-4">
+                  {[
+                    { label: "Week", value: `${activePlan.currentWeek}/${activePlan.totalWeeks}` },
+                    { label: "Progress", value: `${activePlan.progressPercentage}%` },
+                    { label: "Status", value: activePlan.status },
+                  ].map(stat => (
+                    <div key={stat.label} className="bg-slate-800/50 rounded-xl p-2.5 text-center">
+                      <p className="text-[10px] text-slate-500 uppercase font-bold">{stat.label}</p>
+                      <p className="text-sm font-black text-white capitalize mt-0.5">{stat.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center" data-testid="card-no-plan">
+                <Compass className="h-12 w-12 text-slate-600 mx-auto mb-3" />
+                <h3 className="text-base font-black text-white mb-1">Ready to Start a Journey?</h3>
+                <p className="text-sm text-slate-500 mb-4">Complete a reflection check-in to generate your path.</p>
+                <Link href="/assessment">
+                  <Button className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold w-full" data-testid="button-start-assessment">
+                    Begin Reflection
+                  </Button>
+                </Link>
+              </div>
             )}
 
             {/* Recent Activity */}
-            <Card data-testid="card-recent-activity">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Activity className="h-5 w-5" />
-                  <span>Recent Activity</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {progressData && progressData.length > 0 ? (
-                  <div className="space-y-4">
-                    {progressData.slice(0, 5).map((entry: any, index: number) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-2 h-2 rounded-full ${entry.completed ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                          <div>
-                            <p className="font-medium">{entry.activityName}</p>
-                            <p className="text-sm text-muted-foreground capitalize">{entry.activityType}</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(entry.date).toLocaleDateString()}
-                          </p>
-                          <Badge variant={entry.completed ? "default" : "secondary"}>
-                            {entry.completed ? "Completed" : "In Progress"}
-                          </Badge>
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden" data-testid="card-recent-activity">
+              <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-slate-800">
+                <div className="flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-slate-400" />
+                  <span className="text-sm font-black text-white">Recent Activity</span>
+                </div>
+                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wide">Last 5</span>
+              </div>
+              {progressData && progressData.length > 0 ? (
+                <div className="divide-y divide-slate-800/60">
+                  {progressData.slice(0, 5).map((entry: any, i: number) => (
+                    <div key={i} className="flex items-center justify-between px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full ${entry.completed ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+                        <div>
+                          <p className="text-sm font-bold text-white leading-tight">{entry.activityName}</p>
+                          <p className="text-[11px] text-slate-500 capitalize">{entry.activityType}</p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">No recent activity to display</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="progress" className="space-y-6">
-            <Card data-testid="card-progress-chart">
-              <CardHeader>
-                <CardTitle>Progress Over Time</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {progressData && progressData.length > 0 ? (
-                  <ProgressChart data={progressData} />
-                ) : (
-                  <div className="text-center py-12">
-                    <Leaf className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">No progress data available yet</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="assessments" className="space-y-6">
-            <Card data-testid="card-assessment-history">
-              <CardHeader>
-                <CardTitle>Assessment History</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {recentAssessments.length > 0 ? (
-                  <div className="space-y-4">
-                    {recentAssessments.map((assessment: any, index: number) => (
-                      <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                            <Heart className="h-6 w-6 text-primary" />
-                          </div>
-                          <div>
-                            <h4 className="font-semibold capitalize">
-                              {assessment.type.replace('_', ' ')} Assessment
-                            </h4>
-                            <p className="text-sm text-muted-foreground">
-                              Score: {assessment.score} | {new Date(assessment.createdAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-                        <Badge
-                          variant={
-                            assessment.severity === 'severe' || assessment.severity === 'moderately_severe'
-                              ? 'destructive'
-                              : assessment.severity === 'moderate'
-                                ? 'secondary'
-                                : 'default'
-                          }
-                          className="capitalize"
-                        >
-                          {assessment.severity.replace('_', ' ')}
-                        </Badge>
+                      <div className="text-right">
+                        <p className="text-[11px] text-slate-600">{new Date(entry.date).toLocaleDateString()}</p>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${entry.completed ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-500/15 text-amber-400'}`}>
+                          {entry.completed ? "Done" : "In progress"}
+                        </span>
                       </div>
-                    ))}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Activity className="h-10 w-10 text-slate-700 mx-auto mb-2" />
+                  <p className="text-sm text-slate-500">No activity yet — start a session!</p>
+                </div>
+              )}
+            </div>
 
-                    {assessments && assessments.length > 3 && (
-                      <div className="text-center pt-4">
-                        <Link href="/assessment">
-                          <Button variant="outline" data-testid="button-view-all-assessments">
-                            View All Assessments
-                          </Button>
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <Heart className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground mb-4">No reflections completed yet</p>
-                    <Link href="/assessment">
-                      <Button data-testid="button-first-assessment">
-                        Take Your First Assessment
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+            {/* Feedback CTA */}
+            <button onClick={() => setFeedbackOpen(true)}
+              className="w-full bg-slate-900 border border-slate-800 hover:border-indigo-700/50 rounded-2xl p-4 flex items-center gap-3 transition-all group text-left">
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-500/20 transition-all">
+                <MessageSquare className="w-5 h-5 text-indigo-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-black text-white">Have feedback or found a bug?</p>
+                <p className="text-xs text-slate-500">Help us improve PureSoul</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-600 flex-shrink-0" />
+            </button>
+          </motion.div>
+        )}
 
-          <TabsContent value="goals" className="space-y-6">
-            <Card data-testid="card-treatment-goals">
-              <CardHeader>
-                <CardTitle>Treatment Goals & Milestones</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {currentPlan && currentPlan.goals ? (
-                  <div className="space-y-4">
-                    {currentPlan.goals.map((goal: string, index: number) => (
-                      <div key={index} className="flex items-start space-x-3 p-3 bg-muted/50 rounded-lg">
-                        <div className="w-6 h-6 bg-primary/20 rounded-full flex items-center justify-center mt-1">
-                          <span className="text-xs font-bold text-primary">{index + 1}</span>
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium">{goal}</p>
-                        </div>
-                      </div>
-                    ))}
+        {/* ── Tab: Progress ── */}
+        {tab === "progress" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden" data-testid="card-progress-chart">
+            <div className="flex items-center gap-2 px-4 pt-4 pb-3 border-b border-slate-800">
+              <BarChart2 className="w-4 h-4 text-slate-400" />
+              <span className="text-sm font-black text-white">Progress Over Time</span>
+            </div>
+            {progressData && progressData.length > 0 ? (
+              <div className="p-4">
+                <ProgressChart data={progressData} />
+              </div>
+            ) : (
+              <div className="text-center py-12 px-4">
+                <TrendingUp className="h-12 w-12 text-slate-700 mx-auto mb-3" />
+                <p className="text-sm text-slate-500 mb-4">No progress data yet</p>
+                <Link href="/activities">
+                  <Button className="bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-sm">
+                    Browse Activities
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* ── Tab: History ── */}
+        {tab === "history" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3" data-testid="card-assessment-history">
+            {recentAssessments.length > 0 ? recentAssessments.map((a: any, i: number) => {
+              const sevColor = a.severity === 'severe' || a.severity === 'moderately_severe'
+                ? 'bg-rose-500/15 text-rose-400 border-rose-500/20'
+                : a.severity === 'moderate'
+                  ? 'bg-amber-500/15 text-amber-400 border-amber-500/20'
+                  : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20';
+              return (
+                <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                  className="bg-slate-900 border border-slate-800 rounded-2xl flex items-center gap-3 px-4 py-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Heart className="w-5 h-5 text-primary" />
                   </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <Compass className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">No treatment goals set yet</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-black text-white capitalize leading-tight">
+                      {a.type.replace('_', ' ')} Assessment
+                    </p>
+                    <p className="text-[11px] text-slate-500">
+                      Score {a.score} · {new Date(a.createdAt).toLocaleDateString()}
+                    </p>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </main>
+                  <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border capitalize flex-shrink-0 ${sevColor}`}>
+                    {a.severity.replace('_', ' ')}
+                  </span>
+                </motion.div>
+              );
+            }) : (
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl text-center py-12 px-4">
+                <Heart className="h-12 w-12 text-slate-700 mx-auto mb-3" />
+                <p className="text-sm text-slate-500 mb-4">No reflections yet</p>
+                <Link href="/assessment">
+                  <Button className="bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-sm" data-testid="button-first-assessment">
+                    Take Your First Assessment
+                  </Button>
+                </Link>
+              </div>
+            )}
+            {assessments.length > 3 && (
+              <Link href="/assessment">
+                <button className="w-full py-3 text-sm font-bold text-slate-400 hover:text-white transition-all flex items-center justify-center gap-1" data-testid="button-view-all-assessments">
+                  View All Assessments <ChevronRight className="w-4 h-4" />
+                </button>
+              </Link>
+            )}
+          </motion.div>
+        )}
+
+        {/* ── Tab: Goals ── */}
+        {tab === "goals" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} data-testid="card-treatment-goals">
+            {activePlan?.goals ? (
+              <div className="space-y-3">
+                {activePlan.goals.map((goal: string, i: number) => (
+                  <motion.div key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06 }}
+                    className="bg-slate-900 border border-slate-800 rounded-2xl flex items-start gap-3 p-4">
+                    <div className="w-7 h-7 rounded-xl bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-black text-indigo-400">{i + 1}</span>
+                    </div>
+                    <p className="text-sm font-medium text-slate-300 leading-relaxed">{goal}</p>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl text-center py-12 px-4">
+                <Target className="h-12 w-12 text-slate-700 mx-auto mb-3" />
+                <p className="text-sm text-slate-500 mb-4">No goals set yet</p>
+                <Link href="/assessment">
+                  <Button className="bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-sm">
+                    Create a Plan
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+      </div>
 
       <FeedbackModal open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </div>

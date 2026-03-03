@@ -196,6 +196,13 @@ export default function WomenCyclePage() {
                                 </div>
                             </div>
                             <p className="text-xs text-center text-purple-300 mt-1">{phaseData.emoji} {phaseData.label}</p>
+                            {/* Reset to Day 1 */}
+                            <button
+                                onClick={() => setCycleDayAndSave(1)}
+                                className="mt-3 w-full py-1.5 rounded-xl text-xs font-bold text-purple-400 hover:text-purple-600 hover:bg-purple-50 transition-all border border-dashed border-purple-200"
+                            >
+                                🔄 Reset to Day 1 (new cycle started)
+                            </button>
                         </div>
 
                         {/* Mood */}

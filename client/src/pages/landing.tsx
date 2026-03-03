@@ -24,6 +24,53 @@ export default function Landing() {
     { anxiousText: "Overwhelmed", calmText: "Clear", anxiousColor: "bg-zinc-700/80 border-zinc-500 text-white", calmColor: "bg-cyan-500/80 border-cyan-400 text-white", ax: 0, ay: -120, cx: 0, cy: -140 },
   ];
 
+  const features = [
+    {
+      id: 1,
+      action: "Speak your mind.",
+      actionDesc: "Record a 30-second audio thought. No typing needed.",
+      reaction: "AI extracts biomarkers.",
+      reactionDesc: <>We instantly detect <strong className="text-indigo-900">stress and fatigue</strong> hidden in your tone.</>,
+      actionBg: "bg-white border-slate-100",
+      reactionBg: "bg-indigo-50 border-indigo-100",
+      badge: "The Reaction",
+      badgeColor: "bg-indigo-500 shadow-indigo-500/20"
+    },
+    {
+      id: 2,
+      action: "Feel anxious or triggered.",
+      actionDesc: "Open the AI Companion chat when overwhelmed.",
+      reaction: "24/7 grounded conversation.",
+      reactionDesc: <>Get instant, <strong className="text-amber-900">compassionate support</strong> tailored to help you down-regulate.</>,
+      actionBg: "bg-white border-slate-100",
+      reactionBg: "bg-amber-50 border-amber-100",
+      badge: "The Reaction",
+      badgeColor: "bg-amber-500 shadow-amber-500/20"
+    },
+    {
+      id: 3,
+      action: "Log daily check-ins.",
+      actionDesc: "Answer brief prompts about your sleep and mood.",
+      reaction: "Generates a diagnostic report.",
+      reactionDesc: <>We compile your data into <strong className="text-emerald-900">professional reports</strong> to share with a doctor.</>,
+      actionBg: "bg-white border-slate-100",
+      reactionBg: "bg-emerald-50 border-emerald-100",
+      badge: "The Reaction",
+      badgeColor: "bg-emerald-500 shadow-emerald-500/20"
+    },
+    {
+      id: 4,
+      action: "Struggle to sleep at night.",
+      actionDesc: "Toss and turn? Open the Sleep module.",
+      reaction: "Restorative audio.",
+      reactionDesc: <>We play <strong className="text-purple-900">custom frequencies</strong> to help you drift off naturally.</>,
+      actionBg: "bg-white border-slate-100",
+      reactionBg: "bg-purple-50 border-purple-100",
+      badge: "The Reaction",
+      badgeColor: "bg-purple-500 shadow-purple-500/20"
+    }
+  ];
+
   return (
     <div className="min-h-screen aurora-bg text-slate-800 font-sans selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden">
       {/* Navbar - Glass & Minimal */}
@@ -274,131 +321,151 @@ export default function Landing() {
           </p>
         </div>
 
-        <div className="space-y-8 md:space-y-12">
+        <div className="space-y-12 md:space-y-20">
+          {features.map((feature, idx) => (
+            <motion.div
+              key={feature.id}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              className="relative"
+            >
+              {/* Desktop & Mobile Shared Layout Structure */}
+              <div className="flex flex-col md:flex-row items-center gap-6 md:gap-12 group">
 
-          {/* Feature 1: Vocal Journal */}
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
-            <div className="flex-1 w-full bg-white border border-slate-100 p-6 md:p-8 rounded-[2rem] shadow-sm relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[100px] -z-10 transition-transform group-hover:scale-110"></div>
-              <Badge variant="secondary" className="mb-4 bg-slate-100 text-slate-500 border-none font-bold tracking-widest uppercase text-[10px]">Your Action</Badge>
-              <h3 className="text-xl md:text-2xl font-bold text-slate-800 mb-2">Speak your mind.</h3>
-              <p className="text-sm md:text-base text-slate-500 font-medium">Record a 30-second audio thought. No typing needed.</p>
-            </div>
+                {/* Action Card */}
+                <div className={`w-full md:flex-1 ${feature.actionBg} border border-slate-100 p-6 md:p-8 rounded-[2rem] shadow-sm relative overflow-hidden transition-all duration-500 hover:shadow-xl hover:-translate-y-1 z-10`}>
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-bl-[80px] -z-10 transition-transform group-hover:scale-110 opacity-50"></div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center text-white text-[10px] font-black">0{idx + 1}</div>
+                    <Badge variant="secondary" className="bg-slate-100 text-slate-500 border-none font-black tracking-widest uppercase text-[9px]">Your Action</Badge>
+                  </div>
+                  <h3 className="text-xl md:text-2xl font-black text-slate-800 mb-3 leading-tight">{feature.action}</h3>
+                  <p className="text-sm md:text-base text-slate-500 font-medium leading-relaxed">{feature.actionDesc}</p>
+                </div>
 
-            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-900 border-4 border-white shadow-xl flex items-center justify-center text-white shrink-0 z-10 rotate-90 md:rotate-0">
-              <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
-            </div>
+                {/* Laser Beam Connector */}
+                <div className="hidden md:flex relative w-24 h-px items-center justify-center">
+                  <div className="absolute inset-0 bg-slate-100 h-px"></div>
+                  <motion.div
+                    animate={{
+                      left: ['-50%', '150%'],
+                      opacity: [0, 1, 1, 0]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                      delay: idx * 0.5
+                    }}
+                    className="absolute w-12 h-[2px] bg-gradient-to-r from-transparent via-indigo-500 to-transparent shadow-[0_0_15px_rgba(99,102,241,0.8)] z-20"
+                  />
+                  <div className="w-8 h-8 rounded-full bg-white border border-slate-100 shadow-sm flex items-center justify-center z-10">
+                    <ArrowRight className="w-4 h-4 text-slate-400" />
+                  </div>
+                </div>
 
-            <div className="flex-1 w-full bg-indigo-50 border border-indigo-100 p-6 md:p-8 rounded-[2rem] relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-100/50 rounded-bl-[100px] -z-10 transition-transform group-hover:scale-110"></div>
-              <Badge className="mb-4 bg-indigo-500 hover:bg-indigo-600 border-none font-bold tracking-widest uppercase text-[10px] shadow-md shadow-indigo-500/20">The Reaction</Badge>
-              <h3 className="text-xl md:text-2xl font-bold text-indigo-950 mb-2">AI extracts biomarkers.</h3>
-              <p className="text-sm md:text-base text-indigo-800/70 font-medium">We instantly detect <strong className="text-indigo-900">stress and fatigue</strong> hidden in your tone.</p>
-            </div>
-          </motion.div>
+                {/* Mobile Laser Connector (Vertical) */}
+                <div className="md:hidden flex flex-col items-center gap-2 py-2">
+                  <div className="w-px h-12 bg-slate-100 relative">
+                    <motion.div
+                      animate={{
+                        top: ['-20%', '120%'],
+                        opacity: [0, 1, 1, 0]
+                      }}
+                      transition={{
+                        duration: 1.5,
+                        repeat: Infinity,
+                        ease: "linear"
+                      }}
+                      className="absolute left-1/2 -translate-x-1/2 w-[2px] h-8 bg-gradient-to-b from-transparent via-indigo-500 to-transparent shadow-[0_0_10px_rgba(99,102,241,0.6)]"
+                    />
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center text-white shadow-lg rotate-90">
+                    <ArrowRight className="w-4 h-4" />
+                  </div>
+                </div>
 
-          {/* Feature 2: Empathic AI Companion */}
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
-            <div className="flex-1 w-full bg-white border border-slate-100 p-6 md:p-8 rounded-[2rem] shadow-sm relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[100px] -z-10 transition-transform group-hover:scale-110"></div>
-              <Badge variant="secondary" className="mb-4 bg-slate-100 text-slate-500 border-none font-bold tracking-widest uppercase text-[10px]">Your Action</Badge>
-              <h3 className="text-xl md:text-2xl font-bold text-slate-800 mb-2">Feel anxious or triggered.</h3>
-              <p className="text-sm md:text-base text-slate-500 font-medium">Open the AI Companion chat when overwhelmed.</p>
-            </div>
+                {/* Reaction Card */}
+                <div className={`w-full md:flex-1 ${feature.reactionBg} border border-indigo-100 p-6 md:p-8 rounded-[2rem] relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] shadow-sm z-10`}>
+                  {/* Glowing background for reaction */}
+                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/10 blur-[50px] rounded-full"></div>
 
-            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-900 border-4 border-white shadow-xl flex items-center justify-center text-white shrink-0 z-10 rotate-90 md:rotate-0">
-              <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
-            </div>
+                  <Badge className={`mb-4 ${feature.badgeColor} border-none font-black tracking-widest uppercase text-[9px] shadow-lg text-white`}>{feature.badge}</Badge>
+                  <h3 className="text-xl md:text-2xl font-black text-slate-900 mb-3 leading-tight">{feature.reaction}</h3>
+                  <div className="text-sm md:text-base text-slate-700 font-medium leading-relaxed">
+                    {feature.reactionDesc}
+                  </div>
 
-            <div className="flex-1 w-full bg-amber-50 border border-amber-100 p-6 md:p-8 rounded-[2rem] relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-100/50 rounded-bl-[100px] -z-10 transition-transform group-hover:scale-110"></div>
-              <Badge className="mb-4 bg-amber-500 hover:bg-amber-600 text-white border-none font-bold tracking-widest uppercase text-[10px] shadow-md shadow-amber-500/20">The Reaction</Badge>
-              <h3 className="text-xl md:text-2xl font-bold text-amber-950 mb-2">24/7 grounded conversation.</h3>
-              <p className="text-sm md:text-base text-amber-800/80 font-medium">Get instant, <strong className="text-amber-900">compassionate support</strong> tailored to help you down-regulate.</p>
-            </div>
-          </motion.div>
+                  {/* Micro-sparkle animation */}
+                  <motion.div
+                    animate={{
+                      scale: [1, 1.2, 1],
+                      opacity: [0.2, 0.5, 0.2]
+                    }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                    className="absolute bottom-4 right-4"
+                  >
+                    <Sparkles className="w-6 h-6 text-indigo-200/50" />
+                  </motion.div>
+                </div>
 
-          {/* Feature 3: Clinical Reports */}
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
-            <div className="flex-1 w-full bg-white border border-slate-100 p-6 md:p-8 rounded-[2rem] shadow-sm relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[100px] -z-10 transition-transform group-hover:scale-110"></div>
-              <Badge variant="secondary" className="mb-4 bg-slate-100 text-slate-500 border-none font-bold tracking-widest uppercase text-[10px]">Your Action</Badge>
-              <h3 className="text-xl md:text-2xl font-bold text-slate-800 mb-2">Log daily check-ins.</h3>
-              <p className="text-sm md:text-base text-slate-500 font-medium">Answer brief prompts about your sleep and mood.</p>
-            </div>
-
-            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-900 border-4 border-white shadow-xl flex items-center justify-center text-white shrink-0 z-10 rotate-90 md:rotate-0">
-              <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
-            </div>
-
-            <div className="flex-1 w-full bg-emerald-50 border border-emerald-100 p-6 md:p-8 rounded-[2rem] relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-100/50 rounded-bl-[100px] -z-10 transition-transform group-hover:scale-110"></div>
-              <Badge className="mb-4 bg-emerald-500 hover:bg-emerald-600 border-none font-bold tracking-widest uppercase text-[10px] shadow-md shadow-emerald-500/20 text-white">The Reaction</Badge>
-              <h3 className="text-xl md:text-2xl font-bold text-emerald-950 mb-2">Generates a diagnostic report.</h3>
-              <p className="text-sm md:text-base text-emerald-800/80 font-medium">We compile your data into <strong className="text-emerald-900">professional reports</strong> to share with a doctor.</p>
-            </div>
-          </motion.div>
-
-          {/* Feature 4: Sleep */}
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
-            <div className="flex-1 w-full bg-white border border-slate-100 p-6 md:p-8 rounded-[2rem] shadow-sm relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[100px] -z-10 transition-transform group-hover:scale-110"></div>
-              <Badge variant="secondary" className="mb-4 bg-slate-100 text-slate-500 border-none font-bold tracking-widest uppercase text-[10px]">Your Action</Badge>
-              <h3 className="text-xl md:text-2xl font-bold text-slate-800 mb-2">Struggle to sleep at night.</h3>
-              <p className="text-sm md:text-base text-slate-500 font-medium">Toss and turn? Open the Sleep module.</p>
-            </div>
-
-            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-900 border-4 border-white shadow-xl flex items-center justify-center text-white shrink-0 z-10 rotate-90 md:rotate-0">
-              <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
-            </div>
-
-            <div className="flex-1 w-full bg-purple-50 border border-purple-100 p-6 md:p-8 rounded-[2rem] relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-100/50 rounded-bl-[100px] -z-10 transition-transform group-hover:scale-110"></div>
-              <Badge className="mb-4 bg-purple-500 hover:bg-purple-600 border-none font-bold tracking-widest uppercase text-[10px] shadow-md shadow-purple-500/20 text-white">The Reaction</Badge>
-              <h3 className="text-xl md:text-2xl font-bold text-purple-950 mb-2">Restorative audio.</h3>
-              <p className="text-sm md:text-base text-purple-800/80 font-medium">We play <strong className="text-purple-900">custom frequencies</strong> to help you drift off naturally.</p>
-            </div>
-          </motion.div>
-
+              </div>
+            </motion.div>
+          ))}
         </div>
       </section>
 
-      {/* NEW: Technology & Trust Section */}
-      <section className="px-6 py-24 bg-slate-900 text-white relative">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-12">
-            <div className="max-w-xl">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 md:mb-6">Privacy is our <br /><span className="text-indigo-400">Biological Imperative.</span></h2>
-              <p className="text-base md:text-xl text-slate-400 mb-6 md:mb-8 leading-relaxed">
-                End-to-end encryption ensures your intimate thoughts stay yours.
+
+      {/* Optimized: Technology & Trust Section */}
+      <section className="px-6 py-20 bg-slate-900 text-white relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_30%_30%,#1e1b4b_0%,transparent_70%)] opacity-50"></div>
+        <div className="max-w-7xl mx-auto relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-20"
+          >
+            <div className="max-w-xl text-center lg:text-left">
+              <h2 className="text-3xl md:text-5xl font-bold mb-6 text-white leading-tight">Privacy is our <br /><span className="text-indigo-400">Biological Imperative.</span></h2>
+              <p className="text-base md:text-lg text-slate-400 mb-8 leading-relaxed">
+                Your data is stored in clinical-grade vaults, protected by the same encryption used by global financial institutions.
               </p>
-              <ul className="space-y-4">
+              <div className="grid grid-cols-1 gap-3 text-left w-full">
                 {[
-                  { icon: ShieldCheck, text: "End-to-End Encrypted Data Vaults" },
-                  { icon: Lock, text: "Strict HIPAA-complaint Privacy Protocols" },
-                  { icon: Scale, text: "Ethics-First AI Architecture" }
+                  { icon: ShieldCheck, text: "End-to-End Encrypted Vaults" },
+                  { icon: Lock, text: "Strict HIPAA Compliance" },
+                  { icon: Scale, text: "Ethics-First AI" }
                 ].map((item, idx) => (
-                  <li key={idx} className="flex items-center gap-3 text-lg font-medium">
-                    <item.icon className="w-6 h-6 text-indigo-400" />
-                    {item.text}
-                  </li>
+                  <motion.div
+                    key={idx}
+                    className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10"
+                  >
+                    <item.icon className="w-5 h-5 text-indigo-400" />
+                    <span className="text-sm font-bold text-slate-200">{item.text}</span>
+                  </motion.div>
                 ))}
-              </ul>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-              {/* Evidence-based badges */}
+
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full lg:w-auto">
               {[
-                { label: "CBT", icon: Brain },
-                { label: "Somatic", icon: Heart },
-                { label: "DBT", icon: Activity }
+                { label: "CBT", icon: Brain, color: "from-indigo-500/20" },
+                { label: "Somatic", icon: Heart, color: "from-rose-500/20" },
+                { label: "DBT", icon: Activity, color: "from-emerald-500/20" }
               ].map((tag, idx) => (
-                <div key={idx} className="px-8 py-10 rounded-3xl bg-white/5 border border-white/10 flex flex-col items-center gap-4 hover:bg-white/10 transition-colors cursor-default">
-                  <tag.icon className="w-10 h-10 text-indigo-300" />
-                  <span className="text-xl font-bold tracking-widest">{tag.label}</span>
-                </div>
+                <motion.div
+                  key={idx}
+                  whileHover={{ y: -5, backgroundColor: "rgba(255,255,255,0.08)" }}
+                  className={`p-6 md:p-8 rounded-[2rem] bg-white/5 border border-white/10 flex flex-col items-center gap-4 transition-all cursor-default bg-gradient-to-br ${tag.color} to-transparent`}
+                >
+                  <tag.icon className="w-8 h-8 md:w-10 md:h-10 text-white/80" />
+                  <span className="text-sm md:text-lg font-bold tracking-widest uppercase">{tag.label}</span>
+                </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 

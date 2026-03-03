@@ -140,12 +140,14 @@ export default function AuthPage() {
       <div className="w-full max-w-md">
         {/* Logo & Branding */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Logo size="lg" showText={false} />
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
-              PureSoul
-            </h1>
-          </div>
+          <a href="/" className="block">
+            <div className="flex items-center justify-center gap-3 mb-4 cursor-pointer hover:opacity-80 transition-opacity">
+              <Logo size="lg" showText={false} />
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
+                PureSoul
+              </h1>
+            </div>
+          </a>
           <p className="text-muted-foreground">
             {isLogin ? "Welcome back" : "Create your account"}
           </p>

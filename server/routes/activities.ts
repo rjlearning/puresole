@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { storage } from '../storage';
+import { pool } from '../db';
 import { isAuthenticated } from '../standardAuth';
-import { insertProgressEntrySchema } from '@shared/schema';
 
 const router = Router();
 
@@ -276,35 +276,55 @@ router.get('/activities/:id', async (req, res) => {
 router.post('/activities/:id/complete', isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.claims.sub;
+    const userId = req.user?.id || req.user?.claims?.sub;
+    if (!userId) {
+      return res.status(401).json({ error: 'User ID not found' });
+    }
     const { effectiveness_rating, notes, duration_actual } = req.body;
 
-    const activity = await storage.getWellnessActivity(id);
+    // Try to get activity from storage, fall back to static data
+    let activity: any = null;
+    try { activity = await storage.getWellnessActivity(id); } catch (_) { }
+    if (!activity) {
+      // Fall back to static list
+      const { sampleActivities } = await import('../../client/src/lib/activity-data');
+      activity = sampleActivities.find((a: any) => a.id === id);
+    }
     if (!activity) {
       return res.status(404).json({ error: 'Activity not found' });
     }
 
-    // Create activity completion record in the correct table (user_activity_completions)
-    const completionData = {
-      userId,
-      activityId: id,
-      completedAt: new Date(),
-      durationActual: duration_actual || activity.duration,
-      effectivenessRating: effectiveness_rating || 5,
-      notes: notes || `Completed ${activity.name}`
-    };
+    // Calculate points
+    const durationBonus = Math.min(duration_actual || 0, activity.duration) * 2;
+    const effectivenessBonus = Math.round(((effectiveness_rating || 5) / 10) * 20);
+    const points_earned = 10 + durationBonus + effectivenessBonus;
 
-    const entry = await storage.createActivityCompletion(completionData);
+    // Save to activity_logs table
+    await pool.query(
+      `INSERT INTO activity_logs (
+        user_id, activity_id, activity_name, category,
+        duration_actual, effectiveness_rating, notes, points_earned, completed_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
+      [
+        userId,
+        id,
+        activity.name,
+        activity.category,
+        duration_actual || 0,
+        effectiveness_rating || 5,
+        notes || null,
+        points_earned
+      ]
+    );
 
     res.json({
       success: true,
-      message: 'Progress recorded',
-      points_earned: 10 + (effectiveness_rating || 0),
-      entry
+      message: `Activity completed! You earned ${points_earned} points.`,
+      points_earned,
     });
   } catch (error) {
     console.error('[Activities] Completion Error:', error);
-    res.status(500).json({ error: 'Failed to record progress' });
+    res.status(500).json({ error: 'Failed to record progress', detail: String(error) });
   }
 });
 

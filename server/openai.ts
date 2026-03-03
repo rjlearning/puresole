@@ -65,7 +65,7 @@ Base your analysis on clinical guidelines and evidence-based practices. If the a
 `;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
@@ -134,7 +134,7 @@ The treatment plan should:
 `;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
@@ -183,7 +183,7 @@ Provide analysis in JSON format:
 `;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
@@ -261,7 +261,7 @@ Guidelines:
 `;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
@@ -313,7 +313,7 @@ Base your analysis on:
 `;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
@@ -356,7 +356,7 @@ Requirements:
 `;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
@@ -400,7 +400,7 @@ Requirements:
 `;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
@@ -456,7 +456,7 @@ Requirements:
 `;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",

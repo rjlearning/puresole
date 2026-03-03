@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { UnifiedVoiceRecorder } from "@/components/voice/UnifiedVoiceRecorder";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mic, ArrowLeft, Clock } from "lucide-react";
-import EntryCard from "@/components/flexible/EntryCard";
-import { motion } from "framer-motion";
+import {
+  Loader2, Mic, Clock, Zap, Activity, Play
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface VoiceEntry {
   id: string;
@@ -20,146 +20,135 @@ interface VoiceEntry {
   ai_analysis?: any;
   entryType?: string;
   title?: string;
+  emotions?: any[];
+  emotionData?: any;
 }
+
+// ── helpers ──────────────────────────────────────────────────────────────────
+
+function getMoodLabel(score: number) {
+  if (score >= 8) return { label: "Flourishing", emoji: "🌟", color: "text-emerald-600" };
+  if (score >= 6) return { label: "Stable", emoji: "😊", color: "text-sky-600" };
+  if (score >= 4) return { label: "Neutral", emoji: "😐", color: "text-amber-600" };
+  if (score >= 2) return { label: "Low", emoji: "😔", color: "text-orange-600" };
+  return { label: "Struggling", emoji: "😰", color: "text-rose-600" };
+}
+
+const VOICE_EXPERT_ACTIONS: Record<string, { title: string; activityId: string; durationMinutes: number; instructions: string }> = {
+  'fear': { title: '5-4-3-2-1 Grounding', activityId: 'grounding-1', durationMinutes: 3, instructions: 'Your voice indicates high arousal & tension. Name 5 things you see, 4 you touch, 3 you hear, 2 you smell, 1 you taste.' },
+  'anger': { title: 'Box Breathing', activityId: 'breathing-2', durationMinutes: 4, instructions: 'Vocal energy is peaking. Inhale 4s → Hold 4s → Exhale 4s → Hold 4s to stimulate the vagus nerve and slow heart rate.' },
+  'sadness': { title: 'Vagus Nerve Reset', activityId: 'somatic-1', durationMinutes: 4, instructions: 'Voice tone shows low energy. Use this eye-movement exercise to signal safety to your nervous system and lift your state.' },
+  'sad': { title: 'Vagus Nerve Reset', activityId: 'somatic-1', durationMinutes: 4, instructions: 'Voice tone shows low energy. Use this eye-movement exercise to signal safety to your nervous system and lift your state.' },
+  'joy': { title: 'Gratitude Journal', activityId: 'journaling-1', durationMinutes: 3, instructions: 'High positive resonance detected! Write down three things currently supporting you to lock in this baseline.' },
+  'happy': { title: 'Gratitude Journal', activityId: 'journaling-1', durationMinutes: 3, instructions: 'High positive resonance detected! Write down three things currently supporting you to lock in this baseline.' },
+  'neutral': { title: 'Mindful Breathing', activityId: 'meditation-1', durationMinutes: 2, instructions: 'Stable baseline detected. A short guided mindfulness session will reinforce this calm state.' },
+  'anxious': { title: '4-7-8 Breathing', activityId: 'breathing-1', durationMinutes: 3, instructions: 'Anxiety pattern in voice detected. Inhale through your nose for 4 counts, hold for 7, exhale through your mouth for 8.' },
+  'anxiety': { title: '4-7-8 Breathing', activityId: 'breathing-1', durationMinutes: 3, instructions: 'Anxiety pattern in voice detected. Inhale through your nose for 4 counts, hold for 7, exhale through your mouth for 8.' },
+  'stressed': { title: 'Body Scan Meditation', activityId: 'meditation-2', durationMinutes: 5, instructions: 'Vocal stress markers detected. A full body scan will systematically release the tension held in your body.' },
+  'stress': { title: 'Body Scan Meditation', activityId: 'meditation-2', durationMinutes: 5, instructions: 'Vocal stress markers detected. A full body scan will systematically release the tension held in your body.' },
+  'surprised': { title: '5-4-3-2-1 Grounding', activityId: 'grounding-1', durationMinutes: 3, instructions: 'Heightened arousal detected. Grounding with your five senses will bring you back to a stable baseline.' },
+  'disgusted': { title: 'Walking Meditation', activityId: 'movement-2', durationMinutes: 5, instructions: 'Voice indicates suppressed tension. A mindful walk with full sensory awareness can gently process this emotional state.' },
+  'default': { title: 'Guided Mindfulness', activityId: 'meditation-1', durationMinutes: 5, instructions: 'Take a moment to center yourself with this guided mindfulness session.' }
+};
+
+
+// ── main page ─────────────────────────────────────────────────────────────────
 
 export default function VoiceJournal() {
   const [, setLocation] = useLocation();
   const [isSaving, setIsSaving] = useState(false);
-  const [recentEntries, setRecentEntries] = useState<VoiceEntry[]>([]);
   const [resetKey, setResetKey] = useState(0);
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [sessionSnapshot, setSessionSnapshot] = useState<{
+    emotion: string;
+    savedEntry: VoiceEntry | null;
+  } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const snapshotRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    fetchRecentEntries();
-  }, []);
-
-  const fetchRecentEntries = async () => {
-    try {
-      const res = await fetch('/api/voice-entries?limit=5', { credentials: 'include' });
-      if (res.ok) {
-        const data = await res.json();
-        const mappedEntries = (data.entries || []).map((e: any) => ({
-          ...e,
-          entryType: 'voice',
-          title: 'Voice Note'
-        }));
-        setRecentEntries(mappedEntries);
-      }
-    } catch (error) {
-      console.error('Failed to fetch entries:', error);
+  // Fetch entries with React Query for built-in caching and refetching
+  const { data: entriesData, isLoading: isLoadingEntries } = useQuery<{ entries: any[] }>({
+    queryKey: ["/api/voice-entries"],
+    queryFn: async () => {
+      const res = await fetch('/api/voice-entries?limit=10', { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch entries');
+      return res.json();
     }
-  };
+  });
+
+  const recentEntries: VoiceEntry[] = (entriesData?.entries || []).map((e: any) => ({
+    ...e,
+    entryType: 'voice',
+    title: 'Voice Note'
+  }));
+
+  // Auto-scroll to the snapshot card whenever it appears
 
   const handleSave = async (data: any) => {
+    // Extract dominant emotion from live session data immediately, before any API call
+    const emotionCounts: Record<string, number> = {};
+    (data.emotions || []).forEach((em: any) => {
+      const name = (typeof em === 'string' ? em : em.primary_emotion || em.emotion || em.label || '').toLowerCase().trim();
+      if (name) emotionCounts[name] = (emotionCounts[name] || 0) + 1;
+    });
+    const sorted = Object.entries(emotionCounts).sort(([, a], [, b]) => b - a);
+    const topEmotion = sorted.length > 0 ? sorted[0][0] : 'neutral';
+
+    // Set snapshot IMMEDIATELY - don't wait for API
+    setSessionSnapshot({ emotion: topEmotion, savedEntry: null });
+
     setIsSaving(true);
     try {
       const formData = new FormData();
       formData.append("audio", data.audioBlob, "voice-entry.webm");
       formData.append("duration", data.duration.toString());
-
       if (data.moodBefore) formData.append("moodBefore", data.moodBefore.toString());
       if (data.moodAfter) formData.append("moodAfter", data.moodAfter.toString());
-      if (data.tags && data.tags.length > 0) formData.append("tags", JSON.stringify(data.tags));
+      if (data.tags?.length) formData.append("tags", JSON.stringify(data.tags));
       if (data.notes) formData.append("notes", data.notes);
-      if (data.emotions && data.emotions.length > 0) {
-        formData.append("emotions", JSON.stringify(data.emotions));
-      }
+      if (data.emotions?.length) formData.append("emotions", JSON.stringify(data.emotions));
 
-      const response = await fetch("/api/voice-entries", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
-      });
-
+      const response = await fetch("/api/voice-entries", { method: "POST", body: formData, credentials: "include" });
       if (!response.ok) throw new Error("Failed to save voice entry");
-
       const result = await response.json();
 
-      if (result.entry?.id) {
-        fetch(`/api/analysis/process/${result.entry.id}`, {
-          method: "POST",
-          credentials: "include",
-        }).catch(err => console.error("Analysis trigger failed:", err));
-      }
+      // Update snapshot with the actual saved entry (for audio playback URL)
+      const savedEntry: VoiceEntry = {
+        id: result.entry?.id || `temp-${Date.now()}`,
+        duration: data.duration,
+        moodBefore: data.moodBefore,
+        moodAfter: data.moodAfter,
+        audioUrl: result.entry?.audioUrl,
+        recordedAt: new Date().toISOString(),
+        tags: [],
+      };
+      setSessionSnapshot({ emotion: topEmotion, savedEntry });
 
-      toast({
-        title: "Voice entry saved!",
-        description: "Your thoughts have been recorded securely. AI analysis started!",
-      });
-
-      fetchRecentEntries();
+      toast({ title: "Vocal Snapshot saved!", description: `Dominant state detected: ${topEmotion}` });
+      queryClient.invalidateQueries({ queryKey: ["/api/voice-entries"] });
       setResetKey(prev => prev + 1);
-    } catch (error) {
-      console.error("Error saving voice entry:", error);
-      toast({
-        title: "Error saving entry",
-        description: "Please try again",
-        variant: "destructive",
-      });
+    } catch (err) {
+      console.error("Error saving voice entry:", err);
+      toast({ title: "Error saving entry", description: "Your analysis still shows above.", variant: "destructive" });
     } finally {
       setIsSaving(false);
     }
   };
 
   const handlePlayPause = (entry: VoiceEntry) => {
-    const audioUrl = entry.audioUrl;
-    if (!audioUrl) {
-      toast({
-        title: "Audio not available",
-        description: "This entry doesn't have an audio recording",
-        variant: "destructive",
-      });
+    if (!entry.audioUrl) {
+      toast({ title: "Audio not available", description: "This entry doesn't have an audio recording", variant: "destructive" });
       return;
     }
-
-    if (playingId === entry.id && audioRef.current) {
-      audioRef.current.pause();
-      setPlayingId(null);
-      return;
-    }
-
-    if (audioRef.current) {
-      audioRef.current.pause();
-    }
-
-    const audio = new Audio(audioUrl);
+    if (playingId === entry.id && audioRef.current) { audioRef.current.pause(); setPlayingId(null); return; }
+    if (audioRef.current) audioRef.current.pause();
+    const audio = new Audio(entry.audioUrl);
     audioRef.current = audio;
     setPlayingId(entry.id);
-
-    audio.play().catch(err => {
-      console.error("Error playing audio:", err);
-      toast({
-        title: "Playback error",
-        description: "Could not play the audio file",
-        variant: "destructive",
-      });
-      setPlayingId(null);
-    });
-
-    audio.onended = () => {
-      setPlayingId(null);
-    };
-  };
-
-  const handleDelete = async (id: string) => {
-    try {
-      const res = await fetch(`/api/voice-entries/${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error('Delete failed');
-      setRecentEntries(prev => prev.filter(e => e.id !== id));
-      if (playingId === id && audioRef.current) {
-        audioRef.current.pause();
-        setPlayingId(null);
-      }
-      toast({ title: 'Entry deleted', description: 'Voice note removed successfully.' });
-    } catch (err) {
-      console.error('Delete error:', err);
-      toast({ title: 'Could not delete', description: 'Please try again.', variant: 'destructive' });
-    }
+    audio.play().catch(() => { toast({ title: "Playback error", variant: "destructive" }); setPlayingId(null); });
+    audio.onended = () => setPlayingId(null);
   };
 
   if (isSaving) {
@@ -172,95 +161,182 @@ export default function VoiceJournal() {
               <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
             </div>
           </div>
-          <h3 className="text-xl font-bold text-slate-800 mb-2">Saving your entry...</h3>
-          <p className="text-slate-600">AI analysis will begin shortly to uncover insights from your voice.</p>
+          <h3 className="text-xl font-bold text-slate-800 mb-2">Building Vocal Snapshot...</h3>
+          <p className="text-slate-600">Analyzing your vocal biomarkers and emotional intonation.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen aurora-bg pb-24 pt-24">
-      <nav className="fixed top-0 left-0 right-0 z-40 h-16 flex items-center justify-center bg-white/30 backdrop-blur-md border-b border-white/20">
-        <div className="font-bold text-slate-800 text-lg flex items-center gap-2">
-          <Mic className="h-5 w-5 text-indigo-600" />
-          Voice Journal
+    <div className="min-h-screen aurora-bg pb-24 flex flex-col relative overflow-hidden">
+      {/* Subtle animated background mesh */}
+      <div className="absolute inset-0 z-0 opacity-30 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 60%)' }} />
+
+      {/* Top Nav */}
+      <nav className="relative z-40 h-12 sm:h-20 flex items-center justify-center bg-transparent mb-1 sm:mb-4">
+        <div className="font-black tracking-widest uppercase text-slate-800 text-[9px] sm:text-xs flex items-center gap-1.5 sm:gap-2 bg-white/40 backdrop-blur-3xl px-4 py-1.5 sm:px-6 sm:py-2.5 rounded-full border border-white/50 shadow-sm">
+          <Mic className="h-3 w-3 sm:h-4 sm:w-4 text-indigo-600" /> Vocal Mirror
         </div>
       </nav>
 
-      <div className="container max-w-4xl mx-auto px-6 pt-32 space-y-12">
-        {/* Header Area */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center space-y-6 max-w-2xl mx-auto"
-        >
-          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight text-slate-900">
-            Speak your mind.<br />
-            <span className="text-gradient-soft">Heal your soul.</span>
-          </h1>
-          <p className="text-lg md:text-xl text-slate-600 font-medium leading-relaxed">
-            Record your thoughts and let our real-time AI visualize your emotional journey as you speak.
-          </p>
-        </motion.div>
+      <div className="container max-w-5xl mx-auto px-4 sm:px-6 flex-1 flex flex-col relative z-10 self-center w-full">
 
-        {/* Unified Recorder Component */}
+        {/* ── Immersive Recorder ── */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="glass-panel p-8 md:p-10 shadow-2xl shadow-indigo-100/40 relative overflow-hidden"
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full flex flex-col justify-center"
         >
-          {/* Subtle background decoration */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-indigo-200/20 to-pink-200/20 rounded-full blur-3xl -z-10 transform translate-x-1/3 -translate-y-1/3"></div>
-
           <UnifiedVoiceRecorder key={resetKey} onSave={handleSave} />
         </motion.div>
 
-        {/* Recent Entries Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="space-y-6"
-        >
-          <div className="flex items-center justify-between px-2">
-            <h3 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
-              <Clock className="h-6 w-6 text-indigo-400" />
-              Recent Entries
-            </h3>
-            {recentEntries.length > 0 && (
-              <Button variant="link" className="text-indigo-600 font-bold text-base hover:text-indigo-700">View All</Button>
-            )}
-          </div>
+        {/* ── Post-Recording Snapshot (Vocal Snapshot / Expert AI Output) ── */}
+        <AnimatePresence>
+          {sessionSnapshot && !isSaving && (
+            <div ref={snapshotRef}>
+              <motion.div
+                initial={{ opacity: 0, y: 40, scale: 0.94 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                transition={{ type: "spring", bounce: 0, duration: 0.8 }}
+                className="mt-3 sm:mt-8 mb-24 sm:mb-32 max-w-2xl mx-auto w-full"
+              >
+                <div className="bg-slate-900 rounded-[1.5rem] sm:rounded-[2rem] p-5 sm:p-10 relative overflow-hidden shadow-2xl border border-slate-800">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+                  <div className="relative z-10">
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {recentEntries.length > 0 ? (
-              recentEntries.map((entry) => (
-                <EntryCard
-                  key={entry.id}
-                  entry={{
-                    id: entry.id,
-                    entryType: 'voice',
-                    title: entry.title || 'Voice Note',
-                    recordedAt: entry.recordedAt || entry.createdAt || new Date(),
-                    tags: entry.tags,
-                    moodScore: entry.moodBefore,
-                  }}
-                  onClick={() => handlePlayPause(entry)}
-                  onDelete={handleDelete}
-                />
-              ))
-            ) : (
-              <div className="col-span-2 text-center py-16 glass-card border-none shadow-sm">
-                <Mic className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-500 font-medium text-lg">No voice entries yet.</p>
-                <p className="text-slate-400 text-sm mt-2">Start a recording above to capture your first thought.</p>
+                    {/* Header */}
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className="bg-gradient-to-br from-rose-400 to-rose-600 rounded-2xl w-12 h-12 flex items-center justify-center shadow-lg shadow-rose-500/30">
+                        <Zap className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-300/80 mb-1">Vocal Snapshot</div>
+                        <div className="text-white font-bold tracking-tight text-lg">
+                          Dominant State: <span className="capitalize text-rose-200 font-serif italic">{sessionSnapshot.emotion}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* AI Action */}
+                    {(() => {
+                      const action = VOICE_EXPERT_ACTIONS[sessionSnapshot.emotion] || VOICE_EXPERT_ACTIONS['default'];
+                      return (
+                        <>
+                          <h3 className="text-3xl font-black mb-4 tracking-tight text-white leading-tight">
+                            {action.title}
+                          </h3>
+                          <p className="text-slate-300 text-base leading-relaxed mb-8 font-medium max-w-lg opacity-90">
+                            {action.instructions}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-4">
+                            <div className="flex items-center gap-2 bg-white/10 px-5 py-3 rounded-full text-slate-300 text-xs font-bold border border-white/5">
+                              <Clock className="w-4 h-4 text-slate-400" />
+                              {action.durationMinutes} min Protocol
+                            </div>
+                            <Link href={`/activities/${action.activityId}`}>
+                              <button className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-400 text-white px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:shadow-[0_0_25px_rgba(99,102,241,0.6)] hover:scale-105 active:scale-95">
+                                <Activity className="w-4 h-4" /> Begin Now
+                              </button>
+                            </Link>
+                          </div>
+                        </>
+                      );
+                    })()}
+
+                    {/* Inline Audio Player */}
+                    {(() => {
+                      const playEntry = recentEntries.length > 0 ? recentEntries[0] : sessionSnapshot.savedEntry;
+                      if (!playEntry?.audioUrl) return null;
+                      return (
+                        <div className="mt-8 pt-6 border-t border-slate-700/50 flex flex-col gap-3">
+                          <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center justify-between">
+                            <span>Latest Recording</span>
+                            <span className="text-emerald-400 flex items-center gap-1">
+                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Saved securely
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-4 bg-slate-800/50 rounded-2xl p-4 border border-slate-700">
+                            <button
+                              onClick={() => handlePlayPause(playEntry)}
+                              className="w-10 h-10 shrink-0 rounded-full bg-indigo-500 hover:bg-indigo-400 border border-indigo-400/50 flex items-center justify-center text-white transition-all shadow-lg shadow-indigo-500/20"
+                            >
+                              {playingId === playEntry.id
+                                ? <div className="w-3 h-3 bg-white rounded-sm animate-pulse" />
+                                : <Play className="w-4 h-4 ml-0.5" />
+                              }
+                            </button>
+                            <div className="flex-1">
+                              <div className="h-1.5 w-full bg-slate-700 rounded-full overflow-hidden relative">
+                                {playingId === playEntry.id ? (
+                                  <motion.div
+                                    initial={{ width: "0%" }}
+                                    animate={{ width: "100%" }}
+                                    transition={{ duration: playEntry.duration || 60, ease: "linear" }}
+                                    className="absolute left-0 top-0 bottom-0 bg-indigo-400 rounded-full"
+                                  />
+                                ) : (
+                                  <div className="absolute left-0 top-0 bottom-0 w-0 bg-indigo-400 rounded-full" />
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-xs font-mono font-bold text-slate-400 shrink-0">
+                              {playEntry.duration
+                                ? `${Math.floor(playEntry.duration / 60)}:${(playEntry.duration % 60).toString().padStart(2, '0')}`
+                                : '0:00'
+                              }
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Record Another button */}
+                    <button
+                      onClick={() => { setSessionSnapshot(null); queryClient.invalidateQueries({ queryKey: ["/api/voice-entries"] }); }}
+                      className="mt-4 sm:mt-6 w-full py-2.5 sm:py-3 rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-all border border-transparent hover:border-white/10"
+                    >
+                      Record Another
+                    </button>
+
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* ── Sleek Post-Recording History Strip ── */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 sm:p-6 z-30 pointer-events-none">
+        <div className="container max-w-5xl mx-auto flex items-end justify-center sm:justify-end pointer-events-none">
+          <div className="flex gap-3 overflow-x-auto pb-2 pt-4 pointer-events-auto snap-x hide-scrollbar max-w-full px-4 sm:px-0">
+            {recentEntries.slice(0, 8).map((entry) => (
+              <div
+                key={entry.id}
+                onClick={() => handlePlayPause(entry)}
+                className="snap-start flex-shrink-0 cursor-pointer group bg-white/70 hover:bg-white backdrop-blur-xl border border-white/60 shadow-lg shadow-slate-200/50 rounded-full px-5 py-3 flex items-center gap-4 transition-all hover:scale-105 active:scale-95"
+              >
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${playingId === entry.id ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/30' : 'bg-slate-100 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-500'}`}>
+                  {playingId === entry.id
+                    ? <div className="w-2.5 h-2.5 bg-white rounded-sm animate-pulse" />
+                    : <Play className="w-3.5 h-3.5 ml-0.5" />
+                  }
+                </div>
+                <div className="flex flex-col pr-2">
+                  <span className="text-sm font-black text-slate-800 leading-none mb-1">
+                    {entry.recordedAt ? new Date(entry.recordedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                  </span>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600 leading-none flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Saved
+                  </span>
+                </div>
               </div>
-            )}
+            ))}
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

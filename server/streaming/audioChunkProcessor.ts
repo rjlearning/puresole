@@ -54,10 +54,15 @@ export class AudioChunkProcessor {
    * Add a new audio chunk to the buffer
    */
   addChunk(chunk: AudioChunk): void {
+    // SECURITY/ROBUSTNESS: Forcefully overwrite the client timestamp with the server's timestamp
+    // to prevent client-server clock skew from instantly discarding incoming chunks.
+    const serverTimestamp = Date.now();
+    chunk.timestamp = serverTimestamp;
+
     this.chunks.push(chunk);
 
     // Keep only chunks within the sliding window + overlap
-    const cutoffTime = Date.now() - (this.windowSizeMs + this.overlapMs);
+    const cutoffTime = serverTimestamp - (this.windowSizeMs + this.overlapMs);
     this.chunks = this.chunks.filter(c => c.timestamp >= cutoffTime);
   }
 

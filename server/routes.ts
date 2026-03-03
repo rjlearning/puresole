@@ -645,8 +645,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      // Get modules for this plan
-      const modules = await storage.getTreatmentModulesByPlan(plan.id);
+      // Get modules for this plan and normalize activity fields for backward compat
+      const rawModules = await storage.getTreatmentModulesByPlan(plan.id);
+      const modules = (rawModules || []).map((mod: any) => ({
+        ...mod,
+        content: {
+          ...mod.content,
+          activities: (mod.content?.activities || []).map((a: any) => ({
+            ...a,
+            name: a.name || a.title || 'Activity',
+            duration: a.duration || a.durationMinutes || 5,
+            instructions: a.instructions || a.description || 'Follow the steps for this activity.',
+          })),
+          learningObjectives: mod.content?.learningObjectives || [],
+        }
+      }));
 
       res.json({ ...plan, modules });
     } catch (error) {
