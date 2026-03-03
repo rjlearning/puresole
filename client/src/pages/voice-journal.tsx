@@ -51,6 +51,23 @@ const VOICE_EXPERT_ACTIONS: Record<string, { title: string; activityId: string; 
   'default': { title: 'Guided Mindfulness', activityId: 'meditation-1', durationMinutes: 5, instructions: 'Take a moment to center yourself with this guided mindfulness session.' }
 };
 
+function getTopEmotionFromEntry(entry: VoiceEntry): string {
+  if (typeof entry.emotionData === 'string') return entry.emotionData.toLowerCase();
+
+  const emotionSource = entry.emotionData || entry.emotions || [];
+  if (!Array.isArray(emotionSource)) return 'neutral';
+  if (emotionSource.length === 0) return 'neutral';
+
+  const emotionCounts: Record<string, number> = {};
+  emotionSource.forEach((em: any) => {
+    const name = (typeof em === 'string' ? em : em.primary_emotion || em.emotion || em.label || '').toLowerCase().trim();
+    if (name) emotionCounts[name] = (emotionCounts[name] || 0) + 1;
+  });
+
+  const sorted = Object.entries(emotionCounts).sort(([, a], [, b]) => b - a);
+  return sorted.length > 0 ? sorted[0][0] : 'neutral';
+}
+
 
 // ── main page ─────────────────────────────────────────────────────────────────
 
@@ -85,6 +102,11 @@ export default function VoiceJournal() {
   }));
 
   // Auto-scroll to the snapshot card whenever it appears
+  useEffect(() => {
+    if (recentEntries.length > 0 && !sessionSnapshot && !isSaving) {
+      handleSelectEntry(recentEntries[0]);
+    }
+  }, [entriesData, isSaving]); // Only run when entries data arrives or saving finishes
 
   const handleSave = async (data: any) => {
     // Extract dominant emotion from live session data immediately, before any API call
@@ -137,7 +159,25 @@ export default function VoiceJournal() {
     }
   };
 
-  const handlePlayPause = (entry: VoiceEntry) => {
+  const handleSelectEntry = (entry: VoiceEntry) => {
+    const topEmotion = getTopEmotionFromEntry(entry);
+    setSessionSnapshot({
+      emotion: topEmotion,
+      savedEntry: entry
+    });
+
+    // Reset recorder key to stop any active live session if desired
+    // (Optional, keeps UI clean)
+    // setResetKey(prev => prev + 1);
+
+    // Scroll to snapshot
+    setTimeout(() => {
+      snapshotRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  };
+
+  const handlePlayPause = (entry: VoiceEntry, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation(); // Don't trigger handleSelectEntry if clicking play
     if (!entry.audioUrl) {
       toast({ title: "Audio not available", description: "This entry doesn't have an audio recording", variant: "destructive" });
       return;
@@ -169,7 +209,7 @@ export default function VoiceJournal() {
   }
 
   return (
-    <div className="min-h-screen aurora-bg pb-24 flex flex-col relative overflow-hidden">
+    <div className="min-h-screen aurora-bg pb-24 flex flex-col relative">
       {/* Subtle animated background mesh */}
       <div className="absolute inset-0 z-0 opacity-30 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 60%)' }} />
 
@@ -248,7 +288,7 @@ export default function VoiceJournal() {
 
                     {/* Inline Audio Player */}
                     {(() => {
-                      const playEntry = recentEntries.length > 0 ? recentEntries[0] : sessionSnapshot.savedEntry;
+                      const playEntry = sessionSnapshot.savedEntry;
                       if (!playEntry?.audioUrl) return null;
                       return (
                         <div className="mt-8 pt-6 border-t border-slate-700/50 flex flex-col gap-3">
@@ -260,7 +300,7 @@ export default function VoiceJournal() {
                           </div>
                           <div className="flex items-center gap-4 bg-slate-800/50 rounded-2xl p-4 border border-slate-700">
                             <button
-                              onClick={() => handlePlayPause(playEntry)}
+                              onClick={(e) => handlePlayPause(playEntry, e)}
                               className="w-10 h-10 shrink-0 rounded-full bg-indigo-500 hover:bg-indigo-400 border border-indigo-400/50 flex items-center justify-center text-white transition-all shadow-lg shadow-indigo-500/20"
                             >
                               {playingId === playEntry.id
@@ -316,17 +356,23 @@ export default function VoiceJournal() {
             {recentEntries.slice(0, 8).map((entry) => (
               <div
                 key={entry.id}
-                onClick={() => handlePlayPause(entry)}
-                className="snap-start flex-shrink-0 cursor-pointer group bg-white/70 hover:bg-white backdrop-blur-xl border border-white/60 shadow-lg shadow-slate-200/50 rounded-full px-5 py-3 flex items-center gap-4 transition-all hover:scale-105 active:scale-95"
+                onClick={() => handleSelectEntry(entry)}
+                className={`snap-start flex-shrink-0 cursor-pointer group backdrop-blur-xl border shadow-lg shadow-slate-200/50 rounded-full px-5 py-3 flex items-center gap-4 transition-all hover:scale-105 active:scale-95 ${sessionSnapshot?.savedEntry?.id === entry.id
+                  ? 'bg-indigo-950/90 border-indigo-500/50 ring-2 ring-indigo-500/20'
+                  : 'bg-white/70 hover:bg-white border-white/60'
+                  }`}
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${playingId === entry.id ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/30' : 'bg-slate-100 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-500'}`}>
+                <div
+                  onClick={(e) => handlePlayPause(entry, e)}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${playingId === entry.id ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/30' : 'bg-slate-100 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-500'}`}
+                >
                   {playingId === entry.id
                     ? <div className="w-2.5 h-2.5 bg-white rounded-sm animate-pulse" />
                     : <Play className="w-3.5 h-3.5 ml-0.5" />
                   }
                 </div>
                 <div className="flex flex-col pr-2">
-                  <span className="text-sm font-black text-slate-800 leading-none mb-1">
+                  <span className={`text-sm font-black leading-none mb-1 ${sessionSnapshot?.savedEntry?.id === entry.id ? 'text-white' : 'text-slate-800'}`}>
                     {entry.recordedAt ? new Date(entry.recordedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
                   </span>
                   <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600 leading-none flex items-center gap-1">
