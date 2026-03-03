@@ -5,6 +5,7 @@ import fs from "fs";
 import { db } from "./db";
 import * as schema from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
+import { supabase } from "./supabase";
 
 // Configure multer for file uploads
 const uploadDir = path.join(process.cwd(), "uploads", "voice");
@@ -49,7 +50,7 @@ export function registerVoiceRoutes(app: Express) {
           return res.status(401).json({ message: "Unauthorized" });
         }
 
-        const userId = req.user?.id || (req.user as any)?.claims?.sub;
+        const userId = (req.user as any)?.id || (req.user as any)?.claims?.sub;
         if (!userId) {
           return res.status(401).json({ message: "User ID not found" });
         }
@@ -87,12 +88,34 @@ export function registerVoiceRoutes(app: Express) {
           }
         }
 
+        let finalAudioUrl = `/uploads/voice/${req.file.filename}`;
+
+        // Upload to Supabase if available
+        if (supabase) {
+          const fileBuffer = fs.readFileSync(req.file.path);
+          const { data, error } = await supabase.storage
+            .from('voice-memos')
+            .upload(`${userId}/${req.file.filename}`, fileBuffer, {
+              contentType: 'audio/webm',
+              upsert: true
+            });
+
+          if (error) {
+            console.error("Supabase upload error:", error);
+          } else if (data) {
+            const { data: { publicUrl } } = supabase.storage
+              .from('voice-memos')
+              .getPublicUrl(data.path);
+            finalAudioUrl = publicUrl;
+          }
+        }
+
         // Save to database
         const [voiceEntry] = await db
           .insert(schema.voiceEntries)
           .values({
             userId,
-            audioUrl: `/uploads/voice/${req.file.filename}`,
+            audioUrl: finalAudioUrl,
             duration: parseInt(duration) || 0,
             fileSize: req.file.size,
             moodBefore: moodBefore ? parseInt(moodBefore) : null,
@@ -121,7 +144,7 @@ export function registerVoiceRoutes(app: Express) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const userId = req.user?.id || req.user?.claims?.sub;
+      const userId = (req.user as any)?.id || (req.user as any)?.claims?.sub;
       if (!userId) {
         return res.status(401).json({ message: "User ID not found" });
       }
@@ -148,7 +171,7 @@ export function registerVoiceRoutes(app: Express) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const userId = req.user?.id || req.user?.claims?.sub;
+      const userId = (req.user as any)?.id || (req.user as any)?.claims?.sub;
       const entryId = req.params.id;
 
       const [entry] = await db
@@ -179,7 +202,7 @@ export function registerVoiceRoutes(app: Express) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const userId = req.user?.id || req.user?.claims?.sub;
+      const userId = (req.user as any)?.id || (req.user as any)?.claims?.sub;
       const entryId = req.params.id;
 
       const [entry] = await db

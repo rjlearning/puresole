@@ -263,12 +263,12 @@ export default function UnifiedDashboard() {
                                 </p>
                             </motion.div>
                             <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.1 }}
-                                className="bg-white border border-slate-100 shadow-sm rounded-full px-4 py-2 flex items-center gap-2">
+                                className="bg-white/80 backdrop-blur-md border border-indigo-100 shadow-sm rounded-full px-4 py-2 flex items-center gap-2 self-start sm:self-auto">
                                 <span className="relative flex h-2 w-2">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                                 </span>
-                                <span className="font-bold uppercase tracking-widest text-[9px] text-slate-500">Private Session</span>
+                                <span className="font-bold uppercase tracking-widest text-[9px] text-slate-500">Neural Sync Active</span>
                             </motion.div>
                         </header>
 
@@ -613,6 +613,8 @@ export default function UnifiedDashboard() {
                     </div>
                 </motion.div>
             )}
+            {/* Spacer for mobile bottom nav overlap */}
+            <div className="h-24 lg:hidden pointer-events-none" />
         </AnimatePresence>
     );
 }

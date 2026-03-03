@@ -180,7 +180,9 @@ export default function MainNavigation() {
                   <div className={`p-2 rounded-full transition-all ${active ? 'bg-indigo-50 shadow-sm' : ''}`}>
                     <item.icon className="w-6 h-6" />
                   </div>
-                  {active && <span className="text-[10px] font-bold tracking-wide">{item.name}</span>}
+                  <span className={`text-[9px] font-bold tracking-wide transition-opacity duration-300 ${active ? 'opacity-100' : 'opacity-60'}`}>
+                    {item.name}
+                  </span>
                 </div>
               </Link>
             );
@@ -191,7 +193,9 @@ export default function MainNavigation() {
             <div className={`p-2 rounded-full transition-all ${isActive('/sos') ? 'bg-rose-50 shadow-sm' : 'bg-rose-50/50'}`}>
               <ShieldAlert className="w-6 h-6" />
             </div>
-            {isActive('/sos') && <span className="text-[10px] font-bold tracking-wide">SOS</span>}
+            <span className={`text-[9px] font-bold tracking-wide transition-opacity duration-300 ${isActive('/sos') ? 'opacity-100' : 'opacity-60'}`}>
+              SOS
+            </span>
           </div>
         </Link >
 
@@ -204,7 +208,9 @@ export default function MainNavigation() {
           <div className={`p-2 rounded-full transition-all ${feedbackOpen ? 'bg-indigo-50 shadow-sm' : ''}`}>
             <MessageSquare className="w-6 h-6" />
           </div>
-          {feedbackOpen && <span className="text-[10px] font-bold tracking-wide">Feedback</span>}
+          <span className={`text-[9px] font-bold tracking-wide transition-opacity duration-300 ${feedbackOpen ? 'opacity-100' : 'opacity-60'}`}>
+            Feedback
+          </span>
         </div >
 
         {/* Mobile logout via profile icon */}
@@ -216,7 +222,9 @@ export default function MainNavigation() {
             <div className={`p-2 rounded-full transition-all ${isActive('/settings') ? 'bg-indigo-50 shadow-sm' : ''}`}>
               <User className="w-6 h-6" />
             </div>
-            {isActive('/settings') && <span className="text-[10px] font-bold tracking-wide">Me</span>}
+            <span className={`text-[9px] font-bold tracking-wide transition-opacity duration-300 ${isActive('/settings') ? 'opacity-100' : 'opacity-60'}`}>
+              Me
+            </span>
           </div>
 
           {
