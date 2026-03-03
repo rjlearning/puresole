@@ -201,8 +201,8 @@ export default function VoiceJournal() {
               <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
             </div>
           </div>
-          <h3 className="text-xl font-bold text-slate-800 mb-2">Building Vocal Snapshot...</h3>
-          <p className="text-slate-600">Analyzing your vocal biomarkers and emotional intonation.</p>
+          <h3 className="text-xl font-bold text-slate-800 mb-2">Syncing Neural Resonance...</h3>
+          <p className="text-slate-600">Aligning bio-acoustic markers with forensic emotional intonation.</p>
         </div>
       </div>
     );
@@ -216,7 +216,7 @@ export default function VoiceJournal() {
       {/* Top Nav */}
       <nav className="relative z-40 h-12 sm:h-20 flex items-center justify-center bg-transparent mb-1 sm:mb-4">
         <div className="font-black tracking-widest uppercase text-slate-800 text-[9px] sm:text-xs flex items-center gap-1.5 sm:gap-2 bg-white/40 backdrop-blur-3xl px-4 py-1.5 sm:px-6 sm:py-2.5 rounded-full border border-white/50 shadow-sm">
-          <Mic className="h-3 w-3 sm:h-4 sm:w-4 text-indigo-600" /> Vocal Mirror
+          <Mic className="h-3 w-3 sm:h-4 sm:w-4 text-indigo-600" /> Neural Resonance
         </div>
       </nav>
 
@@ -338,7 +338,7 @@ export default function VoiceJournal() {
                       onClick={() => { setSessionSnapshot(null); queryClient.invalidateQueries({ queryKey: ["/api/voice-entries"] }); }}
                       className="mt-4 sm:mt-6 w-full py-2.5 sm:py-3 rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-all border border-transparent hover:border-white/10"
                     >
-                      Record Another
+                      Initiate New Calibration
                     </button>
 
                   </div>
