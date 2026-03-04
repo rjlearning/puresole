@@ -1,35 +1,24 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-// Create a reusable transporter object using the default SMTP transport
-// This relies on environment variables (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM)
-// which should be configured in your Railway dashboard or local .env file.
-export const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.example.com',
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    },
-});
+// Initialize the Resend client with your API key
+// We use the environment variable if available, otherwise fallback to the provided test key
+const resendApiKey = process.env.RESEND_API_KEY || 're_bmzZgW8V_v4pLQzeyjkVadjhc8dZsecYQ';
+const resend = new Resend(resendApiKey);
 
-export const defaultFromEmail = process.env.SMTP_FROM || '"PureSoul" <hello@puresoul.com>';
+// If you haven't verified a custom domain on Resend yet, you MUST send from onboarding@resend.dev
+export const defaultFromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
 /**
  * Send a welcome email to a new user.
  */
 export async function sendWelcomeEmail(to: string, name: string) {
-    if (!process.env.SMTP_HOST || !process.env.SMTP_USER) {
-        console.warn('⚠️ SMTP credentials not configured. Skipping welcome email to:', to);
-        return false;
-    }
-
     try {
-        const info = await transporter.sendMail({
+        const data = await resend.emails.send({
             from: defaultFromEmail,
-            to,
+            // If you are using the testing domain (onboarding@resend.dev), Resend ONLY allows sending to your own verified email address.
+            // So if you get errors sending to external addresses, you either need to verify a domain, or hardcode the 'to' address here for testing.
+            to: [to],
             subject: "Welcome to PureSoul",
-            text: `Hi ${name},\n\nWelcome to PureSoul. We're excited to support your journey to better self-awareness.\n\nLive well, live long.\n\nThe PureSoul Team`,
             html: `
         <div style="font-family: sans-serif; max-w-xl; margin: 0 auto; padding: 20px; color: #333;">
           <h2 style="color: #4f46e5;">Welcome to PureSoul, ${name}</h2>
@@ -41,10 +30,11 @@ export async function sendWelcomeEmail(to: string, name: string) {
         </div>
       `,
         });
-        console.log("Email sent: %s", info.messageId);
+
+        console.log("Email sent successfully:", data);
         return true;
     } catch (error) {
-        console.error("Failed to send email:", error);
+        console.error("Failed to send email via Resend:", error);
         return false;
     }
 }
