@@ -1314,6 +1314,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin endpoint to test SMTP configuration
+  app.post('/api/admin/test-email', isAuthenticated, async (req: any, res) => {
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    try {
+      const { email } = req.body;
+      const { sendWelcomeEmail } = await import('./email');
+      const success = await sendWelcomeEmail(email, "Admin Tester");
+
+      if (success) {
+        res.json({ success: true, message: "Test email sent successfully" });
+      } else {
+        res.status(500).json({ success: false, message: "SMTP connection failed. Check your environment variables." });
+      }
+    } catch (e: any) {
+      res.status(500).json({ success: false, message: e.message });
+    }
+  });
 
   return httpServer;
 }
