@@ -206,24 +206,34 @@ export function registerMultiAuthRoutes(app: Express) {
   // Google OAuth routes
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     app.get('/api/auth/google', (req, res, next) => {
-      // Determine callback URL dynamically from request to be immune to env misconfig
+      // ULTIMATE ROBUST CALLBACK DETECTION
+      // 1. Prioritize x-forwarded-host (proxy), then fallback to host header
       const host = req.get('x-forwarded-host') || req.get('host');
-      const protocol = req.get('x-forwarded-proto') || req.protocol;
+
+      // 2. Force 'https' in production regardless of headers, as Google requires it
+      const protocol = (process.env.NODE_ENV === 'production') ? 'https' : (req.get('x-forwarded-proto') || req.protocol);
+
+      // 3. Build the absolute callback URL
       const callbackURL = `${protocol}://${host}/api/auth/google/callback`;
 
-      console.log(`[Auth] Dynamic Google Auth Start - Host: ${host}, Proto: ${protocol}, Callback: ${callbackURL}`);
+      console.log(`[GoogleAuth] REQUEST_START: ${protocol}://${host}${req.url}`);
+      console.log(`[GoogleAuth] CALLBACK_URI_GENERATED: ${callbackURL}`);
+      console.log(`[GoogleAuth] HEADERS: host=${req.get('host')}, x-forwarded-host=${req.get('x-forwarded-host')}, x-forwarded-proto=${req.get('x-forwarded-proto')}`);
 
       passport.authenticate('google', {
         scope: ['profile', 'email'],
-        callbackURL: callbackURL
+        callbackURL: callbackURL // This OVERRIDES the strategy default
       } as any)(req, res, next);
     });
 
     app.get('/api/auth/google/callback', (req, res, next) => {
-      // Must also pass the same dynamic callbackURL to the callback handler
+      // Must use the EXACT same dynamic callbackURL logic as the start route
       const host = req.get('x-forwarded-host') || req.get('host');
-      const protocol = req.get('x-forwarded-proto') || req.protocol;
+      const protocol = (process.env.NODE_ENV === 'production') ? 'https' : (req.get('x-forwarded-proto') || req.protocol);
       const callbackURL = `${protocol}://${host}/api/auth/google/callback`;
+
+      console.log(`[GoogleAuth] CALLBACK_REACHED: ${protocol}://${host}${req.url}`);
+      console.log(`[GoogleAuth] CALLBACK_URI_MATCHING: ${callbackURL}`);
 
       passport.authenticate('google', {
         failureRedirect: '/login',
