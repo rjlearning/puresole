@@ -3,7 +3,7 @@ import { Link } from 'wouter';
 import {
     ClipboardCheck, Moon, HeartPulse,
     Users, ChevronRight, Activity, Brain, ShieldCheck, Sparkles, Droplet,
-    Dna, Zap, ArrowRight, ZapOff
+    Dna, Zap, ArrowRight, ZapOff, Mic
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { WellnessHalo } from '@/components/voice/WellnessHalo';
@@ -218,7 +218,7 @@ export default function WomenPage() {
                     </motion.div>
 
                     {/* Recovery - Grid item */}
-                    <motion.div variants={itemVariants} className="lg:col-span-2">
+                    <motion.div variants={itemVariants} className="sm:col-span-2 lg:col-span-3">
                         <Link href="/women/body">
                             <div className="h-full min-h-[180px] rounded-[2.5rem] bg-white border border-teal-100 p-7 flex flex-col cursor-pointer hover:border-teal-300 hover:shadow-xl transition-all shadow-sm">
                                 <div className="bg-teal-50 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 border border-teal-100">
@@ -236,7 +236,7 @@ export default function WomenPage() {
                     </motion.div>
 
                     {/* Metabolic - Dark item */}
-                    <motion.div variants={itemVariants} className="lg:col-span-2">
+                    <motion.div variants={itemVariants} className="sm:col-span-2 lg:col-span-3">
                         <Link href="/women/metabolic">
                             <div className="h-full min-h-[180px] rounded-[2.5rem] bg-slate-900 border border-slate-800 p-7 text-white cursor-pointer hover:scale-[1.02] transition-all shadow-lg overflow-hidden relative group">
                                 <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent" />
@@ -254,13 +254,27 @@ export default function WomenPage() {
                     </motion.div>
 
                     {/* Check-In */}
-                    <motion.div variants={itemVariants} className="sm:col-span-2 lg:col-span-2">
+                    <motion.div variants={itemVariants} className="sm:col-span-2 lg:col-span-3">
                         <Link href="/women/checkin">
                             <div className="h-full min-h-[180px] rounded-[2.5rem] bg-indigo-500 p-7 text-white cursor-pointer hover:bg-slate-800 transition-all shadow-xl flex flex-col justify-between group">
                                 <ClipboardCheck className="w-7 h-7 text-indigo-100 group-hover:text-indigo-400 transition-colors" />
                                 <div>
                                     <h3 className="font-black text-white text-xl tracking-tight leading-tight">Mood Core</h3>
                                     <p className="text-xs text-indigo-200/60 mt-2 uppercase tracking-widest font-bold">Bio-feedback screening</p>
+                                </div>
+                            </div>
+                        </Link>
+                    </motion.div>
+
+                    {/* Voice Insights */}
+                    <motion.div variants={itemVariants} className="sm:col-span-2 lg:col-span-3">
+                        <Link href="/voice-insights">
+                            <div className="h-full min-h-[180px] rounded-[2.5rem] bg-purple-900 border border-purple-800 p-7 text-white cursor-pointer hover:scale-[1.02] transition-all shadow-xl flex flex-col justify-between group relative overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-transparent" />
+                                <Mic className="w-7 h-7 text-purple-300 group-hover:text-purple-100 transition-colors relative z-10" />
+                                <div className="relative z-10">
+                                    <h3 className="font-black text-white text-xl tracking-tight leading-tight">Voice Biomarkers</h3>
+                                    <p className="text-xs text-purple-200/60 mt-2 uppercase tracking-widest font-bold">Vocal Pattern Analysis</p>
                                 </div>
                             </div>
                         </Link>

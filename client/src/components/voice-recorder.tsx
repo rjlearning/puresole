@@ -34,7 +34,7 @@ export function VoiceRecorder({ onSave }: VoiceRecorderProps) {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [waveformBars, setWaveformBars] = useState([20, 40, 30, 50, 35, 45, 25, 55, 30, 40]);
-  
+
   const recorderRef = useRef<RecordRTC | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -53,20 +53,20 @@ export function VoiceRecorder({ onSave }: VoiceRecorderProps) {
     { label: "grateful", emoji: "🙏", color: "from-green-300 to-emerald-400" },
     { label: "worried", emoji: "😰", color: "from-orange-400 to-red-400" }
   ];
-const triggerAnalysis = async (entryId: string) => {
-  try {
-    const response = await fetch(`/api/analysis/process/${entryId}`, {
-      method: 'POST',
-      credentials: 'include'
-    });
-    
-    if (response.ok) {
-      console.log('Analysis started for entry:', entryId);
+  const triggerAnalysis = async (entryId: string) => {
+    try {
+      const response = await fetch(`/api/analysis/process/${entryId}`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        console.log('Analysis started for entry:', entryId);
+      }
+    } catch (error) {
+      console.error('Failed to trigger analysis:', error);
     }
-  } catch (error) {
-    console.error('Failed to trigger analysis:', error);
-  }
-};
+  };
 
   useEffect(() => {
     return () => {
@@ -173,9 +173,9 @@ const triggerAnalysis = async (entryId: string) => {
           console.log("Audio URL created:", url);
 
           // Stop all tracks
-          const stream = recorder.stream;
+          const stream = (recorder as any).stream;
           if (stream) {
-            stream.getTracks().forEach((track) => track.stop());
+            stream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
           }
 
           // Set state updates together
@@ -213,7 +213,7 @@ const triggerAnalysis = async (entryId: string) => {
 
   const togglePause = () => {
     if (!recorderRef.current) return;
-    
+
     if (isPaused) {
       recorderRef.current.resumeRecording();
       timerRef.current = setInterval(() => {
@@ -228,7 +228,7 @@ const triggerAnalysis = async (entryId: string) => {
 
   const playAudio = () => {
     if (!audioRef.current) return;
-    
+
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
@@ -370,7 +370,7 @@ const triggerAnalysis = async (entryId: string) => {
         {isRecording && (
           <div className="absolute inset-0 bg-gradient-animated opacity-10" />
         )}
-        
+
         <div className="relative z-10 space-y-8">
           {/* Waveform Visualizer */}
           <div className="flex items-center justify-center gap-2 h-32">
@@ -576,8 +576,8 @@ const triggerAnalysis = async (entryId: string) => {
                     onClick={() => toggleTag(tag.label)}
                     className={`
                       px-6 py-3 rounded-full font-medium transition-all
-                      ${isSelected 
-                        ? `bg-gradient-to-r ${tag.color} text-white shadow-lg` 
+                      ${isSelected
+                        ? `bg-gradient-to-r ${tag.color} text-white shadow-lg`
                         : 'glass hover:border-primary/30'
                       }
                     `}

@@ -1030,7 +1030,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               metadata: { invoiceId: invoice.id, subscriptionId: (invoice as any).subscription }
             });
 
-            await createAuditLog(userSub.userId, 'payment', invoice.id, event.type, null, { amount: invoice.amount_paid, currency: invoice.currency as string });
+            if (invoice.id && invoice.currency) {
+              await createAuditLog(userSub.userId, 'payment', invoice.id, event.type as string, null, { amount: invoice.amount_paid, currency: invoice.currency });
+            }
           }
           break;
       }
