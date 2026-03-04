@@ -6,7 +6,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Brain, Menu, User, Settings, LogOut, Shield, CreditCard, Crown, HelpCircle, AlertCircle, BarChart3, FileText, Activity, MessageSquare } from "lucide-react";
 import type { User as UserType } from "@shared/schema";
 import { useState } from "react";
-import { FeedbackModal } from "../FeedbackModal";
 // import logo from "..."
 
 // ... (imports)
@@ -14,7 +13,6 @@ import { FeedbackModal } from "../FeedbackModal";
 export default function Header() {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [, setLocation] = useLocation();
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const handleLogin = () => setLocation("/auth");
   const handleLogout = () => {
@@ -149,10 +147,6 @@ export default function Header() {
                           </DropdownMenuItem>
                         </Link>
                       )}
-                      <DropdownMenuItem onClick={() => setFeedbackOpen(true)} className="focus:bg-primary/5 focus:text-primary">
-                        <MessageSquare className="h-4 w-4 mr-2" />
-                        Provide Feedback
-                      </DropdownMenuItem>
                       <DropdownMenuSeparator className="bg-black/5" />
                     </div>
 
@@ -174,10 +168,6 @@ export default function Header() {
                         Contact Us
                       </DropdownMenuItem>
                     </Link>
-                    <DropdownMenuItem onClick={() => setFeedbackOpen(true)} className="focus:bg-primary/5 focus:text-primary">
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      Provide Feedback
-                    </DropdownMenuItem>
                     <DropdownMenuItem disabled className="focus:bg-primary/5 focus:text-primary opacity-50" data-testid="menu-profile">
                       <User className="h-4 w-4 mr-2" />
                       Profile
@@ -216,7 +206,6 @@ export default function Header() {
           </div>
         </nav>
       </div>
-      <FeedbackModal open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </header>
   );
 }

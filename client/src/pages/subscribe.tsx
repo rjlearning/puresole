@@ -26,15 +26,15 @@ const PLANS = [
     iconColor: 'text-indigo-400',
     iconBg: 'bg-indigo-500/10 border-indigo-500/20',
     description: 'Daily wellness tracking & AI insights to build consistent habits.',
-    monthly: 19,
-    annual: 149,
+    monthly: 9,
+    annual: 89,
     highlight: false,
     badge: null,
     cta: 'Start Free Trial',
     features: [
       'Voice biomarker analysis (10/mo)',
+      'AI Companion chat (5 hrs/mo)',
       'Daily check-ins & mood tracking',
-      'AI wellness recommendations',
       'Men\'s & Women\'s health protocols',
       'Sleep & activity tracking',
       'Goal setting & progress reports',
@@ -46,16 +46,16 @@ const PLANS = [
     icon: Zap,
     iconColor: 'text-violet-400',
     iconBg: 'bg-violet-500/10 border-violet-500/20',
-    description: 'Unlimited AI-powered analysis with advanced longevity & identity protocols.',
-    monthly: 39,
-    annual: 299,
+    description: 'Comprehensive AI analysis with advanced longevity & identity protocols.',
+    monthly: 19,
+    annual: 159,
     highlight: true,
-    badge: 'Most Popular',
+    badge: 'Best Value',
     cta: 'Start Free Trial',
     features: [
-      'Unlimited voice biomarker analysis',
+      'Voice biomarker analysis (100/mo)',
+      'AI Companion chat (50 hrs/mo)',
       'Advanced metabolic & longevity panels',
-      'AI Companion (unlimited sessions)',
       'Full Men\'s & Women\'s protocol suite',
       'Postpartum & hormone tracking',
       'Priority support & early features',
@@ -64,8 +64,8 @@ const PLANS = [
 ];
 
 const COMPARISON = [
-  { feature: 'Voice biomarker analysis', core: '10/month', pro: 'Unlimited' },
-  { feature: 'AI Companion sessions', core: '5/month', pro: 'Unlimited' },
+  { feature: 'Voice biomarker analysis', core: '10 sessions/month', pro: '100 sessions/month' },
+  { feature: 'AI Companion chatting', core: '5 hours/month', pro: '50 hours/month' },
   { feature: 'Health assessments', core: '✓', pro: '✓' },
   { feature: 'Men\'s & Women\'s protocols', core: '✓', pro: '✓' },
   { feature: 'Metabolic & longevity panels', core: '—', pro: '✓' },
@@ -245,8 +245,8 @@ export default function Subscribe() {
               <div
                 key={plan.id}
                 className={`relative rounded-[2rem] p-8 border transition-all ${plan.highlight
-                    ? 'bg-gradient-to-br from-indigo-950/80 to-violet-950/80 border-indigo-500/40 shadow-2xl shadow-indigo-900/20'
-                    : 'bg-slate-900/80 border-slate-800'
+                  ? 'bg-gradient-to-br from-indigo-950/80 to-violet-950/80 border-indigo-500/40 shadow-2xl shadow-indigo-900/20'
+                  : 'bg-slate-900/80 border-slate-800'
                   }`}
               >
                 {plan.badge && (
@@ -280,8 +280,8 @@ export default function Subscribe() {
                   onClick={() => handleSelectPlan(plan.id)}
                   disabled={createSubscriptionMutation.isPending || isActive}
                   className={`w-full py-4 rounded-2xl font-black text-sm transition-all mb-6 flex items-center justify-center gap-2 ${plan.highlight
-                      ? 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-lg'
-                      : 'bg-white/5 hover:bg-white/10 border border-white/10 text-white'
+                    ? 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-lg'
+                    : 'bg-white/5 hover:bg-white/10 border border-white/10 text-white'
                     } disabled:opacity-50`}
                 >
                   {createSubscriptionMutation.isPending && selectedPlanId === plan.id

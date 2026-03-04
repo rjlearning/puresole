@@ -294,7 +294,7 @@ const faqs = [
   },
   {
     question: 'How much does PureSoul cost?',
-    answer: 'Basic features are free. Premium features (AI Companion unlimited, therapist collaboration, advanced analytics) are available with a subscription starting at $9.99/month.'
+    answer: 'Basic features are free to try. Premium extended limits (like 100 voice analyses, 50 hours of companion chat, and advanced analytics) are available with a subscription starting at $9.99/month.'
   },
   {
     question: 'Can I use PureSoul without a therapist?',
@@ -410,22 +410,20 @@ export default function HelpCenter() {
               <div className="flex gap-2 mt-3">
                 <button
                   onClick={() => setActiveTab('articles')}
-                  className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-                    activeTab === 'articles'
+                  className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${activeTab === 'articles'
                       ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
                       : 'bg-slate-800 text-gray-400 hover:bg-slate-700'
-                  }`}
+                    }`}
                 >
                   <BookOpen className="w-4 h-4 inline mr-2" />
                   Articles
                 </button>
                 <button
                   onClick={() => setActiveTab('faq')}
-                  className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-                    activeTab === 'faq'
+                  className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${activeTab === 'faq'
                       ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
                       : 'bg-slate-800 text-gray-400 hover:bg-slate-700'
-                  }`}
+                    }`}
                 >
                   <MessageCircle className="w-4 h-4 inline mr-2" />
                   FAQ

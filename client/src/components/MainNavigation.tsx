@@ -18,7 +18,6 @@ import {
   Zap
 } from 'lucide-react';
 import Logo from './Logo';
-import { FeedbackModal } from '@/components/FeedbackModal';
 import { usePhase } from '@/context/PhaseContext';
 
 interface UserProfile {
@@ -33,7 +32,6 @@ export default function MainNavigation() {
   const [location, setLocation] = useLocation();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const isActive = (href: string) => location === href;
 
@@ -114,14 +112,6 @@ export default function MainNavigation() {
             </div>
           </Link>
 
-          <div
-            className={`flex items-center gap-4 px-4 py-3 rounded-[1.5rem] cursor-pointer transition-all duration-300 ${feedbackOpen ? 'bg-white text-indigo-600 shadow-md' : 'text-slate-400 hover:bg-white/40 hover:text-slate-600'}`}
-            onClick={() => setFeedbackOpen(true)}
-          >
-            <MessageSquare className="w-5 h-5" />
-            <span className="font-medium">Provide Feedback</span>
-          </div>
-
           <Link href="/settings">
             <div className={`flex items-center gap-4 px-4 py-3 rounded-[1.5rem] cursor-pointer transition-all duration-300 ${isActive('/settings') ? 'bg-white text-indigo-600 shadow-md' : 'text-slate-400 hover:bg-white/40 hover:text-slate-600'}`}>
               <Settings className="w-5 h-5" />
@@ -195,18 +185,6 @@ export default function MainNavigation() {
           </div>
         </Link >
 
-        {/* Feedback Icon in Mobile Nav */}
-        < div
-          className={`flex flex-col items-center gap-1 transition-all duration-300 cursor-pointer ${feedbackOpen ? 'text-indigo-600 -translate-y-1' : 'text-slate-400'}`
-          }
-          onClick={() => setFeedbackOpen(true)}
-        >
-          <div className={`p-2 rounded-full transition-all ${feedbackOpen ? 'bg-indigo-50 shadow-sm' : ''}`}>
-            <MessageSquare className="w-6 h-6" />
-          </div>
-          {feedbackOpen && <span className="text-[10px] font-bold tracking-wide">Feedback</span>}
-        </div >
-
         {/* Mobile logout via profile icon */}
         < div className="relative" >
           <div
@@ -241,8 +219,6 @@ export default function MainNavigation() {
           }
         </div >
       </nav >
-
-      <FeedbackModal open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </>
   );
 }
