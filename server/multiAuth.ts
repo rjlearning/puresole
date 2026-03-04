@@ -32,7 +32,8 @@ function configureGoogleAuth() {
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID!,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    callbackURL: callbackURL
+    callbackURL: callbackURL,
+    proxy: true // Trust reverse proxy for correctly building the absolute URL (HTTPS)
   }, async (accessToken, refreshToken, profile, done) => {
     try {
       // Check if this Google account is already linked
