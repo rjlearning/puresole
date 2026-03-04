@@ -186,7 +186,7 @@ export default function PhaseSelect() {
                                             <div className="text-slate-500 text-sm font-medium">{chosenPhase.nickname}</div>
                                         </div>
                                         {chosenPhase.free ? (
-                                            <span className="ml-auto px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-black">Free forever</span>
+                                            <span className="ml-auto px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-black">Limited Time</span>
                                         ) : (
                                             <span className="ml-auto px-3 py-1 rounded-full bg-violet-100 text-violet-700 text-xs font-black flex items-center gap-1"><Lock className="w-3 h-3" /> Premium</span>
                                         )}

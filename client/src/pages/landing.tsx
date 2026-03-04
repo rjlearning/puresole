@@ -387,7 +387,7 @@ export default function Landing() {
                 </div>
 
                 {/* Reaction Card */}
-                <div className={`w-full md:flex-1 ${feature.reactionBg} border border-indigo-100 p-6 md:p-8 rounded-[2rem] relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] shadow-sm z-10`}>
+                <div className={`w-full md:flex-1 ${feature.reactionBg} border border-indigo-100 p-6 md:p-8 rounded-[2rem] relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] shadow-sm z-10 sm:ml-4 md:ml-0`}>
                   {/* Glowing background for reaction */}
                   <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/10 blur-[50px] rounded-full"></div>
 
@@ -473,7 +473,7 @@ export default function Landing() {
       <section className="py-20 text-center px-6 border-t border-white/20 bg-white/30 backdrop-blur-sm">
         <p className="text-3xl font-semibold text-slate-800 mb-12 tracking-tight">Trusted by 10,000+ souls.</p>
         <div className="flex flex-wrap justify-center gap-6">
-          {["Privacy First", "End-to-End Encrypted", "Free Forever"].map((tag) => (
+          {["Privacy First", "End-to-End Encrypted"].map((tag) => (
             <span key={tag} className="px-6 py-3 rounded-full bg-white/50 border border-white/60 font-medium text-slate-600 shadow-sm cursor-default">
               {tag}
             </span>
