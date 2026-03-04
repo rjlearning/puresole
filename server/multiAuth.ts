@@ -23,7 +23,24 @@ function configureGoogleAuth() {
     return;
   }
 
-  const callbackURL = "/api/auth/google/callback";
+  let callbackURL = "/api/auth/google/callback";
+
+  if (process.env.GOOGLE_CALLBACK_URL) {
+    callbackURL = process.env.GOOGLE_CALLBACK_URL;
+  } else if (process.env.NODE_ENV === "production") {
+    // In production, prioritize the production domain and ignore "localhost" settings
+    const productionUrl = (process.env.APP_URL && !process.env.APP_URL.includes("localhost"))
+      ? process.env.APP_URL
+      : process.env.RAILWAY_PUBLIC_DOMAIN
+        ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+        : null;
+
+    if (productionUrl) {
+      callbackURL = `${productionUrl.replace(/\/$/, "")}/api/auth/google/callback`;
+    }
+  } else if (process.env.APP_URL) {
+    callbackURL = `${process.env.APP_URL.replace(/\/$/, "")}/api/auth/google/callback`;
+  }
 
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID!,
