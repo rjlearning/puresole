@@ -65,6 +65,18 @@ const MenBioscanPage = lazy(() => import('./pages/men-bioscan'));
 const MenLongevityPage = lazy(() => import('./pages/men-longevity'));
 const MenIdentityPage = lazy(() => import('./pages/men-identity'));
 
+// ── Legal & Compliance pages ──
+const PrivacyNoticePage = lazy(() => import('./pages/legal/privacy'));
+const TermsOfServicePage = lazy(() => import('./pages/legal/terms'));
+const InformedConsentPage = lazy(() => import('./pages/legal/informed-consent'));
+const CookiePreferencesPage = lazy(() => import('./pages/legal/cookies'));
+const NondiscriminationPage = lazy(() => import('./pages/legal/nondiscrimination'));
+const AccessibilityPage = lazy(() => import('./pages/legal/accessibility'));
+const NoticePrivacyPracticesPage = lazy(() => import('./pages/legal/notice-of-privacy-practices'));
+const ContactUsPage = lazy(() => import('./pages/contact'));
+
+import Footer from './components/layout/footer';
+
 import './styles/airtable.css';
 
 // Component to scroll to top on route change
@@ -336,6 +348,15 @@ function Router() {
             <Route path="/">
               {isAuthenticated ? <PhaseDashboard /> : <Landing />}
             </Route>
+            {/* ── Legal & Compliance routes (public) ── */}
+            <Route path="/legal/privacy"><PrivacyNoticePage /></Route>
+            <Route path="/legal/terms"><TermsOfServicePage /></Route>
+            <Route path="/legal/informed-consent"><InformedConsentPage /></Route>
+            <Route path="/legal/cookies"><CookiePreferencesPage /></Route>
+            <Route path="/legal/nondiscrimination"><NondiscriminationPage /></Route>
+            <Route path="/legal/accessibility"><AccessibilityPage /></Route>
+            <Route path="/legal/notice-of-privacy-practices"><NoticePrivacyPracticesPage /></Route>
+            <Route path="/contact"><ContactUsPage /></Route>
             {/* Catch-all 404 */}
             <Route>
               <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
@@ -348,6 +369,7 @@ function Router() {
             </Route>
           </Switch>
         </Suspense>
+        <Footer />
       </div>
     </>
   );
