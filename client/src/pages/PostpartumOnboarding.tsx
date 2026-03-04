@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const STEPS = [
     { id: 'welcome', title: 'Welcome', icon: Sparkles },
-    { id: 'recovery', title: 'Recovery', icon: Baby },
+    { id: 'context', title: 'Context', icon: ClipboardList },
     { id: 'biomarkers', title: 'Biomarkers', icon: HeartPulse },
     { id: 'wearables', title: 'Integrations', icon: Activity },
     { id: 'complete', title: 'Ready', icon: CheckCircle2 },
@@ -31,9 +31,9 @@ export default function PostpartumOnboarding() {
     const { toast } = useToast();
 
     const [formData, setFormData] = useState({
-        deliveryDate: "",
-        deliveryType: "vaginal",
-        breastfeeding: "yes",
+        lifePhase: "menstruating",
+        cycleLength: "28",
+        primaryGoal: "energy",
         symptoms: [] as string[],
         biomarkers: {
             ferritin: "",
@@ -102,11 +102,11 @@ export default function PostpartumOnboarding() {
                 <div className="min-h-[400px]">
                     {step === 0 && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <h2 className="text-3xl font-bold text-slate-900 mb-4 font-serif">Welcome to Precision Recovery</h2>
+                            <h2 className="text-3xl font-bold text-slate-900 mb-4 font-serif">Welcome to Precision Health</h2>
                             <p className="text-slate-600 mb-8 leading-relaxed">
-                                We're going to build a recovery protocol designed specifically for your biology.
-                                By understanding your biomarkers and wearable data, we can personalize your nutrition
-                                and lifestyle for optimal postpartum health.
+                                We're going to build a health protocol designed specifically for your unique biology.
+                                By understanding your current life phase, biomarkers, and wearable data, we can personalize your nutrition
+                                and lifestyle for optimal vitality.
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                                 <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100">
@@ -129,46 +129,67 @@ export default function PostpartumOnboarding() {
 
                     {step === 1 && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <h2 className="text-2xl font-bold text-slate-900 mb-6">Your Recovery Context</h2>
+                            <h2 className="text-2xl font-bold text-slate-900 mb-6">Your Health Context</h2>
 
                             <div className="space-y-6">
                                 <div>
-                                    <Label className="text-slate-700 font-bold mb-2 block">Delivery Date</Label>
-                                    <Input
-                                        type="date"
-                                        className="h-12 rounded-xl"
-                                        value={formData.deliveryDate}
-                                        onChange={(e) => setFormData({ ...formData, deliveryDate: e.target.value })}
-                                    />
-                                </div>
-
-                                <div>
-                                    <Label className="text-slate-700 font-bold mb-4 block">Delivery Type</Label>
-                                    <RadioGroup value={formData.deliveryType} onValueChange={(val) => setFormData({ ...formData, deliveryType: val })} className="grid grid-cols-2 gap-4">
-                                        <div className={`cursor-pointer border-2 p-4 rounded-2xl transition-all ${formData.deliveryType === 'vaginal' ? 'border-rose-500 bg-rose-50' : 'border-slate-100'}`}>
-                                            <RadioGroupItem value="vaginal" id="vaginal" className="sr-only" />
-                                            <Label htmlFor="vaginal" className="cursor-pointer font-bold block">Vaginal</Label>
+                                    <Label className="text-slate-700 font-bold mb-4 block">Current Life Phase</Label>
+                                    <RadioGroup value={formData.lifePhase} onValueChange={(val) => setFormData({ ...formData, lifePhase: val })} className="grid grid-cols-2 gap-4">
+                                        <div className={`cursor-pointer border-2 p-4 rounded-2xl transition-all ${formData.lifePhase === 'menstruating' ? 'border-rose-500 bg-rose-50' : 'border-slate-100'}`}>
+                                            <RadioGroupItem value="menstruating" id="menstruating" className="sr-only" />
+                                            <Label htmlFor="menstruating" className="cursor-pointer font-bold block">Menstruating</Label>
                                         </div>
-                                        <div className={`cursor-pointer border-2 p-4 rounded-2xl transition-all ${formData.deliveryType === 'c-section' ? 'border-rose-500 bg-rose-50' : 'border-slate-100'}`}>
-                                            <RadioGroupItem value="c-section" id="c-section" className="sr-only" />
-                                            <Label htmlFor="c-section" className="cursor-pointer font-bold block">C-Section</Label>
+                                        <div className={`cursor-pointer border-2 p-4 rounded-2xl transition-all ${formData.lifePhase === 'perimenopause' ? 'border-rose-500 bg-rose-50' : 'border-slate-100'}`}>
+                                            <RadioGroupItem value="perimenopause" id="perimenopause" className="sr-only" />
+                                            <Label htmlFor="perimenopause" className="cursor-pointer font-bold block">Perimenopause</Label>
+                                        </div>
+                                        <div className={`cursor-pointer border-2 p-4 rounded-2xl transition-all ${formData.lifePhase === 'menopause' ? 'border-rose-500 bg-rose-50' : 'border-slate-100'}`}>
+                                            <RadioGroupItem value="menopause" id="menopause" className="sr-only" />
+                                            <Label htmlFor="menopause" className="cursor-pointer font-bold block">Postmenopause</Label>
+                                        </div>
+                                        <div className={`cursor-pointer border-2 p-4 rounded-2xl transition-all ${formData.lifePhase === 'postpartum' ? 'border-rose-500 bg-rose-50' : 'border-slate-100'}`}>
+                                            <RadioGroupItem value="postpartum" id="postpartum" className="sr-only" />
+                                            <Label htmlFor="postpartum" className="cursor-pointer font-bold block">Postpartum</Label>
                                         </div>
                                     </RadioGroup>
                                 </div>
 
+                                {formData.lifePhase === 'menstruating' && (
+                                    <div className="animate-in fade-in duration-300">
+                                        <Label className="text-slate-700 font-bold mb-2 block">Typical Cycle Length (Days)</Label>
+                                        <Input
+                                            type="number"
+                                            className="h-12 rounded-xl border-slate-200"
+                                            value={formData.cycleLength}
+                                            onChange={(e) => setFormData({ ...formData, cycleLength: e.target.value })}
+                                            placeholder="e.g. 28"
+                                            min="21"
+                                            max="45"
+                                        />
+                                        <p className="text-[10px] text-slate-400 mt-2">This helps us sync your nutrition to your hormonal fluctuations.</p>
+                                    </div>
+                                )}
+
                                 <div>
-                                    <Label className="text-slate-700 font-bold mb-4 block">Are you currently breastfeeding?</Label>
-                                    <RadioGroup value={formData.breastfeeding} onValueChange={(val) => setFormData({ ...formData, breastfeeding: val })} className="grid grid-cols-2 gap-4">
-                                        <div className={`cursor-pointer border-2 p-4 rounded-2xl transition-all ${formData.breastfeeding === 'yes' ? 'border-rose-500 bg-rose-50' : 'border-slate-100'}`}>
-                                            <RadioGroupItem value="yes" id="bf-yes" className="sr-only" />
-                                            <Label htmlFor="bf-yes" className="cursor-pointer font-bold block">Yes</Label>
+                                    <Label className="text-slate-700 font-bold mb-4 block">Primary Health Goal</Label>
+                                    <RadioGroup value={formData.primaryGoal} onValueChange={(val) => setFormData({ ...formData, primaryGoal: val })} className="grid grid-cols-2 gap-4">
+                                        <div className={`cursor-pointer border-2 p-4 rounded-2xl transition-all ${formData.primaryGoal === 'energy' ? 'border-rose-500 bg-rose-50' : 'border-slate-100'}`}>
+                                            <RadioGroupItem value="energy" id="goal-energy" className="sr-only" />
+                                            <Label htmlFor="goal-energy" className="cursor-pointer font-bold block text-sm">Boost Energy</Label>
                                         </div>
-                                        <div className={`cursor-pointer border-2 p-4 rounded-2xl transition-all ${formData.breastfeeding === 'no' ? 'border-rose-500 bg-rose-50' : 'border-slate-100'}`}>
-                                            <RadioGroupItem value="no" id="bf-no" className="sr-only" />
-                                            <Label htmlFor="bf-no" className="cursor-pointer font-bold block">No</Label>
+                                        <div className={`cursor-pointer border-2 p-4 rounded-2xl transition-all ${formData.primaryGoal === 'hormones' ? 'border-rose-500 bg-rose-50' : 'border-slate-100'}`}>
+                                            <RadioGroupItem value="hormones" id="goal-hormones" className="sr-only" />
+                                            <Label htmlFor="goal-hormones" className="cursor-pointer font-bold block text-sm">Balance Hormones</Label>
+                                        </div>
+                                        <div className={`cursor-pointer border-2 p-4 rounded-2xl transition-all ${formData.primaryGoal === 'metabolism' ? 'border-rose-500 bg-rose-50' : 'border-slate-100'}`}>
+                                            <RadioGroupItem value="metabolism" id="goal-metabolism" className="sr-only" />
+                                            <Label htmlFor="goal-metabolism" className="cursor-pointer font-bold block text-sm">Support Metabolism</Label>
+                                        </div>
+                                        <div className={`cursor-pointer border-2 p-4 rounded-2xl transition-all ${formData.primaryGoal === 'recovery' ? 'border-rose-500 bg-rose-50' : 'border-slate-100'}`}>
+                                            <RadioGroupItem value="recovery" id="goal-recovery" className="sr-only" />
+                                            <Label htmlFor="goal-recovery" className="cursor-pointer font-bold block text-sm">Postpartum Recovery</Label>
                                         </div>
                                     </RadioGroup>
-                                    <p className="text-[10px] text-slate-400 mt-2">This significantly affects your caloric and micronutrient needs.</p>
                                 </div>
                             </div>
 
@@ -296,7 +317,7 @@ export default function PostpartumOnboarding() {
                             </div>
                             <h2 className="text-3xl font-bold text-slate-900 mb-4 font-serif">You're All Set!</h2>
                             <p className="text-slate-600 mb-8 leading-relaxed max-w-sm mx-auto">
-                                Your biomarker data and recovery context have been ingested.
+                                Your biomarker data and health context have been ingested.
                                 Our AI engine is now generating your first Weekly Precision Protocol.
                             </p>
 
@@ -319,7 +340,7 @@ export default function PostpartumOnboarding() {
                             </div>
 
                             <Button onClick={handleComplete} className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-lg shadow-indigo-200 transition-all hover:scale-[1.02]">
-                                Go to Recovery Dashboard
+                                Go to Health Dashboard
                             </Button>
                         </div>
                     )}

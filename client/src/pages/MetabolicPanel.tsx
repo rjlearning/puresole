@@ -2,8 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import {
     HeartPulse,
-    Activity,
     ChevronRight,
+    ChevronLeft,
     Info,
     History,
     TrendingDown,
@@ -64,13 +64,22 @@ export default function MetabolicPanel() {
 
     return (
         <div className="container mx-auto p-6 font-sans">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <div className="mb-4">
+                <Link href="/women">
+                    <Button variant="ghost" size="sm" className="text-slate-500 hover:text-rose-500 hover:bg-rose-50 -ml-2 h-8">
+                        <ChevronLeft className="w-4 h-4 mr-1" />
+                        Back to Hub
+                    </Button>
+                </Link>
+            </div>
+
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900 font-serif">Metabolic Panel</h1>
-                    <p className="text-slate-500">Biomarker-driven precision recovery tracking.</p>
+                    <p className="text-slate-500">Biomarker-driven precision health tracking.</p>
                 </div>
 
-                <div className="flex gap-4 items-center">
+                <div className="flex flex-wrap gap-4 items-center w-full lg:w-auto">
                     {analysis?.recoveryScore && (
                         <Card className="px-5 py-3 border-none shadow-md bg-white flex items-center gap-3">
                             <div className="relative w-10 h-10 flex items-center justify-center">
