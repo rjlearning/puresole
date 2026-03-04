@@ -34,9 +34,11 @@ interface DashboardData {
 // ─── Recommendations engine ───────────────────────────────────────────────────
 type Rec = { icon: React.ComponentType<{ className?: string }>; title: string; body: string; href?: string; tag: string; tagColor: string };
 
-function buildRecommendations(data: DashboardData): Rec[] {
+function buildRecommendations(data: DashboardData, user: any): Rec[] {
   const recs: Rec[] = [];
   const { avg_wellness, current_trend } = data.stats;
+
+  const isMale = user?.gender === 'male';
 
   if (current_trend === 'declining') {
     recs.push({
@@ -79,8 +81,8 @@ function buildRecommendations(data: DashboardData): Rec[] {
     recs.push({
       icon: Heart,
       title: 'Connect with support',
-      body: 'Consistent low-wellness patterns are worth sharing with someone you trust — a friend, therapist, or the Women\'s Companion in PureSoul.',
-      href: '/women/companion',
+      body: `Consistent low-wellness patterns are worth sharing with someone you trust — a friend, therapist, or the AI Companion in PureSoul.`,
+      href: isMale ? '/ai-companion' : '/women/companion',
       tag: 'Emotional',
       tagColor: 'bg-pink-500/10 text-pink-400 border border-pink-500/20',
     });
@@ -224,7 +226,10 @@ function RecCard({ rec }: { rec: Rec }) {
 }
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
+import { useAuth } from "@/hooks/useAuth";
+
 export default function VoiceAnalysisDashboard() {
+  const { user } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -271,7 +276,7 @@ export default function VoiceAnalysisDashboard() {
     );
   }
 
-  const recs = buildRecommendations(data);
+  const recs = buildRecommendations(data, user);
   const latestBiomarkers = data.recent_analyses?.length > 0 ? data.recent_analyses[0].biomarkers : null;
 
   return (
