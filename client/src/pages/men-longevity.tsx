@@ -34,12 +34,6 @@ export default function MenLongevityPage() {
             <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-500/5 blur-[150px] rounded-full -mr-64 -mt-32 pointer-events-none" />
 
             <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20">
-                <Link href="/men">
-                    <Button variant="ghost" size="sm" className="mb-8 rounded-full text-slate-400 hover:text-white hover:bg-white/5">
-                        <ChevronLeft className="w-4 h-4 mr-1" /> Back to Evolution Hub
-                    </Button>
-                </Link>
-
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-16 gap-8">
                     <div>
                         <div className="flex items-center gap-4 mb-3">

@@ -88,12 +88,6 @@ export default function MenProtocol() {
             <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-indigo-600/5 blur-[150px] rounded-full pointer-events-none" />
 
             <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 relative z-10">
-                <Link href="/men/metabolic">
-                    <Button variant="ghost" size="sm" className="mb-8 rounded-full text-slate-400 hover:text-white hover:bg-white/10">
-                        <ChevronLeft className="w-4 h-4 mr-1" /> Back to Metabolic Cell
-                    </Button>
-                </Link>
-
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-16 gap-8">
                     <div className="space-y-3">
                         <div className="flex items-center gap-3">
