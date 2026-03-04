@@ -27,10 +27,8 @@ export default function Footer() {
 
                 {/* Disclaimer */}
                 <p className="text-[11px] text-slate-500 leading-relaxed max-w-3xl mb-5">
-                    PureSoul provides AI-assisted wellness insights for informational and personal support purposes only.
-                    It is not a licensed healthcare provider and does not offer medical diagnosis, clinical treatment,
-                    or professional mental health services. Always consult a qualified healthcare professional for
-                    medical decisions. If you are experiencing a mental health emergency, call{' '}
+                    <span className="text-slate-400 font-bold uppercase tracking-tighter mr-2">Medical Disclaimer:</span>
+                    PureSoul is a self-growth and wellness platform. Our AI insights are for informational purposes only and do not constitute medical advice, clinical therapy, or professional diagnosis. Always seek the advice of a qualified healthcare provider for any medical or mental health condition. If you are experiencing a mental health emergency, call{' '}
                     <a href="tel:988" className="text-indigo-400 hover:text-indigo-300 transition-colors">988</a>{' '}
                     (Suicide &amp; Crisis Lifeline) or{' '}
                     <a href="tel:911" className="text-rose-400 hover:text-rose-300 transition-colors">911</a>.
