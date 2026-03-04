@@ -340,7 +340,7 @@ export default function Landing() {
                     <div className="w-5 h-5 md:w-8 md:h-8 rounded-full bg-slate-900 flex items-center justify-center text-white text-[8px] md:text-[10px] font-black italic">0{idx + 1}</div>
                     <Badge variant="secondary" className="hidden md:inline-flex bg-slate-100 text-slate-400 border-none font-black tracking-widest uppercase text-[9px]">Action</Badge>
                   </div>
-                  <h3 className="text-[9px] md:text-2xl font-black text-slate-800 leading-tight text-center md:text-left break-words max-w-[75px] md:max-w-none hyphens-none">{feature.action}</h3>
+                  <h3 className="text-[8.5px] md:text-2xl font-black text-slate-800 leading-tight text-center md:text-left max-w-[80px] md:max-w-none hyphens-none">{feature.action}</h3>
                   <p className="hidden md:block text-base text-slate-500 font-medium leading-relaxed">{feature.actionDesc}</p>
                 </div>
 
