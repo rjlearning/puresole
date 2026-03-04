@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'wouter';
 import {
   Loader, Mic, Heart, TrendingUp, Clock, TrendingDown,
   Minus, Lightbulb, Zap, Moon, Wind, BookOpen,
@@ -300,7 +301,9 @@ export default function VoiceAnalysisDashboard() {
           </div>
 
           <div className="flex gap-3">
-            <button className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-lg shadow-indigo-600/20 active:scale-95">Record New Sample</button>
+            <Link href="/voice-journal">
+              <button className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-lg shadow-indigo-600/20 active:scale-95">Record New Sample</button>
+            </Link>
             <button className="p-3 bg-slate-900 border border-slate-800 text-slate-400 rounded-2xl hover:text-white transition-colors"><Settings className="w-5 h-5" /></button>
           </div>
         </div>
