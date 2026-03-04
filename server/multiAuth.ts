@@ -320,6 +320,11 @@ export function registerMultiAuthRoutes(app: Express) {
         lastName
       });
 
+      // Fire off a welcome email asynchronously
+      import('./email').then(({ sendWelcomeEmail }) => {
+        sendWelcomeEmail(email, user.firstName || 'User').catch(console.error);
+      });
+
       // Create auth provider record
       await storage.createAuthProvider({
         userId: user.id,
