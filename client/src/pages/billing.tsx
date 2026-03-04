@@ -7,17 +7,20 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { 
-  Calendar, 
-  CreditCard, 
-  DollarSign, 
-  Download, 
+import { useState } from "react";
+import RetentionModal from "@/components/billing/RetentionModal";
+import {
+  Calendar,
+  CreditCard,
+  DollarSign,
+  Download,
   AlertTriangle,
   CheckCircle,
   Clock,
-  XCircle
+  XCircle,
+  Sparkles
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { useEffect } from "react";
 import { isUnauthorizedError } from "@/lib/authUtils";
 
@@ -146,10 +149,11 @@ export default function Billing() {
     },
   });
 
+  const [showRetentionModal, setShowRetentionModal] = useState(false);
+
   const handleCancelSubscription = () => {
-    if (confirm("Are you sure you want to cancel your subscription? You'll continue to have access until your current billing period ends.")) {
-      cancelSubscriptionMutation.mutate();
-    }
+    // Show retention modal instead of boring confirm()
+    setShowRetentionModal(true);
   };
 
   if (authLoading || subscriptionLoading) {
@@ -165,13 +169,35 @@ export default function Billing() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
+      {showRetentionModal && subscription && (
+        <RetentionModal
+          subscriptionId={subscription.id}
+          onKeptSubscription={() => { setShowRetentionModal(false); queryClient.invalidateQueries({ queryKey: ['/api/subscription'] }); }}
+          onConfirmedCancel={() => { setShowRetentionModal(false); queryClient.invalidateQueries({ queryKey: ['/api/subscription'] }); }}
+          onClose={() => setShowRetentionModal(false)}
+        />
+      )}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Billing & Subscription</h1>
-        <p className="text-muted-foreground mt-2">
-          Manage your subscription and view billing history
-        </p>
+        <p className="text-muted-foreground mt-2">Manage your subscription and view billing history</p>
       </div>
-
+      {subscription?.status === 'trialing' && (
+        <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-indigo-950/60 to-violet-950/60 border border-indigo-500/30 flex items-center gap-4">
+          <div className="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Sparkles className="h-5 w-5 text-indigo-400" />
+          </div>
+          <div className="flex-1">
+            <p className="text-white font-bold text-sm">You're on a free trial</p>
+            <p className="text-indigo-300 text-xs">
+              {differenceInDays(new Date(subscription.currentPeriodEnd), new Date())} days remaining
+              &mdash; billing starts {format(new Date(subscription.currentPeriodEnd), 'MMM d, yyyy')}
+            </p>
+          </div>
+          <Button size="sm" onClick={() => setLocation('/subscribe')} className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded-xl">
+            Upgrade Now
+          </Button>
+        </div>
+      )}
       {/* Current Subscription */}
       <Card className="mb-8">
         <CardHeader>
@@ -212,8 +238,8 @@ export default function Billing() {
                   <div>
                     <p className="text-sm font-medium">Next Billing Date</p>
                     <p className="text-sm text-muted-foreground">
-                      {subscription.cancelAtPeriodEnd 
-                        ? "Will not renew" 
+                      {subscription.cancelAtPeriodEnd
+                        ? "Will not renew"
                         : format(new Date(subscription.currentPeriodEnd), 'MMM d, yyyy')
                       }
                     </p>
@@ -225,7 +251,7 @@ export default function Billing() {
                 <Alert>
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
-                    Your subscription is set to cancel on {format(new Date(subscription.currentPeriodEnd), 'MMM d, yyyy')}. 
+                    Your subscription is set to cancel on {format(new Date(subscription.currentPeriodEnd), 'MMM d, yyyy')}.
                     You'll continue to have access until then.
                   </AlertDescription>
                 </Alert>

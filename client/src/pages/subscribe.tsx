@@ -1,381 +1,354 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Crown, Zap, Shield, ArrowLeft } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "wouter";
+import { useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import { useLocation, Link } from 'wouter';
+import { useMutation as _useMutation } from '@tanstack/react-query';
+import {
+  CheckCircle2, Zap, Star, ArrowLeft, Clock, Shield,
+  Brain, Mic, Heart, TrendingUp, ChevronRight, Loader2,
+  BarChart3, Activity
+} from 'lucide-react';
 
-// Make sure to call `loadStripe` outside of a component's render to avoid
-// recreating the `Stripe` object on every render.
-const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY 
+const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY
   ? loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
   : null;
 
-interface SubscriptionPlan {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  type: string;
-  interval: string;
-  features: string[];
-  stripePriceId: string;
-  isActive: boolean;
-  currency: string;
-  assessmentsPerMonth: number | null;
-}
+// ── Pricing data ──────────────────────────────────────────────────────────────
+const PLANS = [
+  {
+    id: 'core',
+    name: 'Core',
+    icon: Heart,
+    iconColor: 'text-indigo-400',
+    iconBg: 'bg-indigo-500/10 border-indigo-500/20',
+    description: 'Daily wellness tracking & AI insights to build consistent habits.',
+    monthly: 19,
+    annual: 149,
+    highlight: false,
+    badge: null,
+    cta: 'Start Free Trial',
+    features: [
+      'Voice biomarker analysis (10/mo)',
+      'Daily check-ins & mood tracking',
+      'AI wellness recommendations',
+      'Men\'s & Women\'s health protocols',
+      'Sleep & activity tracking',
+      'Goal setting & progress reports',
+    ],
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    icon: Zap,
+    iconColor: 'text-violet-400',
+    iconBg: 'bg-violet-500/10 border-violet-500/20',
+    description: 'Unlimited AI-powered analysis with advanced longevity & identity protocols.',
+    monthly: 39,
+    annual: 299,
+    highlight: true,
+    badge: 'Most Popular',
+    cta: 'Start Free Trial',
+    features: [
+      'Unlimited voice biomarker analysis',
+      'Advanced metabolic & longevity panels',
+      'AI Companion (unlimited sessions)',
+      'Full Men\'s & Women\'s protocol suite',
+      'Postpartum & hormone tracking',
+      'Priority support & early features',
+    ],
+  },
+];
 
-interface UserSubscription {
-  id: string;
-  planId: string;
-  status: string;
-  currentPeriodStart: string;
-  currentPeriodEnd: string;
-  cancelAtPeriodEnd: boolean;
-}
+const COMPARISON = [
+  { feature: 'Voice biomarker analysis', core: '10/month', pro: 'Unlimited' },
+  { feature: 'AI Companion sessions', core: '5/month', pro: 'Unlimited' },
+  { feature: 'Health assessments', core: '✓', pro: '✓' },
+  { feature: 'Men\'s & Women\'s protocols', core: '✓', pro: '✓' },
+  { feature: 'Metabolic & longevity panels', core: '—', pro: '✓' },
+  { feature: 'Postpartum tracking', core: '—', pro: '✓' },
+  { feature: 'Priority support', core: '—', pro: '✓' },
+  { feature: 'Early access features', core: '—', pro: '✓' },
+];
 
-const PlanIcon = ({ type }: { type: string }) => {
-  switch (type) {
-    case 'basic':
-      return <CheckCircle className="h-6 w-6 text-blue-500" />;
-    case 'professional':
-      return <Zap className="h-6 w-6 text-purple-500" />;
-    case 'enterprise':
-      return <Crown className="h-6 w-6 text-gold-500" />;
-    default:
-      return <Shield className="h-6 w-6 text-gray-500" />;
-  }
-};
-
-const CheckoutForm = ({ planId, onSuccess }: { planId: string; onSuccess: () => void }) => {
+// ── Checkout form ─────────────────────────────────────────────────────────────
+function CheckoutForm({ planName, onSuccess }: { planName: string; onSuccess: () => void }) {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [processing, setProcessing] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsProcessing(true);
-
-    if (!stripe || !elements) {
-      setIsProcessing(false);
-      return;
-    }
-
+    if (!stripe || !elements) return;
+    setProcessing(true);
     const { error } = await stripe.confirmPayment({
       elements,
-      confirmParams: {
-        return_url: window.location.origin + '/dashboard',
-      },
+      confirmParams: { return_url: window.location.origin + '/billing' },
     });
-
     if (error) {
-      toast({
-        title: "Payment Failed",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: 'Payment failed', description: error.message, variant: 'destructive' });
     } else {
-      toast({
-        title: "Payment Successful",
-        description: "Your subscription is now active!",
-      });
+      toast({ title: '🎉 Welcome to PureSoul!', description: 'Your trial has started. Enjoy full access.' });
       onSuccess();
     }
-    setIsProcessing(false);
+    setProcessing(false);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <PaymentElement />
-      <Button 
-        type="submit" 
-        className="w-full" 
-        disabled={!stripe || isProcessing}
-        data-testid="button-submit-payment"
+      <button
+        type="submit"
+        disabled={!stripe || processing}
+        className="w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-black text-sm rounded-2xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
       >
-        {isProcessing ? "Processing..." : "Subscribe Now"}
-      </Button>
+        {processing ? <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</> : `Start 14-Day Free Trial — ${planName}`}
+      </button>
+      <p className="text-center text-xs text-slate-500">No charge for 14 days. Cancel anytime before trial ends.</p>
     </form>
   );
-};
+}
 
+// ── Main component ─────────────────────────────────────────────────────────────
 export default function Subscribe() {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly');
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
 
-  // Fetch subscription plans
-  const { data: plans = [], isLoading: plansLoading } = useQuery<SubscriptionPlan[]>({
-    queryKey: ['/api/subscription-plans'],
-    enabled: true,
-  });
-
-  // Fetch current user subscription
-  const { data: currentSubscription } = useQuery<UserSubscription | null>({
+  const { data: currentSubscription } = useQuery<any>({
     queryKey: ['/api/subscription'],
     enabled: isAuthenticated,
   });
 
   const createSubscriptionMutation = useMutation({
     mutationFn: async (planId: string) => {
-      const response = await apiRequest("POST", "/api/create-subscription", { planId });
-      return response.json();
+      const res = await apiRequest('POST', '/api/create-subscription', { planId, billing });
+      return res.json();
     },
     onSuccess: (data) => {
       setClientSecret(data.clientSecret);
       queryClient.invalidateQueries({ queryKey: ['/api/subscription'] });
     },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create subscription",
-        variant: "destructive",
-      });
+    onError: (err: any) => {
+      toast({ title: 'Error', description: err.message || 'Could not initiate trial', variant: 'destructive' });
     },
   });
 
-  const handleSelectPlan = async (planId: string) => {
+  const handleSelectPlan = (planId: string) => {
     if (!isAuthenticated) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to subscribe to a plan",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 1500);
+      toast({ title: 'Sign in required', description: 'Create a free account first to start your trial.', variant: 'destructive' });
+      setTimeout(() => { window.location.href = '/auth'; }, 1200);
       return;
     }
-
-    setSelectedPlan(planId);
+    setSelectedPlanId(planId);
     createSubscriptionMutation.mutate(planId);
   };
 
-  const handlePaymentSuccess = () => {
-    setClientSecret(null);
-    setSelectedPlan(null);
-    queryClient.invalidateQueries({ queryKey: ['/api/subscription'] });
-    setLocation('/dashboard');
-  };
-
-  if (authLoading || plansLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
-          <p className="mt-4 text-muted-foreground">Loading subscription plans...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show payment form if client secret is available
+  // Show payment form
   if (clientSecret) {
-    const selectedPlanData = plans.find((plan: SubscriptionPlan) => plan.id === selectedPlan);
-    
-    // Check if Stripe is configured
+    const plan = PLANS.find(p => p.id === selectedPlanId)!;
     if (!stripePromise) {
       return (
-        <div className="container mx-auto px-4 py-8 max-w-md">
-          <Card>
-            <CardHeader>
-              <CardTitle>Payment Configuration Required</CardTitle>
-              <CardDescription>
-                Stripe payment processing is not configured
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">
-                The payment system requires configuration. Please contact support.
-              </p>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setClientSecret(null);
-                  setSelectedPlan(null);
-                }}
-                data-testid="button-back-payment"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Plans
-              </Button>
-            </CardContent>
-          </Card>
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
+          <div className="bg-slate-900 rounded-3xl p-8 max-w-md w-full border border-slate-800 text-center">
+            <p className="text-slate-400 mb-4">Payment isn't configured yet. Please contact support.</p>
+            <button onClick={() => { setClientSecret(null); setSelectedPlanId(null); }} className="text-indigo-400 underline">← Back to plans</button>
+          </div>
         </div>
       );
     }
-    
     return (
-      <div className="container mx-auto px-4 py-8 max-w-md">
-        {/* Back Button for Payment Form */}
-        <div className="mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setClientSecret(null);
-              setSelectedPlan(null);
-            }}
-            className="flex items-center gap-2"
-            data-testid="button-back-payment"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Plans
-          </Button>
-        </div>
-
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Complete Your Subscription</h1>
-          {selectedPlanData && (
-            <p className="text-lg text-muted-foreground mt-2">
-              {selectedPlanData.name} Plan - ${selectedPlanData.price}/month
-            </p>
-          )}
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Payment Information</CardTitle>
-            <CardDescription>
-              Enter your payment details to complete your subscription
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
+        <div className="w-full max-w-md">
+          <button onClick={() => { setClientSecret(null); setSelectedPlanId(null); }}
+            className="flex items-center gap-2 text-slate-400 hover:text-white text-sm mb-8 transition-colors">
+            <ArrowLeft className="w-4 h-4" /> Back to plans
+          </button>
+          <div className="bg-slate-900 rounded-3xl border border-slate-800 p-8">
+            <div className="mb-6 text-center">
+              <span className="text-xs font-black uppercase tracking-widest text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">
+                14-Day Free Trial
+              </span>
+              <h2 className="text-2xl font-black text-white mt-4">{plan.name} Plan</h2>
+              <p className="text-slate-400 text-sm mt-1">
+                ${billing === 'monthly' ? plan.monthly + '/month' : plan.annual + '/year'} — starts after trial
+              </p>
+            </div>
             <Elements stripe={stripePromise} options={{ clientSecret }}>
-              <CheckoutForm planId={selectedPlan!} onSuccess={handlePaymentSuccess} />
+              <CheckoutForm planName={plan.name} onSuccess={() => setLocation('/billing')} />
             </Elements>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     );
   }
 
+  const annualSavings = (plan: typeof PLANS[0]) => Math.round(((plan.monthly * 12) - plan.annual) / (plan.monthly * 12) * 100);
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Back Button */}
-      <div className="mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => window.history.back()}
-          className="flex items-center gap-2"
-          data-testid="button-back"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back
-        </Button>
-      </div>
-
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-          Choose Your PureSoul Plan
-        </h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Select the plan that best fits your mental health journey. All plans include AI-powered assessments and personalized treatment recommendations.
-        </p>
-      </div>
-
-      {currentSubscription && (
-        <div className="mb-8 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-          <div className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-green-600" />
-            <span className="text-green-800 dark:text-green-200 font-medium">
-              You currently have an active subscription
-            </span>
-          </div>
-          <p className="text-green-700 dark:text-green-300 mt-1">
-            Status: {currentSubscription.status} | 
-            Next billing: {new Date(currentSubscription.currentPeriodEnd).toLocaleDateString()}
+    <div className="min-h-screen bg-[#020617] text-white">
+      {/* Hero */}
+      <div className="relative overflow-hidden pt-20 pb-16 px-6 text-center">
+        <div className="absolute inset-0 bg-gradient-to-b from-indigo-950/40 to-transparent pointer-events-none" />
+        <div className="relative max-w-3xl mx-auto">
+          <span className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-full border border-emerald-500/20 mb-6">
+            <Clock className="w-3.5 h-3.5" /> 14-Day Free Trial — No Credit Card Required
+          </span>
+          <h1 className="text-5xl sm:text-6xl font-black tracking-tight leading-none mb-5">
+            Invest in your{' '}
+            <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">wellbeing</span>
+          </h1>
+          <p className="text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
+            Start free. No commitments. Upgrade when you're ready. Cancel anytime.
           </p>
         </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-        {plans.map((plan: SubscriptionPlan) => (
-          <Card 
-            key={plan.id} 
-            className={`relative ${
-              plan.type === 'professional' 
-                ? 'border-purple-200 dark:border-purple-800 shadow-lg' 
-                : ''
-            }`}
-          >
-            {plan.type === 'professional' && (
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <Badge className="bg-purple-600 text-white px-3 py-1">
-                  Most Popular
-                </Badge>
-              </div>
-            )}
-            
-            <CardHeader className="text-center">
-              <div className="flex justify-center mb-4">
-                <PlanIcon type={plan.type} />
-              </div>
-              <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
-              <CardDescription className="mt-2">{plan.description}</CardDescription>
-              <div className="mt-4">
-                <span className="text-4xl font-bold">${plan.price}</span>
-                <span className="text-muted-foreground">/{plan.interval}</span>
-              </div>
-            </CardHeader>
-            
-            <CardContent>
-              <ul className="space-y-3">
-                {plan.features.map((feature: string, index: number) => (
-                  <li key={index} className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              
-              {plan.assessmentsPerMonth && (
-                <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <p className="text-sm text-muted-foreground">
-                    <strong>{plan.assessmentsPerMonth}</strong> assessments per month
-                  </p>
-                </div>
-              )}
-            </CardContent>
-            
-            <CardFooter>
-              <Button
-                className="w-full"
-                variant={plan.type === 'professional' ? 'default' : 'outline'}
-                onClick={() => handleSelectPlan(plan.id)}
-                disabled={
-                  createSubscriptionMutation.isPending || 
-                  (currentSubscription?.status === 'active')
-                }
-                data-testid={`button-select-${plan.type}`}
-              >
-                {createSubscriptionMutation.isPending && selectedPlan === plan.id
-                  ? "Processing..."
-                  : currentSubscription?.status === 'active'
-                  ? "Current Plan"
-                  : `Choose ${plan.name}`
-                }
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
       </div>
 
-      <div className="mt-12 text-center">
-        <p className="text-muted-foreground">
-          All plans include a 7-day free trial. Cancel anytime.
-        </p>
-        <p className="text-sm text-muted-foreground mt-2">
-          Need help choosing? <a href="#" className="text-primary hover:underline">Contact our support team</a>
-        </p>
+      {/* Billing Toggle */}
+      <div className="flex justify-center mb-10 px-6">
+        <div className="flex items-center gap-1 p-1 bg-slate-900 rounded-2xl border border-slate-800">
+          {(['monthly', 'annual'] as const).map(b => (
+            <button
+              key={b}
+              onClick={() => setBilling(b)}
+              className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${billing === b ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+            >
+              {b === 'monthly' ? 'Monthly' : 'Annual'}{b === 'annual' && ' 🎉'}
+            </button>
+          ))}
+        </div>
+        {billing === 'annual' && (
+          <span className="ml-4 self-center text-xs font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-full">
+            Save up to 36%
+          </span>
+        )}
+      </div>
+
+      {/* Plan Cards */}
+      <div className="max-w-5xl mx-auto px-6 mb-16">
+        <div className="grid md:grid-cols-2 gap-6">
+          {PLANS.map(plan => {
+            const Icon = plan.icon;
+            const price = billing === 'monthly' ? plan.monthly : plan.annual;
+            const perMonth = billing === 'annual' ? Math.round(plan.annual / 12) : plan.monthly;
+            const savings = annualSavings(plan);
+            const isActive = currentSubscription?.status === 'active' || currentSubscription?.status === 'trialing';
+
+            return (
+              <div
+                key={plan.id}
+                className={`relative rounded-[2rem] p-8 border transition-all ${plan.highlight
+                    ? 'bg-gradient-to-br from-indigo-950/80 to-violet-950/80 border-indigo-500/40 shadow-2xl shadow-indigo-900/20'
+                    : 'bg-slate-900/80 border-slate-800'
+                  }`}
+              >
+                {plan.badge && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg">
+                      {plan.badge}
+                    </span>
+                  </div>
+                )}
+
+                <div className={`w-12 h-12 rounded-2xl ${plan.iconBg} border flex items-center justify-center mb-5`}>
+                  <Icon className={`w-6 h-6 ${plan.iconColor}`} />
+                </div>
+
+                <h2 className="text-2xl font-black text-white mb-1">{plan.name}</h2>
+                <p className="text-slate-400 text-sm mb-6 leading-relaxed">{plan.description}</p>
+
+                <div className="mb-6">
+                  <div className="flex items-end gap-2">
+                    <span className="text-5xl font-black text-white">${billing === 'annual' ? perMonth : price}</span>
+                    <span className="text-slate-500 text-sm mb-2">/month</span>
+                  </div>
+                  {billing === 'annual' ? (
+                    <p className="text-xs text-emerald-400 font-semibold mt-1">Billed ${plan.annual}/year · Save {savings}%</p>
+                  ) : (
+                    <p className="text-xs text-slate-500 mt-1">or ${Math.round(plan.annual / 12)}/mo billed annually</p>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => handleSelectPlan(plan.id)}
+                  disabled={createSubscriptionMutation.isPending || isActive}
+                  className={`w-full py-4 rounded-2xl font-black text-sm transition-all mb-6 flex items-center justify-center gap-2 ${plan.highlight
+                      ? 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-lg'
+                      : 'bg-white/5 hover:bg-white/10 border border-white/10 text-white'
+                    } disabled:opacity-50`}
+                >
+                  {createSubscriptionMutation.isPending && selectedPlanId === plan.id
+                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Setting up trail...</>
+                    : isActive
+                      ? 'Current Plan'
+                      : <>{plan.cta} <ChevronRight className="w-4 h-4" /></>
+                  }
+                </button>
+
+                <ul className="space-y-3">
+                  {plan.features.map(f => (
+                    <li key={f} className="flex items-center gap-3 text-sm text-slate-300">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Feature comparison */}
+      <div className="max-w-3xl mx-auto px-6 mb-20">
+        <h2 className="text-center text-lg font-black text-slate-300 mb-6 uppercase tracking-widest text-sm">
+          Full Comparison
+        </h2>
+        <div className="bg-slate-900/50 rounded-[2rem] border border-slate-800 overflow-hidden">
+          <div className="grid grid-cols-3 text-xs font-black uppercase tracking-widest bg-slate-800/50 border-b border-slate-800">
+            <div className="p-4 text-slate-400">Feature</div>
+            <div className="p-4 text-center text-slate-300">Core</div>
+            <div className="p-4 text-center text-violet-300">Pro</div>
+          </div>
+          {COMPARISON.map((row, i) => (
+            <div key={i} className={`grid grid-cols-3 text-sm ${i !== COMPARISON.length - 1 ? 'border-b border-slate-800/50' : ''}`}>
+              <div className="p-4 text-slate-400">{row.feature}</div>
+              <div className="p-4 text-center text-slate-300">{row.core}</div>
+              <div className="p-4 text-center text-slate-200 font-semibold">{row.pro}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Trust row */}
+      <div className="max-w-4xl mx-auto px-6 pb-20">
+        <div className="grid sm:grid-cols-3 gap-4">
+          {[
+            { icon: Shield, label: '14-Day Free Trial', sub: 'Full access, cancel before Day 14 and pay nothing' },
+            { icon: Star, label: 'No Long Contracts', sub: 'Month-to-month. Pause or cancel anytime' },
+            { icon: Brain, label: 'HIPAA-Compliant', sub: 'Your health data is encrypted and never sold' },
+          ].map(t => {
+            const Icon = t.icon;
+            return (
+              <div key={t.label} className="bg-slate-900/50 rounded-3xl border border-slate-800 p-5 flex gap-4 items-start">
+                <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-4 h-4 text-slate-300" />
+                </div>
+                <div>
+                  <p className="font-bold text-slate-200 text-sm">{t.label}</p>
+                  <p className="text-slate-500 text-xs mt-0.5 leading-relaxed">{t.sub}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

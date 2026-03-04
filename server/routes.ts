@@ -966,6 +966,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Retention discount: offer 30% off for 3 months when user tries to cancel
+  app.post('/api/apply-retention-discount', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const { accept } = req.body;
+      const subscription = await storage.getUserSubscription(userId);
+
+      if (!subscription) {
+        return res.status(404).json({ message: 'No active subscription found' });
+      }
+
+      if (accept) {
+        // Create (or retrieve) a 30%-off-for-3-months coupon in Stripe
+        let coupon: any;
+        try {
+          coupon = await stripe.coupons.retrieve('STAY30_3MO');
+        } catch {
+          coupon = await stripe.coupons.create({
+            id: 'STAY30_3MO',
+            percent_off: 30,
+            duration: 'repeating',
+            duration_in_months: 3,
+            name: '30% off for 3 months (retention)',
+          });
+        }
+
+        // Apply coupon to the Stripe subscription via discounts array
+        await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
+          discounts: [{ coupon: coupon.id }],
+        });
+
+        await createAuditLog(userId, 'subscription', subscription.id, 'retention_discount_applied', null, { coupon: coupon.id }, req);
+        return res.json({ success: true, message: 'Discount applied! 30% off for next 3 months.' });
+      } else {
+        // Decline offer → proceed with standard cancel at period end
+        const stripeSubscription = await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
+          cancel_at_period_end: true,
+        });
+        const updatedSubscription = await storage.updateUserSubscription(subscription.id, {
+          cancelAtPeriodEnd: true,
+          status: stripeSubscription.status as any,
+        });
+        await createAuditLog(userId, 'subscription', subscription.id, 'cancelled_after_offer', null, updatedSubscription, req);
+        const sanitized = sanitizeSubscription(updatedSubscription);
+        return res.json(deepRemoveStripeIds(sanitized));
+      }
+    } catch (error) {
+      console.error('Retention discount error:', error);
+      res.status(500).json({ message: 'Failed to process retention offer' });
+    }
+  });
+
   app.get('/api/billing-history', isAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.user as any).id;
