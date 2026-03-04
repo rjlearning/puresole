@@ -25,11 +25,13 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { Link } from 'wouter';
 import { restartOnboarding } from '@/components/OnboardingManager';
+import { FeedbackModal } from '@/components/FeedbackModal';
 
 export default function Settings() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [saved, setSaved] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const { data: subscription } = useQuery<any>({ queryKey: ['/api/subscription'] });
 
@@ -172,6 +174,21 @@ export default function Settings() {
                     rows={4}
                     className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
+                </div>
+
+                <div className="pt-6 border-t border-gray-100">
+                  <h3 className="text-sm font-medium text-gray-900 mb-2">Contact Support & Feedback</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Have a question, feature request, or found a bug? Let us know.
+                  </p>
+                  <Button
+                    onClick={() => setFeedbackOpen(true)}
+                    variant="outline"
+                    className="w-full sm:w-auto border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                  >
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Open Contact Form
+                  </Button>
                 </div>
 
                 <div>
@@ -391,6 +408,7 @@ export default function Settings() {
           </TabsContent>
         </Tabs>
       </div>
+      <FeedbackModal open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </div>
   );
 }
