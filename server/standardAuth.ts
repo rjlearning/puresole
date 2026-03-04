@@ -19,8 +19,9 @@ export function setupSession(app: Express) {
       secret: sessionSecret,
       resave: false,
       saveUninitialized: false,
+      proxy: isProduction, // Trust the reverse proxy for HTTPS detection
       cookie: {
-        secure: false, // Always false for localhost development with HTTP
+        secure: isProduction, // True in production (HTTPS required), false in dev (HTTP allowed)
         httpOnly: true,
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
         sameSite: "lax",
