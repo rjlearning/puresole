@@ -18,7 +18,7 @@ function requireAuth(req: any, res: any, next: any) {
 // GET /api/plans - Get all plans for current user
 router.get('/plans', requireAuth, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req.user as any).id;
     const { status, type, date } = req.query;
 
     let query = `
@@ -62,7 +62,7 @@ router.get('/plans', requireAuth, async (req, res) => {
 // GET /api/plans/today - Get today's plan
 router.get('/plans/today', requireAuth, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req.user as any).id;
 
     const result = await pool.query(
       `SELECT p.*,
@@ -104,7 +104,7 @@ router.get('/plans/today', requireAuth, async (req, res) => {
 // GET /api/plans/:id - Get specific plan with items
 router.get('/plans/:id', requireAuth, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req.user as any).id;
     const { id } = req.params;
 
     const result = await pool.query(
@@ -146,7 +146,7 @@ router.get('/plans/:id', requireAuth, async (req, res) => {
 // POST /api/plans/generate - Generate new AI plan
 router.post('/plans/generate', requireAuth, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req.user as any).id;
     const { date, focus } = req.body;
 
     const targetDate = date ? new Date(date + 'T12:00:00') : new Date();
@@ -209,7 +209,7 @@ router.post('/plans/generate', requireAuth, async (req, res) => {
 // PUT /api/plans/:id/items/:itemId - Update plan item
 router.put('/plans/:id/items/:itemId', requireAuth, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req.user as any).id;
     const { id, itemId } = req.params;
     const { status, effectiveness_rating, notes } = req.body;
 
@@ -299,7 +299,7 @@ router.put('/plans/:id/items/:itemId', requireAuth, async (req, res) => {
 // DELETE /api/plans/:id - Archive/delete plan
 router.delete('/plans/:id', requireAuth, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req.user as any).id;
     const { id } = req.params;
 
     const result = await pool.query(
@@ -324,7 +324,7 @@ router.delete('/plans/:id', requireAuth, async (req, res) => {
 // GET /api/plans/:id/stats - Get plan completion stats
 router.get('/plans/:id/stats', requireAuth, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req.user as any).id;
     const { id } = req.params;
 
     // Verify plan belongs to user

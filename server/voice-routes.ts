@@ -49,7 +49,7 @@ export function registerVoiceRoutes(app: Express) {
           return res.status(401).json({ message: "Unauthorized" });
         }
 
-        const userId = req.user?.id || (req.user as any)?.claims?.sub;
+        const userId = (req.user as any)?.id || (req.user as any)?.claims?.sub;
         if (!userId) {
           return res.status(401).json({ message: "User ID not found" });
         }
@@ -121,7 +121,7 @@ export function registerVoiceRoutes(app: Express) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const userId = req.user?.id || req.user?.claims?.sub;
+      const userId = (req.user as any)?.id || (req.user as any)?.id;
       if (!userId) {
         return res.status(401).json({ message: "User ID not found" });
       }
@@ -148,7 +148,7 @@ export function registerVoiceRoutes(app: Express) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const userId = req.user?.id || req.user?.claims?.sub;
+      const userId = (req.user as any)?.id || (req.user as any)?.id;
       const entryId = req.params.id;
 
       const [entry] = await db
@@ -179,7 +179,7 @@ export function registerVoiceRoutes(app: Express) {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const userId = req.user?.id || req.user?.claims?.sub;
+      const userId = (req.user as any)?.id || (req.user as any)?.id;
       const entryId = req.params.id;
 
       const [entry] = await db

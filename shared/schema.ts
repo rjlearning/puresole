@@ -18,7 +18,7 @@ import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Session storage table for Replit Auth
+// Session storage table
 export const sessions = pgTable(
   "sessions",
   {
@@ -50,6 +50,11 @@ export const users = pgTable("users", {
   postpartumDeliveryDate: timestamp("postpartum_delivery_date"),
   postpartumDeliveryType: varchar("postpartum_delivery_type", { length: 50 }),
   isBreastfeeding: boolean("is_breastfeeding").default(false),
+  weight: numeric("weight", { precision: 5, scale: 2 }), // Weight in kg
+  height: numeric("height", { precision: 5, scale: 2 }), // Height in cm  
+  age: integer("age"),
+  activityLevel: varchar("activity_level", { length: 50 }), // e.g., 'sedentary', 'light', 'moderate', 'active', 'very_active'
+  fitnessGoal: varchar("fitness_goal", { length: 50 }), // e.g., 'cut', 'maintain', 'bulk', 'recomp'
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

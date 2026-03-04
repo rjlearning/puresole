@@ -276,7 +276,7 @@ router.get('/activities/:id', async (req, res) => {
 router.post('/activities/:id/complete', isAuthenticated, async (req: any, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.id || req.user?.claims?.sub;
+    const userId = (req.user as any)?.id;
     if (!userId) {
       return res.status(401).json({ error: 'User ID not found' });
     }

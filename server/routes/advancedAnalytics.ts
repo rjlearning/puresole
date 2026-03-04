@@ -51,7 +51,7 @@ const router = Router();
  */
 router.get('/baselines', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const baselines = await getAllBaselines(userId);
 
     res.json({
@@ -76,7 +76,7 @@ router.get('/baselines', requireAuth, async (req, res) => {
  */
 router.post('/baselines/calculate', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { window } = req.body;
 
     if (window && ![30, 60, 90].includes(window)) {
@@ -117,7 +117,7 @@ router.post('/baselines/calculate', requireAuth, async (req, res) => {
  */
 router.get('/baselines/deviations', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const days = parseInt(req.query.days as string) || 7;
 
     const deviations = await detectBaselineDeviations(userId, days);
@@ -147,7 +147,7 @@ router.get('/baselines/deviations', requireAuth, async (req, res) => {
  */
 router.get('/predictions', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const predictions = await getActivePredictions(userId);
 
     res.json({
@@ -172,7 +172,7 @@ router.get('/predictions', requireAuth, async (req, res) => {
  */
 router.post('/predictions/generate', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { window } = req.body;
 
     if (window && ![7, 14, 30].includes(window)) {
@@ -212,7 +212,7 @@ router.post('/predictions/generate', requireAuth, async (req, res) => {
  */
 router.post('/predictions/update', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const updatedPredictions = await updatePredictionsIfNeeded(userId);
 
     res.json({
@@ -241,7 +241,7 @@ router.post('/predictions/update', requireAuth, async (req, res) => {
  */
 router.get('/insights', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const limit = parseInt(req.query.limit as string) || 10;
 
     const insights = await getActiveInsights(userId, limit);
@@ -267,7 +267,7 @@ router.get('/insights', requireAuth, async (req, res) => {
  */
 router.post('/insights/generate', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const insights = await generateAdvancedInsights(userId);
 
     res.json({
@@ -296,7 +296,7 @@ router.post('/insights/generate', requireAuth, async (req, res) => {
  */
 router.get('/correlations', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const days = parseInt(req.query.days as string) || 30;
 
     const analysis = await performComprehensiveCrossMetricAnalysis(userId, days);
@@ -327,7 +327,7 @@ router.get('/correlations', requireAuth, async (req, res) => {
  */
 router.get('/correlations/optimal-lag', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { metricType, days } = req.query;
 
     if (!metricType || !['mood', 'sleep', 'medication', 'activity'].includes(metricType as string)) {
@@ -371,7 +371,7 @@ router.get('/correlations/optimal-lag', requireAuth, async (req, res) => {
  */
 router.post('/reports/generate', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const {
       format,
       reportType,
@@ -429,7 +429,7 @@ router.post('/reports/generate', requireAuth, async (req, res) => {
  */
 router.get('/reports/:exportId/download', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { exportId } = req.params;
 
     const exportRecord = await getExportRecord(exportId, userId);
@@ -479,7 +479,7 @@ router.get('/reports/:exportId/download', requireAuth, async (req, res) => {
  */
 router.get('/reports', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const limit = parseInt(req.query.limit as string) || 10;
 
     const exports = await getUserExports(userId, limit);

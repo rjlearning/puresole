@@ -20,7 +20,7 @@ router.get('/ai-companion/conversations', async (req: Request, res: Response) =>
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const userId = (req.user as any).claims?.sub || (req.user as any).id;
+    const userId = (req.user as any).id;
 
     const result = await pool.query(
       `SELECT c.*,
@@ -50,7 +50,7 @@ router.post('/ai-companion/conversations', async (req: Request, res: Response) =
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const userId = (req.user as any).claims?.sub || (req.user as any).id;
+    const userId = (req.user as any).id;
     const { title, moodBefore } = req.body;
 
     const result = await pool.query(
@@ -77,7 +77,7 @@ router.get('/ai-companion/conversations/:id', async (req: Request, res: Response
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const userId = (req.user as any).claims?.sub || (req.user as any).id;
+    const userId = (req.user as any).id;
     const { id } = req.params;
 
     // Get conversation
@@ -116,7 +116,7 @@ router.delete('/ai-companion/conversations/:id', async (req: Request, res: Respo
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const userId = (req.user as any).claims?.sub || (req.user as any).id;
+    const userId = (req.user as any).id;
     const { id } = req.params;
 
     const result = await pool.query(
@@ -146,7 +146,7 @@ router.post('/ai-companion/chat', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const userId = (req.user as any).claims?.sub || (req.user as any).id;
+    const userId = (req.user as any).id;
     const { conversationId, message } = req.body;
 
     if (!message || !conversationId) {
@@ -235,7 +235,7 @@ router.post('/ai-companion/conversations/:id/insights', async (req: Request, res
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const userId = (req.user as any).claims?.sub || (req.user as any).id;
+    const userId = (req.user as any).id;
     const { id } = req.params;
 
     // Verify ownership
@@ -310,7 +310,7 @@ router.get('/ai-companion/settings', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const userId = (req.user as any).claims?.sub || (req.user as any).id;
+    const userId = (req.user as any).id;
 
     const result = await pool.query(
       'SELECT * FROM ai_companion_settings WHERE user_id = $1',
@@ -342,7 +342,7 @@ router.put('/ai-companion/settings', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const userId = (req.user as any).claims?.sub || (req.user as any).id;
+    const userId = (req.user as any).id;
     const { personality, responseLength, crisisMonitoring, proactiveCheckIns } = req.body;
 
     const result = await pool.query(

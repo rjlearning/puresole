@@ -13,7 +13,7 @@ interface Report {
 /**
  * Generate a PDF from wellness report data
  */
-export function generateReportPDF(report: Report): PDFDocument {
+export function generateReportPDF(report: Report): any {
   const doc = new PDFDocument({
     size: 'A4',
     margins: { top: 50, bottom: 50, left: 50, right: 50 }
@@ -154,7 +154,7 @@ export function generateReportPDF(report: Report): PDFDocument {
 }
 
 // Helper functions
-function addSectionHeader(doc: PDFDocument, title: string, color: string = '#1e40af') {
+function addSectionHeader(doc: any, title: string, color: string = '#1e40af') {
   doc.fontSize(16).fillColor(color).text(title, { underline: true });
   doc.moveDown(0.8);
 }

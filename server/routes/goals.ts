@@ -17,7 +17,7 @@ function requireAuth(req: any, res: any, next: any) {
 // GET /api/goals - Get all user goals
 router.get('/goals', requireAuth, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req.user as any).id;
     const { status, category } = req.query;
 
     let query = 'SELECT * FROM user_goals WHERE user_id = $1';
@@ -48,7 +48,7 @@ router.get('/goals', requireAuth, async (req, res) => {
 // GET /api/goals/:id - Get specific goal with progress history
 router.get('/goals/:id', requireAuth, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req.user as any).id;
     const { id } = req.params;
 
     const goalResult = await pool.query(
@@ -84,7 +84,7 @@ router.get('/goals/:id', requireAuth, async (req, res) => {
 // POST /api/goals - Create new goal
 router.post('/goals', requireAuth, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req.user as any).id;
     const {
       title,
       description,
@@ -139,7 +139,7 @@ router.post('/goals', requireAuth, async (req, res) => {
 // PUT /api/goals/:id - Update goal
 router.put('/goals/:id', requireAuth, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req.user as any).id;
     const { id } = req.params;
     const {
       title,
@@ -245,7 +245,7 @@ router.put('/goals/:id', requireAuth, async (req, res) => {
 // POST /api/goals/:id/progress - Record progress snapshot
 router.post('/goals/:id/progress', requireAuth, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req.user as any).id;
     const { id } = req.params;
     const { value, note, mood_at_recording } = req.body;
 
@@ -297,7 +297,7 @@ router.post('/goals/:id/progress', requireAuth, async (req, res) => {
 // DELETE /api/goals/:id - Delete goal
 router.delete('/goals/:id', requireAuth, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req.user as any).id;
     const { id } = req.params;
 
     const result = await pool.query(
@@ -319,7 +319,7 @@ router.delete('/goals/:id', requireAuth, async (req, res) => {
 // GET /api/goals/:id/suggestions - Get AI suggestions for goal
 router.get('/goals/:id/suggestions', requireAuth, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req.user as any).id;
     const { id } = req.params;
 
     // Verify goal belongs to user
@@ -383,7 +383,7 @@ router.get('/goals/:id/suggestions', requireAuth, async (req, res) => {
 // GET /api/goals/stats/summary - Get user's goals summary stats
 router.get('/goals/stats/summary', requireAuth, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = (req.user as any).id;
 
     const result = await pool.query(
       `SELECT

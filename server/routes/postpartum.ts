@@ -17,7 +17,7 @@ router.get('/comprehensive-analysis', async (req, res) => {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const userId = (req.user as any).id || (req.user as any).claims?.sub;
+    const userId = (req.user as any).id;
 
     try {
         const analysis = await generateComprehensiveRecoveryAnalysis(userId);
@@ -32,7 +32,7 @@ router.post('/onboarding', async (req, res) => {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const userId = (req.user as any).id || (req.user as any).claims?.sub;
+    const userId = (req.user as any).id;
     const { deliveryDate, deliveryType, breastfeeding, biomarkers } = req.body;
 
     try {
@@ -79,7 +79,7 @@ router.get('/biomarkers', async (req, res) => {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const userId = (req.user as any).id || (req.user as any).claims?.sub;
+    const userId = (req.user as any).id;
 
     try {
         const results = await db.select()
@@ -98,7 +98,7 @@ router.get('/context', async (req, res) => {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const userId = (req.user as any).id || (req.user as any).claims?.sub;
+    const userId = (req.user as any).id;
 
     try {
         const user = await db.select({
@@ -121,7 +121,7 @@ router.get('/meal-plan', async (req, res) => {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const userId = (req.user as any).id || (req.user as any).claims?.sub;
+    const userId = (req.user as any).id;
 
     try {
         const plans = await db.select()
@@ -148,7 +148,7 @@ router.post('/meal-plan/generate', async (req, res) => {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const userId = (req.user as any).id || (req.user as any).claims?.sub;
+    const userId = (req.user as any).id;
 
     try {
         const newPlan = await generateAdaptiveMealPlan(userId);
@@ -197,7 +197,7 @@ router.get('/insights', async (req, res) => {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const userId = (req.user as any).id || (req.user as any).claims?.sub;
+    const userId = (req.user as any).id;
 
     try {
         const profile = await getMetabolicInsights(userId);

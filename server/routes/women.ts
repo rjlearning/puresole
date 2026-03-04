@@ -90,7 +90,7 @@ router.post('/chat', async (req, res) => {
 
     if (!message?.trim()) return res.status(400).json({ error: 'Message is required' });
 
-    const userId = (req.user as any).id || (req.user as any).claims?.sub;
+    const userId = (req.user as any).id;
     const isHighRisk = detectRiskLanguage(message);
 
     if (process.env.OPENAI_API_KEY) {
