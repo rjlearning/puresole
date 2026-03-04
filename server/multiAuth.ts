@@ -23,30 +23,15 @@ function configureGoogleAuth() {
     return;
   }
 
-  let callbackURL = "/api/auth/google/callback";
-
-  if (process.env.GOOGLE_CALLBACK_URL) {
-    callbackURL = process.env.GOOGLE_CALLBACK_URL;
-  } else if (process.env.NODE_ENV === "production") {
-    // In production, prioritize the production domain and ignore "localhost" settings
-    const productionUrl = (process.env.APP_URL && !process.env.APP_URL.includes("localhost"))
-      ? process.env.APP_URL
-      : process.env.RAILWAY_PUBLIC_DOMAIN
-        ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
-        : null;
-
-    if (productionUrl) {
-      callbackURL = `${productionUrl.replace(/\/$/, "")}/api/auth/google/callback`;
-    }
-  } else if (process.env.APP_URL) {
-    callbackURL = `${process.env.APP_URL.replace(/\/$/, "")}/api/auth/google/callback`;
-  }
+  // We now use dynamic callback URLs in the route handler to be more robust
+  // but we still need a default for the strategy initialization
+  const defaultCallbackURL = "/api/auth/google/callback";
 
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID!,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    callbackURL: callbackURL,
-    proxy: true // Trust reverse proxy for correctly building the absolute URL (HTTPS)
+    callbackURL: defaultCallbackURL,
+    proxy: true
   }, async (accessToken, refreshToken, profile, done) => {
     try {
       // Check if this Google account is already linked
@@ -220,21 +205,51 @@ export function setupMultiAuth(app: Express) {
 export function registerMultiAuthRoutes(app: Express) {
   // Google OAuth routes
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-    app.get('/api/auth/google',
-      passport.authenticate('google', { scope: ['profile', 'email'] })
-    );
+    app.get('/api/auth/google', (req, res, next) => {
+      // Determine callback URL dynamically from request to be immune to env misconfig
+      const host = req.get('x-forwarded-host') || req.get('host');
+      const protocol = req.get('x-forwarded-proto') || req.protocol;
+      const callbackURL = `${protocol}://${host}/api/auth/google/callback`;
 
-    app.get('/api/auth/google/callback',
-      passport.authenticate('google', { failureRedirect: '/login' }),
-      (req, res) => {
-        // Support mobile deep linking if requested via state or session
-        const isMobile = (req.session as any)?.isMobile || req.query.state === 'mobile';
-        if (isMobile) {
-          return res.redirect('com.puresoul.app://dashboard');
-        }
-        res.redirect('/dashboard');
+      console.log(`[Auth] Dynamic Google Auth Start - Host: ${host}, Proto: ${protocol}, Callback: ${callbackURL}`);
+
+      passport.authenticate('google', {
+        scope: ['profile', 'email'],
+        callbackURL: callbackURL
+      } as any)(req, res, next);
+    });
+
+    app.get('/api/auth/google/callback', (req, res, next) => {
+      // Must also pass the same dynamic callbackURL to the callback handler
+      const host = req.get('x-forwarded-host') || req.get('host');
+      const protocol = req.get('x-forwarded-proto') || req.protocol;
+      const callbackURL = `${protocol}://${host}/api/auth/google/callback`;
+
+      passport.authenticate('google', {
+        failureRedirect: '/login',
+        callbackURL: callbackURL
+      } as any)(req, res, next);
+    }, (req, res) => {
+      // Support mobile deep linking if requested via state or session
+      const isMobile = (req.session as any)?.isMobile || req.query.state === 'mobile';
+      if (isMobile) {
+        return res.redirect('com.puresoul.app://dashboard');
       }
-    );
+      res.redirect('/dashboard');
+    });
+
+    // Temporary Debug Route for Auth Config
+    app.get('/api/auth/debug', (req, res) => {
+      res.json({
+        nodeEnv: process.env.NODE_ENV,
+        appUrl: process.env.APP_URL,
+        railwayDomain: process.env.RAILWAY_PUBLIC_DOMAIN,
+        detectedHost: req.get('x-forwarded-host') || req.get('host'),
+        detectedProto: req.get('x-forwarded-proto') || req.protocol,
+        trustProxy: app.get('trust proxy'),
+        callbackUrlGuess: `${req.get('x-forwarded-proto') || req.protocol}://${req.get('x-forwarded-host') || req.get('host')}/api/auth/google/callback`
+      });
+    });
   } else {
     app.get('/api/auth/google', (req, res) => {
       res.status(501).json({ message: "Google Authentication is not configured (missing environment variables)." });
