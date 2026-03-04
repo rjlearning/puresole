@@ -45,6 +45,11 @@ import menRouter from './routes/men';
 
 const app = express();
 
+// Trust proxy in production for correctly identifying hostname/protocol behind load balancers
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1); // trust first proxy
+}
+
 // Security headers
 app.use(helmet({
   contentSecurityPolicy: {
