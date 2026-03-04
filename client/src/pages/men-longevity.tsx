@@ -12,23 +12,22 @@ import {
 } from 'recharts';
 
 export default function MenLongevityPage() {
-    // Deriving longevity from metabolic markers (Testosterone, Cortisol, HOMA-IR mock)
-    // In a real app, this would query the backend for trend analysis
-    const biologicalAge = 28.5;
-    const chronologicalAge = 32;
+    const { data: longevityData, isLoading } = useQuery<any>({
+        queryKey: ["/api/men/longevity"],
+    });
 
-    const markers = [
-        { name: 'Androgenic Load', status: 'Optimal', score: 88, color: '#818cf8' },
-        { name: 'Glycemic Control', status: 'Solid', score: 72, color: '#34d399' },
-        { name: 'Vagal Tone (HRV)', status: 'Peak', score: 94, color: '#2dd4bf' },
-        { name: 'Metabolic Flexibility', status: 'Moderate', score: 65, color: '#fbbf24' },
-    ];
+    const biologicalAge = longevityData?.biologicalAge || 28.5;
+    const chronologicalAge = longevityData?.chronologicalAge || 32;
+    const markers = longevityData?.markers || [];
+    const timeline = longevityData?.timeline || [];
 
-    const timeline = [
-        { date: 'Jan', age: 31.8 },
-        { date: 'Feb', age: 30.2 },
-        { date: 'Mar', age: 28.5 },
-    ];
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+                <div className="animate-spin text-indigo-500"><Activity className="w-8 h-8" /></div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-200 pb-24 overflow-hidden">
@@ -106,7 +105,7 @@ export default function MenLongevityPage() {
                         </Card>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {markers.map((m) => (
+                            {markers.map((m: any) => (
                                 <Card key={m.name} className="p-6 bg-slate-900 border-white/5 group hover:border-indigo-500/20 transition-all">
                                     <div className="flex justify-between items-start mb-4">
                                         <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest">{m.name}</h3>

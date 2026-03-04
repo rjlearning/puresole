@@ -24,19 +24,26 @@ const RANGES: Record<string, { min: number, max: number, unit: string }> = {
 };
 
 export default function MenMetabolicPanel() {
-    // Mocking API for now to ensure UI functionality
-    const biomarkers = [
-        { testedAt: "2024-02-01", biomarkerType: "testosterone", value: 580, unit: 'ng/dL' },
-        { testedAt: "2024-02-15", biomarkerType: "testosterone", value: 610, unit: 'ng/dL' },
-        { testedAt: "2024-03-01", biomarkerType: "testosterone", value: 645, unit: 'ng/dL' },
-    ];
+    const { data: metabolicData, isLoading } = useQuery<any>({
+        queryKey: ["/api/men/metabolic"],
+    });
 
-    const latestStats = {
-        testosterone: 645,
-        cortisol: 14,
-        shbg: 32,
-        glucose: 88
+    const biomarkers = metabolicData?.biomarkers || [];
+    const latestStats = metabolicData?.latestStats || {
+        testosterone: 0,
+        cortisol: 0,
+        shbg: 0,
+        glucose: 0
     };
+    const performanceScore = metabolicData?.performanceScore || 0;
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+                <div className="animate-spin text-indigo-500"><Activity className="w-8 h-8" /></div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-200 pb-24 overflow-hidden">
@@ -72,7 +79,7 @@ export default function MenMetabolicPanel() {
                                     strokeLinecap="round"
                                 />
                             </svg>
-                            <span className="absolute text-xs font-black text-indigo-400">82</span>
+                            <span className="absolute text-xs font-black text-indigo-400">{performanceScore}</span>
                         </div>
                         <div>
                             <p className="text-[10px] uppercase font-black text-slate-500 tracking-[0.2em] mb-0.5">Performance Score</p>

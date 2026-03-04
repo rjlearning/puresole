@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { ArrowLeft, ChevronRight, AlertTriangle, CheckCircle } from 'lucide-react';
+import { useMutation } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 const EPDS_QUESTIONS = [
     { q: "I have been able to laugh and see the funny side of things", opts: ["As much as I always could", "Not quite so much now", "Definitely not so much now", "Not at all"] },
@@ -76,7 +79,7 @@ function QCard({ question, options, value, onChange, index, total }: {
                 {options.map((opt, i) => (
                     <button key={i} onClick={() => onChange(i)}
                         className={`w-full text-left px-4 py-3 rounded-2xl border-2 text-sm transition-all ${value === i ? 'border-rose-400 bg-rose-50 text-rose-800 font-semibold shadow-sm'
-                                : 'border-rose-100 bg-white text-rose-700 hover:border-rose-200 hover:bg-rose-50/50'
+                            : 'border-rose-100 bg-white text-rose-700 hover:border-rose-200 hover:bg-rose-50/50'
                             }`}>
                         {opt}
                     </button>
@@ -99,10 +102,22 @@ export default function WomenCheckinPage() {
     const phq9Score = () => phq9A.reduce((s: number, v) => s + (v ?? 0), 0);
     const phq9Q9 = phq9A[8] ?? 0;
 
+    const saveMutation = useMutation({
+        mutationFn: async (scores: any) => {
+            await apiRequest("POST", "/api/women/checkin", {
+                mood: scores.epds,
+                symptoms: [],
+                energyLevel: scores.phq9,
+                notes: `GAD7 Score: ${scores.gad7}`
+            });
+        }
+    });
+
     const saveResults = () => {
         const scores = { epds: epdsScore(), gad7: gad7Score(), phq9: phq9Score() };
         localStorage.setItem('women_scores', JSON.stringify(scores));
         localStorage.setItem('women_phq9q9', String(phq9Q9));
+        saveMutation.mutate(scores);
     };
 
     const bg = { background: 'linear-gradient(160deg, #fff0f5, #fdf2ff)' };
