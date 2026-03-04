@@ -34,11 +34,11 @@ interface DashboardData {
 // ─── Recommendations engine ───────────────────────────────────────────────────
 type Rec = { icon: React.ComponentType<{ className?: string }>; title: string; body: string; href?: string; tag: string; tagColor: string };
 
-function buildRecommendations(data: DashboardData, user: any): Rec[] {
+function buildRecommendations(data: DashboardData, gender: string | null): Rec[] {
   const recs: Rec[] = [];
   const { avg_wellness, current_trend } = data.stats;
 
-  const isMale = user?.gender === 'male';
+  const isMale = gender === 'male';
 
   if (current_trend === 'declining') {
     recs.push({
@@ -227,9 +227,11 @@ function RecCard({ rec }: { rec: Rec }) {
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 import { useAuth } from "@/hooks/useAuth";
+import { usePhase } from "@/context/PhaseContext";
 
 export default function VoiceAnalysisDashboard() {
   const { user } = useAuth();
+  const { gender } = usePhase();
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -276,7 +278,7 @@ export default function VoiceAnalysisDashboard() {
     );
   }
 
-  const recs = buildRecommendations(data, user);
+  const recs = buildRecommendations(data, gender);
   const latestBiomarkers = data.recent_analyses?.length > 0 ? data.recent_analyses[0].biomarkers : null;
 
   return (
