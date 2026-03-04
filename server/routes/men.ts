@@ -10,7 +10,10 @@ const router = Router();
 // POST /api/men/biometrics - Save male physiological data
 router.post("/biometrics", requireAuth, async (req: any, res) => {
     try {
-        const userId = req.user.id;
+        const userId = (req.user as any)?.id || (req.user as any)?.claims?.sub;
+        if (!userId) {
+            return res.status(401).json({ message: "User ID not found" });
+        }
         const { weight, height, age, activityLevel, fitnessGoal } = req.body;
 
         // Perform basic validation
@@ -40,7 +43,10 @@ router.post("/biometrics", requireAuth, async (req: any, res) => {
 // GET /api/men/protocol - Generate or fetch the personalized Evolution Stack
 router.get("/protocol", requireAuth, async (req: any, res) => {
     try {
-        const userId = req.user.id;
+        const userId = (req.user as any)?.id || (req.user as any)?.claims?.sub;
+        if (!userId) {
+            return res.status(401).json({ message: "User ID not found" });
+        }
 
         // Let the engine calculate the TDEE Macros and query OpenAI for the reasoning/meals
         const protocol = await generateMensProtocol(userId);
