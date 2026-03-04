@@ -11,16 +11,28 @@ import {
 } from 'recharts';
 
 export default function MenIdentityPage() {
-    // Identity Hub: Derived from "Relational Intelligence" and emotional state via voice analysis
-    // Mocking data that would normally come from the Voice Journal Analysis
-    const intelligenceData = [
-        { subject: 'Empathy', A: 85, fullMark: 100 },
-        { subject: 'Stability', A: 92, fullMark: 100 },
-        { subject: 'Focus', A: 78, fullMark: 100 },
-        { subject: 'Social Load', A: 65, fullMark: 100 },
-        { subject: 'Recovery', A: 88, fullMark: 100 },
-        { subject: 'Resilience', A: 95, fullMark: 100 },
+    const { data: identityData, isLoading } = useQuery<any>({
+        queryKey: ["/api/men/identity"]
+    });
+
+    const intelligenceData = identityData?.intelligenceData || [
+        { subject: 'Empathy', A: 0, fullMark: 100 },
+        { subject: 'Stability', A: 0, fullMark: 100 },
+        { subject: 'Focus', A: 0, fullMark: 100 },
+        { subject: 'Social Load', A: 0, fullMark: 100 },
+        { subject: 'Recovery', A: 0, fullMark: 100 },
+        { subject: 'Resilience', A: 0, fullMark: 100 },
     ];
+
+    const stabilityScore = identityData?.stabilityScore || 0;
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+                <div className="animate-spin text-indigo-500"><Fingerprint className="w-8 h-8" /></div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-200 pb-24 overflow-hidden">
@@ -46,7 +58,7 @@ export default function MenIdentityPage() {
 
                     <Card className="px-8 py-5 bg-indigo-950/40 border-white/5 backdrop-blur-3xl flex items-center gap-6 shadow-2xl">
                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center text-white font-black text-sm border-2 border-white/10">
-                            92
+                            {stabilityScore}
                         </div>
                         <div>
                             <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.25em] mb-0.5">Stability Score</p>
