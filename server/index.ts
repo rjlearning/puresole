@@ -155,6 +155,7 @@ app.use((req, res, next) => {
   app.use('/api', feedbackRouter);
   app.use('/api/prescriptions', prescriptionsRouter);
   app.use('/api/women', womenRouter);
+  app.use('/api/men', menRouter);
   registerVoiceRoutes(app);
 
 
