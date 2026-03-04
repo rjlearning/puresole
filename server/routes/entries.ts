@@ -29,7 +29,7 @@ const router = Router();
 // Get all entries for current user
 router.get('/entries', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const {
       type,
       startDate,
@@ -99,7 +99,7 @@ router.get('/entries', requireAuth, async (req, res) => {
 // Get single entry
 router.get('/entries/:id', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { id } = req.params;
 
     const [entry] = await db
@@ -127,7 +127,7 @@ router.get('/entries/:id', requireAuth, async (req, res) => {
 // Create new entry
 router.post('/entries', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const {
       entryType,
       title,
@@ -170,7 +170,7 @@ router.post('/entries', requireAuth, async (req, res) => {
 // Update entry
 router.patch('/entries/:id', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { id } = req.params;
     const updateData = req.body;
 
@@ -208,7 +208,7 @@ router.patch('/entries/:id', requireAuth, async (req, res) => {
 // Soft delete entry
 router.delete('/entries/:id', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { id } = req.params;
 
     const [deleted] = await db
@@ -240,7 +240,7 @@ router.delete('/entries/:id', requireAuth, async (req, res) => {
 // Get available templates
 router.get('/templates', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
 
     // Get both global and user's custom templates
     const allTemplates = await db
@@ -261,7 +261,7 @@ router.get('/templates', requireAuth, async (req, res) => {
 // Create custom template
 router.post('/templates', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { name, description, entryType, templateData, icon, color } = req.body;
 
     const newTemplate: InsertEntryTemplate = {
@@ -314,7 +314,7 @@ router.post('/templates/:id/use', requireAuth, async (req, res) => {
 // Get custom fields for user
 router.get('/custom-fields', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
 
     const fields = await db
       .select()
@@ -332,7 +332,7 @@ router.get('/custom-fields', requireAuth, async (req, res) => {
 // Create custom field
 router.post('/custom-fields', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { fieldName, fieldType, entryTypes, options, validation, displayOrder } = req.body;
 
     const newField: InsertCustomField = {
@@ -364,7 +364,7 @@ router.post('/custom-fields', requireAuth, async (req, res) => {
 // Get insights for user
 router.get('/insights', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { status = 'active', limit = 20 } = req.query;
 
     const userInsights = await db
@@ -389,7 +389,7 @@ router.get('/insights', requireAuth, async (req, res) => {
 // Dismiss insight
 router.post('/insights/:id/dismiss', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { id } = req.params;
 
     await db
@@ -419,7 +419,7 @@ router.post('/insights/:id/dismiss', requireAuth, async (req, res) => {
 // Get entry statistics
 router.get('/entries/stats/summary', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { days = 30 } = req.query;
 
     const startDate = new Date();

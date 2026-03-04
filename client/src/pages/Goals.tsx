@@ -303,7 +303,7 @@ export default function Goals() {
                   <div>
                     <p className="text-sm text-gray-600">Avg Progress</p>
                     <p className="text-2xl font-bold text-purple-600">
-                      {Math.round(parseFloat(stats.avg_completion) || 0)}%
+                      {Math.round(parseFloat(stats.avg_completion as unknown as string) || 0)}%
                     </p>
                   </div>
                   <TrendingUp className="w-8 h-8 text-purple-600 opacity-20" />

@@ -41,6 +41,7 @@ import entriesRouter from './routes/entries';
 import viewsRouter from './routes/views';
 import feedbackRouter from './routes/feedback';
 import prescriptionsRouter from './routes/prescriptions';
+import menRouter from './routes/men';
 
 const app = express();
 

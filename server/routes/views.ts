@@ -21,7 +21,7 @@ function requireAuth(req: any, res: any, next: any) {
 // Get all views for a table
 router.get('/views/:tableName', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { tableName } = req.params;
 
     const userViews = await db
@@ -45,7 +45,7 @@ router.get('/views/:tableName', requireAuth, async (req, res) => {
 // Get single view
 router.get('/views/:tableName/:id', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { tableName, id } = req.params;
 
     const [view] = await db
@@ -82,7 +82,7 @@ router.get('/views/:tableName/:id', requireAuth, async (req, res) => {
 // Create new view
 router.post('/views', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const {
       tableName,
       name,
@@ -141,7 +141,7 @@ router.post('/views', requireAuth, async (req, res) => {
 // Update view
 router.patch('/views/:id', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { id } = req.params;
     const updateData = req.body;
 
@@ -199,7 +199,7 @@ router.patch('/views/:id', requireAuth, async (req, res) => {
 // Delete view
 router.delete('/views/:id', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { id } = req.params;
 
     const [deleted] = await db
@@ -226,7 +226,7 @@ router.delete('/views/:id', requireAuth, async (req, res) => {
 // Duplicate view
 router.post('/views/:id/duplicate', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { id } = req.params;
 
     const [original] = await db
@@ -271,7 +271,7 @@ router.post('/views/:id/duplicate', requireAuth, async (req, res) => {
 // Create share link
 router.post('/views/:id/share', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { id } = req.params;
     const { permission, password, expiresIn } = req.body;
 
@@ -406,7 +406,7 @@ router.get('/shared/:token', async (req, res) => {
 // Revoke share link
 router.delete('/shares/:id', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { id } = req.params;
 
     // Verify ownership
@@ -441,7 +441,7 @@ router.delete('/shares/:id', requireAuth, async (req, res) => {
 // Get view data
 router.get('/views/:id/data', requireAuth, async (req, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = (req.user as any).id;
     const { id } = req.params;
     const { limit = 100, offset = 0 } = req.query;
 

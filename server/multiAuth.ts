@@ -176,10 +176,8 @@ export function setupMultiAuth(app: Express) {
   configureTwitterAuth();
   configureLocalAuth();
 
-  // Serialize/deserialize user for sessions
-  // Handle both Replit Auth (user.claims.sub) and multiAuth (user.id) formats
   passport.serializeUser((user: any, done) => {
-    const userId = user.claims?.sub || user.id;
+    const userId = user.id;
     if (!userId) {
       return done(new Error('User ID not found in session'));
     }

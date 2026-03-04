@@ -1,32 +1,84 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
     Utensils, RefreshCw, Flame, Zap, Scale, Brain,
-    ChevronLeft, ListTodo, Sparkles, ShieldCheck, Activity, Target
+    ChevronLeft, ListTodo, Sparkles, ShieldCheck, Activity, Target, Settings
 } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 export default function MenProtocol() {
-    const [isGenerating, setIsGenerating] = useState(false);
+    const { toast } = useToast();
+    const { user } = useAuth();
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-    const protocol = {
-        calories: 2850,
-        protein: 195,
-        carbs: 240,
-        fats: 85,
-        reasoning: "Focusing on anaerobic recovery and cognitive endurance. Strategic cortisol management through micronutrient timing. Magnesium/Zinc stack active for REM support.",
-        meals: [
-            { id: 1, title: 'Power Start', icon: '🍳', content: '4 Eggs, avocado, smoked salmon, handful of walnuts. High fat-protein anchor for cognitive stability.' },
-            { id: 2, title: 'Mid-Day Fuel', icon: '🥩', content: 'Grass-fed beef bowl, sweet potato, fermented greens. Glycemic load optimized for afternoon anabolic window.' },
-            { id: 3, title: 'Restoration', icon: '🥗', content: 'Roasted chicken, olive oil, asparagus, heap of baby spinach. Micronutrient density for neurotransmitter synthesis.' },
-            { id: 4, title: 'Performance Stack', icon: '🫐', content: 'Greek yogurt with berries & raw honey (Pre-sleep). Cortisol blunting for deep recovery.' }
-        ]
+    // Form state for biometrics
+    const [formData, setFormData] = useState({
+        weight: user?.weight?.toString() || '',
+        height: user?.height?.toString() || '',
+        age: user?.age?.toString() || '',
+        activityLevel: user?.activityLevel || 'moderate',
+        fitnessGoal: user?.fitnessGoal || 'recomp'
+    });
+
+    // Fetch the generated protocol
+    const { data: generatedProtocol, isLoading, isRefetching, refetch } = useQuery({
+        queryKey: ["/api/men/protocol"],
+    });
+
+    // Update biometrics mutation
+    const updateBiometrics = useMutation({
+        mutationFn: async (data: typeof formData) => {
+            const res = await apiRequest("POST", "/api/men/biometrics", data);
+            return res.json();
+        },
+        onSuccess: () => {
+            toast({ title: "Biometrics Updated", description: "Recalibrating your protocol..." });
+            setIsDialogOpen(false);
+            refetch(); // Regenerate protocol after biometrics update
+            queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+        },
+        onError: () => {
+            toast({ title: "Update Failed", description: "Could not save your biometrics. Please try again.", variant: "destructive" });
+        }
+    });
+
+    const protocol: any = generatedProtocol || {
+        calories: '--',
+        protein: '--',
+        carbs: '--',
+        fats: '--',
+        reasoning: "Awaiting biometric calibration to generate your precision protocol.",
+        meals: []
     };
 
     const handleSync = () => {
-        setIsGenerating(true);
-        setTimeout(() => setIsGenerating(false), 2000);
+        refetch();
+    };
+
+    const handleSaveBiometrics = (e: React.FormEvent) => {
+        e.preventDefault();
+        updateBiometrics.mutate(formData);
     };
 
     return (
@@ -54,13 +106,92 @@ export default function MenProtocol() {
                     </div>
 
                     <div className="flex gap-4 w-full lg:w-auto">
+                        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" className="flex-1 lg:flex-none h-14 px-6 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest text-xs border-white/10 transition-all">
+                                    <Settings className="w-4 h-4 mr-2" /> Parameters
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="bg-slate-900 border-white/10 text-white max-w-md">
+                                <DialogHeader>
+                                    <DialogTitle className="text-xl font-black">Calibration Parameters</DialogTitle>
+                                </DialogHeader>
+                                <form onSubmit={handleSaveBiometrics} className="space-y-4 pt-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label>Weight (kg)</Label>
+                                            <Input
+                                                type="number"
+                                                className="bg-slate-800 border-white/10"
+                                                value={formData.weight}
+                                                onChange={e => setFormData({ ...formData, weight: e.target.value })}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Height (cm)</Label>
+                                            <Input
+                                                type="number"
+                                                className="bg-slate-800 border-white/10"
+                                                value={formData.height}
+                                                onChange={e => setFormData({ ...formData, height: e.target.value })}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Age</Label>
+                                        <Input
+                                            type="number"
+                                            className="bg-slate-800 border-white/10"
+                                            value={formData.age}
+                                            onChange={e => setFormData({ ...formData, age: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Activity Level</Label>
+                                        <Select value={formData.activityLevel} onValueChange={(v) => setFormData({ ...formData, activityLevel: v })}>
+                                            <SelectTrigger className="bg-slate-800 border-white/10 text-white">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-slate-800 border-white/10 text-white">
+                                                <SelectItem value="sedentary">Sedentary (Little/No Exercise)</SelectItem>
+                                                <SelectItem value="light">Light (1-3 days/week)</SelectItem>
+                                                <SelectItem value="moderate">Moderate (3-5 days/week)</SelectItem>
+                                                <SelectItem value="active">Active (6-7 days/week)</SelectItem>
+                                                <SelectItem value="very_active">Very Active (Twice Daily)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Primary Goal</Label>
+                                        <Select value={formData.fitnessGoal} onValueChange={(v) => setFormData({ ...formData, fitnessGoal: v })}>
+                                            <SelectTrigger className="bg-slate-800 border-white/10 text-white">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-slate-800 border-white/10 text-white">
+                                                <SelectItem value="cut">Cut (Fat Loss)</SelectItem>
+                                                <SelectItem value="maintain">Maintain</SelectItem>
+                                                <SelectItem value="recomp">Recomposition (Gain Muscle/Lose Fat)</SelectItem>
+                                                <SelectItem value="bulk">Bulk (Muscle Gain)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <Button type="submit" disabled={updateBiometrics.isPending} className="w-full h-12 mt-4 bg-indigo-600 hover:bg-indigo-500 font-bold">
+                                        {updateBiometrics.isPending ? 'Syncing...' : 'Save & Recalibrate'}
+                                    </Button>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
+
                         <Button
                             onClick={handleSync}
-                            disabled={isGenerating}
+                            disabled={isLoading || isRefetching}
                             className="flex-1 lg:flex-none h-14 px-8 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest text-xs shadow-[0_15px_30px_rgba(79,70,229,0.3)] border-none active:scale-95 transition-all"
                         >
-                            <RefreshCw className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-spin' : ''}`} />
-                            {isGenerating ? 'Calibrating...' : 'Synchronize Protocol'}
+                            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading || isRefetching ? 'animate-spin' : ''}`} />
+                            {isLoading || isRefetching ? 'Calibrating...' : 'Synchronize Protocol'}
                         </Button>
                     </div>
                 </div>
@@ -74,16 +205,26 @@ export default function MenProtocol() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2 space-y-6">
-                        {protocol.meals.map((meal) => (
-                            <Card key={meal.id} className="p-8 bg-slate-900/60 border-white/5 backdrop-blur-xl group hover:border-indigo-500/20 transition-all overflow-hidden relative">
-                                <span className="absolute top-0 right-0 p-10 text-6xl opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">{meal.icon}</span>
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-1.5 h-6 bg-indigo-500 rounded-full" />
-                                    <h3 className="text-2xl font-black text-white tracking-tight">{meal.title}</h3>
-                                </div>
-                                <p className="text-slate-400 text-lg leading-relaxed font-medium relative z-10">{meal.content}</p>
+                        {(!protocol.meals || protocol.meals.length === 0) ? (
+                            <Card className="p-12 bg-slate-900/40 border-white/5 border-dashed flex flex-col items-center justify-center text-center">
+                                <Activity className="w-12 h-12 text-slate-700 mb-4" />
+                                <h3 className="text-xl font-black text-slate-500 mb-2">Configure Parameters</h3>
+                                <p className="text-slate-600 text-sm max-w-sm">
+                                    Update your weight, height, age and goal using the Parameters button to generate your personalized nutrition stack.
+                                </p>
                             </Card>
-                        ))}
+                        ) : (
+                            protocol.meals.map((meal: any) => (
+                                <Card key={meal.id} className="p-8 bg-slate-900/60 border-white/5 backdrop-blur-xl group hover:border-indigo-500/20 transition-all overflow-hidden relative">
+                                    <span className="absolute top-0 right-0 p-10 text-6xl opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">{meal.icon}</span>
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <div className="w-1.5 h-6 bg-indigo-500 rounded-full" />
+                                        <h3 className="text-2xl font-black text-white tracking-tight">{meal.title}</h3>
+                                    </div>
+                                    <p className="text-slate-400 text-lg leading-relaxed font-medium relative z-10">{meal.content}</p>
+                                </Card>
+                            ))
+                        )}
                     </div>
 
                     <div className="space-y-6">

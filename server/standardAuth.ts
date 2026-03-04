@@ -34,14 +34,6 @@ export function setupSession(app: Express) {
 
 export function isAuthenticated(req: any, res: any, next: any) {
   if (req.isAuthenticated()) {
-    // Normalize user structure so req.user.claims.sub always works,
-    // regardless of whether the user logged in via OAuth or email/password.
-    if (!req.user.claims && req.user.id) {
-      req.user.claims = {
-        sub: req.user.id,
-        email: req.user.email
-      };
-    }
     return next();
   }
   res.status(401).json({ message: "Unauthorized" });
