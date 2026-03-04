@@ -55,6 +55,8 @@ export const users = pgTable("users", {
   age: integer("age"),
   activityLevel: varchar("activity_level", { length: 50 }), // e.g., 'sedentary', 'light', 'moderate', 'active', 'very_active'
   fitnessGoal: varchar("fitness_goal", { length: 50 }), // e.g., 'cut', 'maintain', 'bulk', 'recomp'
+  freeAccessUntil: timestamp("free_access_until"), // Admin-granted complimentary access expiry
+  freeAccessNote: text("free_access_note"),         // Admin note for the exception
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
