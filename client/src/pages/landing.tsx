@@ -307,7 +307,7 @@ export default function Landing() {
       </section>
 
       {/* INNOVATIVE: Cause & Effect Explanation Section */}
-      <section className="px-6 py-24 max-w-6xl mx-auto">
+      <section className="px-3 md:px-6 py-16 md:py-24 max-w-6xl mx-auto overflow-hidden">
         <div className="text-center mb-12 md:mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wider mb-4 md:mb-6">
             <Activity className="w-3 h-3" />
@@ -330,26 +330,26 @@ export default function Landing() {
               viewport={{ once: true, margin: "-100px" }}
               className="relative"
             >
-              {/* Desktop & Mobile Shared Layout Structure */}
-              <div className="flex flex-col md:flex-row items-center gap-6 md:gap-12 group">
+              {/* Redesigned: Compact Side-by-Side Horizontal Layout for Mobile */}
+              <div className="flex flex-row items-center gap-2 md:gap-12 group">
 
-                {/* Action Card */}
-                <div className={`w-full md:flex-1 ${feature.actionBg} border border-slate-100 p-6 md:p-8 rounded-[2rem] shadow-sm relative overflow-hidden transition-all duration-500 hover:shadow-xl hover:-translate-y-1 z-10`}>
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-bl-[80px] -z-10 transition-transform group-hover:scale-110 opacity-50"></div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center text-white text-[10px] font-black">0{idx + 1}</div>
-                    <Badge variant="secondary" className="bg-slate-100 text-slate-500 border-none font-black tracking-widest uppercase text-[9px]">Your Action</Badge>
+                {/* Action Card (Compact Bubble on Mobile, Full on Desktop) */}
+                <div className={`shrink-0 md:flex-1 ${feature.actionBg} border border-slate-100 p-3 md:p-8 rounded-full md:rounded-[3rem] shadow-sm relative overflow-hidden transition-all duration-500 hover:shadow-xl hover:-translate-y-1 z-10 flex flex-col items-center md:items-start justify-center min-w-[80px] md:min-w-0 px-4 py-3 md:px-8 md:py-8`}>
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-slate-50 rounded-bl-full -z-10 transition-transform group-hover:scale-110 opacity-50"></div>
+                  <div className="flex items-center gap-1 md:mb-4">
+                    <div className="w-5 h-5 md:w-8 md:h-8 rounded-full bg-slate-900 flex items-center justify-center text-white text-[8px] md:text-[10px] font-black italic">0{idx + 1}</div>
+                    <Badge variant="secondary" className="hidden md:inline-flex bg-slate-100 text-slate-400 border-none font-black tracking-widest uppercase text-[9px]">Action</Badge>
                   </div>
-                  <h3 className="text-xl md:text-2xl font-black text-slate-800 mb-3 leading-tight">{feature.action}</h3>
-                  <p className="text-sm md:text-base text-slate-500 font-medium leading-relaxed">{feature.actionDesc}</p>
+                  <h3 className="text-[9px] md:text-2xl font-black text-slate-800 leading-tight text-center md:text-left break-words max-w-[75px] md:max-w-none hyphens-none">{feature.action}</h3>
+                  <p className="hidden md:block text-base text-slate-500 font-medium leading-relaxed">{feature.actionDesc}</p>
                 </div>
 
-                {/* Laser Beam Connector */}
-                <div className="hidden md:flex relative w-24 h-px items-center justify-center">
-                  <div className="absolute inset-0 bg-slate-100 h-px"></div>
+                {/* Connectivity Laser */}
+                <div className="flex relative w-8 md:w-24 items-center justify-center">
+                  <div className="absolute w-full h-[2px] bg-slate-100"></div>
                   <motion.div
                     animate={{
-                      left: ['-50%', '150%'],
+                      left: ['-20%', '120%'],
                       opacity: [0, 1, 1, 0]
                     }}
                     transition={{
@@ -358,64 +358,45 @@ export default function Landing() {
                       ease: "easeInOut",
                       delay: idx * 0.5
                     }}
-                    className="absolute w-12 h-[2px] bg-gradient-to-r from-transparent via-indigo-500 to-transparent shadow-[0_0_15px_rgba(99,102,241,0.8)] z-20"
+                    className="absolute w-4 md:w-12 h-[2px] bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.6)] z-20"
                   />
-                  <div className="w-8 h-8 rounded-full bg-white border border-slate-100 shadow-sm flex items-center justify-center z-10">
-                    <ArrowRight className="w-4 h-4 text-slate-400" />
+                  <div className="w-5 h-5 md:w-8 md:h-8 rounded-full bg-white border border-slate-100 shadow-sm flex items-center justify-center z-10">
+                    <ArrowRight className="w-3 h-3 md:w-4 md:h-4 text-slate-400" />
                   </div>
                 </div>
 
-                {/* Mobile Laser Connector (Vertical) */}
-                <div className="md:hidden flex flex-col items-center gap-2 py-2">
-                  <div className="w-px h-12 bg-slate-100 relative">
-                    <motion.div
-                      animate={{
-                        top: ['-20%', '120%'],
-                        opacity: [0, 1, 1, 0]
-                      }}
-                      transition={{
-                        duration: 1.5,
-                        repeat: Infinity,
-                        ease: "linear"
-                      }}
-                      className="absolute left-1/2 -translate-x-1/2 w-[2px] h-8 bg-gradient-to-b from-transparent via-indigo-500 to-transparent shadow-[0_0_10px_rgba(99,102,241,0.6)]"
-                    />
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center text-white shadow-lg rotate-90">
-                    <ArrowRight className="w-4 h-4" />
-                  </div>
-                </div>
-
-                {/* Reaction Card */}
-                <div className={`w-full md:flex-1 ${feature.reactionBg} border border-indigo-100 p-6 md:p-8 rounded-[2rem] relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] shadow-sm z-10 sm:ml-4 md:ml-0`}>
-                  {/* Glowing background for reaction */}
+                {/* Reaction Card (Shape) */}
+                <div
+                  className={`flex-1 ${feature.reactionBg} border border-indigo-100 p-3 md:p-8 relative overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] shadow-sm z-10 flex flex-col justify-center min-h-[120px] md:min-h-0`}
+                  style={{
+                    borderRadius: '1rem',
+                    clipPath: 'polygon(0% 0%, 100% 0%, 100% 88%, 88% 100%, 0% 100%)'
+                  }}
+                >
                   <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/10 blur-[50px] rounded-full"></div>
 
-                  <Badge className={`mb-4 ${feature.badgeColor} border-none font-black tracking-widest uppercase text-[9px] shadow-lg text-white`}>{feature.badge}</Badge>
-                  <h3 className="text-xl md:text-2xl font-black text-slate-900 mb-3 leading-tight">{feature.reaction}</h3>
-                  <div className="text-sm md:text-base text-slate-700 font-medium leading-relaxed">
+                  <Badge className={`mb-1 md:mb-4 ${feature.badgeColor} border-none font-black tracking-widest uppercase text-[7px] md:text-[9px] shadow-lg text-white w-fit`}>{feature.badge}</Badge>
+                  <h3 className="text-[11px] md:text-2xl font-black text-slate-900 mb-0.5 md:mb-1 leading-tight">{feature.reaction}</h3>
+                  <div className="text-[9px] md:text-base text-slate-700 font-medium leading-tight md:leading-relaxed">
                     {feature.reactionDesc}
                   </div>
 
-                  {/* Micro-sparkle animation */}
                   <motion.div
                     animate={{
                       scale: [1, 1.2, 1],
                       opacity: [0.2, 0.5, 0.2]
                     }}
                     transition={{ duration: 3, repeat: Infinity }}
-                    className="absolute bottom-4 right-4"
+                    className="absolute bottom-2 right-2 md:bottom-6 md:right-8"
                   >
-                    <Sparkles className="w-6 h-6 text-indigo-200/50" />
+                    <Sparkles className="w-4 h-4 md:w-6 md:h-6 text-indigo-200/50" />
                   </motion.div>
                 </div>
-
               </div>
             </motion.div>
           ))}
         </div>
       </section>
-
 
       {/* Optimized: Technology & Trust Section */}
       <section className="px-6 py-20 bg-slate-900 text-white relative overflow-hidden">
