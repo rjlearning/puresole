@@ -447,11 +447,18 @@ export default function Landing() {
               ))}
             </div>
           </motion.div>
+
+          <div className="mt-12 pt-8 border-t border-white/10 text-center lg:text-left">
+            <p className="text-[10px] md:text-xs text-slate-500 font-medium max-w-2xl">
+              <span className="text-indigo-400 font-bold uppercase tracking-tighter mr-2">Therapeutic Basis:</span>
+              PureSoul integrates principles of CBT, Somatic, and DBT for self-growth. This is for educational purposes and is not medical advice, clinical therapy, or a substitute for professional diagnosis.
+            </p>
+          </div>
         </div>
-      </section>
+      </section >
 
       {/* Footer */}
-      <section className="py-20 text-center px-6 border-t border-white/20 bg-white/30 backdrop-blur-sm">
+      < section className="py-20 text-center px-6 border-t border-white/20 bg-white/30 backdrop-blur-sm" >
         <p className="text-3xl font-semibold text-slate-800 mb-12 tracking-tight">Trusted by 10,000+ souls.</p>
         <div className="flex flex-wrap justify-center gap-6">
           {["Privacy First", "End-to-End Encrypted"].map((tag) => (
@@ -460,10 +467,15 @@ export default function Landing() {
             </span>
           ))}
         </div>
-        <div className="mt-20 text-sm text-slate-400 font-medium">
-          © 2024 PureSoul. Crafted with clear intentions.
+        <div className="mt-20 text-xs text-slate-400 font-medium max-w-4xl mx-auto space-y-4">
+          <p className="px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 italic text-slate-500">
+            PureSoul is a self-growth platform. It is not intended to diagnose, treat, or prevent any medical or mental health condition. Always seek the advice of a qualified healthcare provider regarding a medical condition.
+          </p>
+          <p>
+            © 2024 PureSoul. Crafted with clear intentions.
+          </p>
         </div>
-      </section>
-    </div>
+      </section >
+    </div >
   );
 }
