@@ -107,11 +107,6 @@ export default function MenBioscanPage() {
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-cyan-500/5 blur-[120px] rounded-full -mr-64 -mt-32 pointer-events-none" />
 
             <div className="max-w-2xl mx-auto px-5 pt-12 sm:pt-20">
-                <Link href="/men">
-                    <button className="flex items-center gap-1.5 text-sm text-cyan-400 hover:text-cyan-300 mb-8 transition-colors">
-                        <ChevronLeft className="w-4 h-4" /> Back to Evolution Hub
-                    </button>
-                </Link>
 
                 <div className="flex items-center gap-4 mb-10">
                     <div className="w-14 h-14 rounded-[1.5rem] bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shadow-lg">
