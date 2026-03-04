@@ -247,7 +247,8 @@ export function registerMultiAuthRoutes(app: Express) {
         detectedHost: req.get('x-forwarded-host') || req.get('host'),
         detectedProto: req.get('x-forwarded-proto') || req.protocol,
         trustProxy: app.get('trust proxy'),
-        callbackUrlGuess: `${req.get('x-forwarded-proto') || req.protocol}://${req.get('x-forwarded-host') || req.get('host')}/api/auth/google/callback`
+        callbackUrlGuess: `${req.get('x-forwarded-proto') || req.protocol}://${req.get('x-forwarded-host') || req.get('host')}/api/auth/google/callback`,
+        headers: req.headers // DEBUG: See all headers to identify proxy behavior
       });
     });
   } else {
