@@ -14,13 +14,24 @@ import {
   Trash2,
   Save,
   Check,
-  PlayCircle
+  PlayCircle,
+  CreditCard,
+  MessageSquare,
+  Crown,
+  ExternalLink,
+  ReceiptText
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/hooks/useAuth';
+import { Link } from 'wouter';
 import { restartOnboarding } from '@/components/OnboardingManager';
 
 export default function Settings() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [saved, setSaved] = useState(false);
+
+  const { data: subscription } = useQuery<any>({ queryKey: ['/api/subscription'] });
 
   const handleSave = () => {
     setSaved(true);
@@ -36,10 +47,14 @@ export default function Settings() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
+          <TabsList className="grid w-full grid-cols-6 mb-6">
             <TabsTrigger value="profile">
               <User className="w-4 h-4 mr-2" />
               Profile
+            </TabsTrigger>
+            <TabsTrigger value="billing">
+              <CreditCard className="w-4 h-4 mr-2" />
+              Billing
             </TabsTrigger>
             <TabsTrigger value="notifications">
               <Bell className="w-4 h-4 mr-2" />
@@ -58,6 +73,67 @@ export default function Settings() {
               Data
             </TabsTrigger>
           </TabsList>
+
+          {/* Billing / Payment Center Tab */}
+          <TabsContent value="billing">
+            <div className="space-y-6">
+              {/* Current Plan */}
+              <Card className="p-6 bg-white">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <Crown className="w-6 h-6" /> Payment Center
+                </h2>
+                {subscription ? (
+                  <div className="grid gap-4">
+                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border">
+                      <div>
+                        <p className="text-sm text-gray-500">Current Plan</p>
+                        <p className="text-lg font-bold text-gray-900">{subscription.plan?.name || 'Active Plan'}</p>
+                        <p className="text-sm text-gray-500 capitalize">{subscription.status}</p>
+                      </div>
+                      <Link href="/subscribe">
+                        <button className="flex items-center gap-1 text-sm bg-primary/10 text-primary hover:bg-primary/20 px-4 py-2 rounded-xl font-semibold transition-colors">
+                          Change Plan <ExternalLink className="w-3.5 h-3.5" />
+                        </button>
+                      </Link>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl">
+                    <p className="text-indigo-800 text-sm font-medium">No active subscription</p>
+                    <Link href="/subscribe">
+                      <button className="mt-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl font-semibold transition-colors">
+                        Start 14-Day Free Trial
+                      </button>
+                    </Link>
+                  </div>
+                )}
+              </Card>
+
+              {/* Quick Links */}
+              <div className="grid sm:grid-cols-3 gap-4">
+                {[
+                  { icon: CreditCard, label: 'Billing Details', sub: 'View invoices, payment method', href: '/billing' },
+                  { icon: ReceiptText, label: 'Billing History', sub: 'Past payments and receipts', href: '/billing' },
+                  { icon: MessageSquare, label: 'Contact Support', sub: 'Questions about your plan', href: '/contact' },
+                ].map(item => {
+                  const Icon = item.icon;
+                  return (
+                    <Link key={item.label} href={item.href}>
+                      <div className="flex items-start gap-3 p-4 bg-white rounded-xl border hover:border-primary/30 hover:bg-primary/5 transition-all cursor-pointer group">
+                        <div className="w-9 h-9 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                          <Icon className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-sm text-gray-900">{item.label}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">{item.sub}</p>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </TabsContent>
 
           {/* Profile Tab */}
           <TabsContent value="profile">

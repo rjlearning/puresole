@@ -10,7 +10,69 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import Header from "@/components/layout/header";
-import { AlertTriangle, Users, Brain, Shield, Clock, TrendingUp, Search, FileText, MessageSquare } from "lucide-react";
+import { AlertTriangle, Users, Brain, Shield, Clock, TrendingUp, Search, FileText, MessageSquare, Gift, CheckCircle2, X } from "lucide-react";
+
+function UserFreeTierRow({
+  userData,
+  onGrantRevoke,
+  isPending,
+}: {
+  userData: any;
+  onGrantRevoke: (userId: string, grant: boolean, note?: string) => void;
+  isPending: boolean;
+}) {
+  const [showNote, setShowNote] = useState(false);
+  const [note, setNote] = useState('');
+  const hasFree = userData.freeAccessUntil && new Date(userData.freeAccessUntil) > new Date();
+
+  return (
+    <div className="border rounded-lg p-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+            <Users className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <p className="font-medium">{userData.firstName} {userData.lastName}</p>
+            <p className="text-sm text-muted-foreground">{userData.email} | ID: {userData.id.substring(0, 8)}...</p>
+            {hasFree && (
+              <p className="text-xs text-emerald-600 font-semibold mt-0.5">
+                ✓ Complimentary access active{userData.freeAccessNote ? ` — ${userData.freeAccessNote}` : ''}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center space-x-2">
+          {userData.isAdmin && <Badge variant="secondary">Admin</Badge>}
+          {hasFree ? (
+            <button onClick={() => onGrantRevoke(userData.id, false)} disabled={isPending}
+              className="flex items-center gap-1 text-xs bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-1.5 rounded-xl transition-colors disabled:opacity-50">
+              <X className="w-3 h-3" /> Revoke Free
+            </button>
+          ) : (
+            <button onClick={() => setShowNote(v => !v)} disabled={isPending}
+              className="flex items-center gap-1 text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-xl transition-colors disabled:opacity-50">
+              <Gift className="w-3 h-3" /> Grant Free Access
+            </button>
+          )}
+        </div>
+      </div>
+      {showNote && !hasFree && (
+        <div className="mt-3 flex gap-2">
+          <input type="text" value={note} onChange={e => setNote(e.target.value)}
+            placeholder="Note (e.g. 'Scholarship', 'Beta tester')…"
+            className="flex-1 text-sm border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-emerald-400 outline-none" />
+          <button onClick={() => { onGrantRevoke(userData.id, true, note); setShowNote(false); setNote(''); }}
+            disabled={isPending}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl disabled:opacity-50 transition-colors">
+            {isPending ? 'Saving…' : 'Confirm'}
+          </button>
+          <button onClick={() => setShowNote(false)} className="text-slate-400 hover:text-slate-600 text-xs px-2">Cancel</button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Admin() {
   const { toast } = useToast();
@@ -37,6 +99,19 @@ export default function Admin() {
     retry: false,
   });
   const feedbacks = feedbacksData?.feedback || [];
+
+  const grantFreeTierMutation = useMutation({
+    mutationFn: async ({ userId, grant, note }: { userId: string; grant: boolean; note?: string }) => {
+      await apiRequest('POST', '/api/admin/grant-free-tier', { userId, grant, note });
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: vars.grant ? 'Free tier granted' : 'Free tier revoked', description: `Access updated for user.` });
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to update user access.', variant: 'destructive' });
+    },
+  });
 
   const updateFeedbackMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
@@ -375,33 +450,12 @@ export default function Admin() {
                 ) : users && users.length > 0 ? (
                   <div className="space-y-3">
                     {users.map((userData: any) => (
-                      <div key={userData.id} className="border rounded-lg p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                              <Users className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                              <p className="font-medium">
-                                {userData.firstName} {userData.lastName}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {userData.email} | ID: {userData.id.substring(0, 8)}...
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="flex items-center space-x-2 mb-1">
-                              {userData.isAdmin && (
-                                <Badge variant="secondary">Admin</Badge>
-                              )}
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              Joined: {new Date(userData.createdAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
+                      <UserFreeTierRow
+                        key={userData.id}
+                        userData={userData}
+                        onGrantRevoke={(userId, grant, note) => grantFreeTierMutation.mutate({ userId, grant, note })}
+                        isPending={grantFreeTierMutation.isPending}
+                      />
                     ))}
                   </div>
                 ) : (

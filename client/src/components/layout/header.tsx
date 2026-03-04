@@ -85,15 +85,6 @@ export default function Header() {
               <div className="w-8 h-8 bg-black/5 rounded-full animate-pulse"></div>
             ) : isAuthenticated ? (
               <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setFeedbackOpen(true)}
-                  className="flex bg-primary/5 text-primary border-primary/20 hover:bg-primary/10"
-                >
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Feedback
-                </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-10 w-10 rounded-full ring-2 ring-primary/10 hover:ring-primary/30 transition-all" data-testid="user-menu">
@@ -177,10 +168,10 @@ export default function Header() {
                         Billing
                       </DropdownMenuItem>
                     </Link>
-                    <Link href="/support">
-                      <DropdownMenuItem className="focus:bg-primary/5 focus:text-primary" data-testid="menu-support">
+                    <Link href="/contact">
+                      <DropdownMenuItem className="focus:bg-primary/5 focus:text-primary" data-testid="menu-contact">
                         <HelpCircle className="h-4 w-4 mr-2" />
-                        Support & Help
+                        Contact Us
                       </DropdownMenuItem>
                     </Link>
                     <DropdownMenuItem onClick={() => setFeedbackOpen(true)} className="focus:bg-primary/5 focus:text-primary">

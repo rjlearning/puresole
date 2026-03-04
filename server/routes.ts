@@ -768,6 +768,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: grant or revoke complimentary free tier for a specific user
+  app.post('/api/admin/grant-free-tier', isAuthenticated, async (req: any, res) => {
+    try {
+      const adminId = (req.user as any).id;
+      const admin = await storage.getUser(adminId);
+      if (!admin?.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const { userId, grant, note } = req.body as { userId: string; grant: boolean; note?: string };
+      if (!userId) return res.status(400).json({ message: 'userId is required' });
+
+      const targetUser = await storage.getUser(userId);
+      if (!targetUser) return res.status(404).json({ message: 'User not found' });
+
+      // Use storage.updateUser to persist the free-access grant
+      const freeAccessUntil = grant ? new Date('2099-12-31') : null;
+      await storage.updateUser(userId, {
+        freeAccessUntil: freeAccessUntil as any,
+        freeAccessNote: (note || null) as any,
+      });
+
+      await createAuditLog(
+        adminId, 'user', userId,
+        grant ? 'admin_granted_free_tier' : 'admin_revoked_free_tier',
+        null, { grant, note }, req
+      );
+
+      res.json({ success: true, message: grant ? 'Free tier granted' : 'Free tier revoked' });
+    } catch (error) {
+      console.error('Grant free tier error:', error);
+      res.status(500).json({ message: 'Failed to update user access' });
+    }
+  });
+
+
+
   app.get('/api/admin/assessments', isAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.user as any).id;
