@@ -10,9 +10,10 @@
     /* High Contrast / Supabase Inspired Palette */
 
     /* Backgrounds: Crisp & Deep */
-    --background: 210 40% 98%; /* Light grey-white fallback */
+    --background: 210 40% 98%;
+    /* Light grey-white fallback */
     --foreground: 222 47% 11%;
-    
+
     /* Pure White for Cards in Light Mode */
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
@@ -21,7 +22,8 @@
     --popover-foreground: 222 47% 11%;
 
     /* Primary: Vibrant Supabase Green */
-    --primary: 153 60% 53%; /* #3ecf8e */
+    --primary: 153 60% 53%;
+    /* #3ecf8e */
     --primary-foreground: 153 60% 5%;
 
     /* Secondary: Slate for contrast */
@@ -29,22 +31,25 @@
     --secondary-foreground: 210 40% 98%;
 
     /* Accent: Indigo for brand depth */
-    --accent: 250 84% 67%; 
+    --accent: 250 84% 67%;
     --accent-foreground: 250 84% 15%;
 
     /* Muted: Professional Grays */
     --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 40%; /* Slightly darker for contrast */
+    --muted-foreground: 215.4 16.3% 40%;
+    /* Slightly darker for contrast */
 
     /* Destructive: Error Red */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 85%; /* Sharper borders */
+    --border: 214.3 31.8% 85%;
+    /* Sharper borders */
     --input: 214.3 31.8% 85%;
     --ring: 153 60% 53%;
 
-    --radius: 0.75rem; /* Modern sharp-rounded corners, not super-round */
+    --radius: 0.75rem;
+    /* Modern sharp-rounded corners, not super-round */
   }
 }
 
@@ -53,8 +58,14 @@
     @apply border-border;
   }
 
+  html {
+    overscroll-behavior-y: auto;
+  }
+
   body {
     @apply bg-background text-foreground;
+    overscroll-behavior-y: auto;
+    touch-action: manipulation;
   }
 }
 
