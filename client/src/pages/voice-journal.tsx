@@ -6,7 +6,7 @@ import { VoiceHistoryList } from "@/components/voice/VoiceHistoryList";
 import { useToast } from "@/hooks/use-toast";
 
 import {
-  Loader2, Mic, Clock, Zap, Activity, Play, Pause
+  Loader2, Mic, Clock, Zap, Activity, Play, Pause, Sparkles
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -45,6 +45,20 @@ const VOICE_EXPERT_ACTIONS: Record<string, { title: string; activityId: string; 
   'default': { title: 'Guided Mindfulness', activityId: 'meditation-1', durationMinutes: 5, instructions: 'Take a moment to center yourself with this guided mindfulness session.' }
 };
 
+const calculateLocalBioInsights = (emotions: any[]) => {
+  if (!emotions || emotions.length === 0) return { valence: 0, arousal: 0, energy: 'Normal', stability: 'Balanced' };
+
+  const avgValence = emotions.reduce((sum, e) => sum + (e.valence || 0), 0) / emotions.length;
+  const avgArousal = emotions.reduce((sum, e) => sum + (e.arousal || 0), 0) / emotions.length;
+
+  return {
+    valence: avgValence,
+    arousal: avgArousal,
+    energy: avgArousal > 0.3 ? 'High' : avgArousal < -0.3 ? 'Low' : 'Stable',
+    stability: Math.abs(avgValence) < 0.2 ? 'Neutral' : avgValence > 0 ? 'Positive' : 'Strain'
+  };
+};
+
 function getTopEmotionFromEntry(entry: VoiceEntry): string {
   if (typeof entry.emotionData === 'string') return entry.emotionData.toLowerCase();
 
@@ -70,6 +84,12 @@ export default function VoiceJournal() {
   const [sessionSnapshot, setSessionSnapshot] = useState<{
     emotion: string;
     savedEntry: VoiceEntry | null;
+    localAnalysis?: {
+      valence: number;
+      arousal: number;
+      energy: string;
+      stability: string;
+    };
   } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const snapshotRef = useRef<HTMLDivElement>(null);
@@ -108,7 +128,12 @@ export default function VoiceJournal() {
     const sorted = Object.entries(emotionCounts).sort(([, a], [, b]) => b - a);
     const topEmotion = sorted.length > 0 ? sorted[0][0] : 'neutral';
 
-    setSessionSnapshot({ emotion: topEmotion, savedEntry: null });
+    const instantAnalysis = calculateLocalBioInsights(data.emotions || []);
+    setSessionSnapshot({
+      emotion: topEmotion,
+      savedEntry: null,
+      localAnalysis: instantAnalysis
+    });
     setIsSaving(true);
 
     try {
@@ -236,25 +261,67 @@ export default function VoiceJournal() {
                     {(() => {
                       const action = VOICE_EXPERT_ACTIONS[sessionSnapshot.emotion] || VOICE_EXPERT_ACTIONS['default'];
                       return (
-                        <>
-                          <h3 className="text-4xl font-black mb-6 tracking-tight text-white leading-tight">
-                            {action.title}
-                          </h3>
-                          <p className="text-slate-400 text-lg leading-relaxed mb-10 font-medium opacity-90">
-                            {action.instructions}
-                          </p>
-                          <div className="flex flex-wrap items-center gap-4">
-                            <div className="flex items-center gap-2 bg-white/5 px-6 py-4 rounded-full text-slate-300 text-xs font-bold border border-white/5">
-                              <Clock className="w-4 h-4 text-slate-400" />
-                              {action.durationMinutes} min Protocol
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                          <div className="flex flex-col">
+                            <h3 className="text-3xl font-black mb-4 tracking-tight text-white leading-tight">
+                              {action.title}
+                            </h3>
+                            <p className="text-slate-400 text-base leading-relaxed mb-6 font-medium opacity-90">
+                              {action.instructions}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-4">
+                              <div className="flex items-center gap-2 bg-white/5 px-6 py-4 rounded-full text-slate-300 text-xs font-bold border border-white/5">
+                                <Clock className="w-4 h-4 text-slate-400" />
+                                {action.durationMinutes} min Protocol
+                              </div>
+                              <Link href={`/activities/${action.activityId}`}>
+                                <button className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-400 text-white px-8 py-4 rounded-full text-xs font-black uppercase tracking-widest transition-all shadow-[0_0_25px_rgba(99,102,241,0.4)]">
+                                  <Activity className="w-4 h-4" /> Begin Now
+                                </button>
+                              </Link>
                             </div>
-                            <Link href={`/activities/${action.activityId}`}>
-                              <button className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-400 text-white px-10 py-4 rounded-full text-xs font-black uppercase tracking-widest transition-all shadow-[0_0_25px_rgba(99,102,241,0.4)]">
-                                <Activity className="w-4 h-4" /> Begin Now
-                              </button>
-                            </Link>
                           </div>
-                        </>
+
+                          {sessionSnapshot.localAnalysis && (
+                            <div className="bg-white/5 rounded-[2rem] p-6 border border-white/10 flex flex-col justify-between">
+                              <div className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-4">Precision Diagnostics</div>
+
+                              <div className="space-y-4">
+                                <div>
+                                  <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-tighter">
+                                    <span>Vocal Energy</span>
+                                    <span className="text-indigo-300">{sessionSnapshot.localAnalysis.energy}</span>
+                                  </div>
+                                  <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+                                    <motion.div
+                                      initial={{ width: 0 }}
+                                      animate={{ width: `${Math.min(100, (sessionSnapshot.localAnalysis.arousal + 1) * 50)}%` }}
+                                      className="h-full bg-gradient-to-r from-indigo-500 to-rose-400"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-tighter">
+                                    <span>Homeostasis</span>
+                                    <span className="text-emerald-400">{sessionSnapshot.localAnalysis.stability}</span>
+                                  </div>
+                                  <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
+                                    <motion.div
+                                      initial={{ width: 0 }}
+                                      animate={{ width: `${Math.min(100, (sessionSnapshot.localAnalysis.valence + 1) * 50)}%` }}
+                                      className="h-full bg-gradient-to-r from-rose-500 via-slate-400 to-emerald-400"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="mt-6 flex items-center gap-2 text-[9px] font-medium text-slate-500 italic">
+                                <Sparkles className="w-3 h-3" /> Real-time heuristic feedback active.
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       );
                     })()}
 

@@ -141,60 +141,34 @@ export async function generateVoiceInsights(userId: string): Promise<VoiceInsigh
       ? correlationsData.map(c => `${c.correlated_with_type}: ${(c.correlation_strength * 100).toFixed(0)}%`).join(', ')
       : 'No strong correlations detected yet';
 
-    // Construct GPT-4 prompt with Precision Diagnostic Focus
-    const prompt = `You are a Senior AI Mental Wellness & Voice Biomarker Specialist. Analyze this user's longitudinal voice data to provide a "Precision Diagnostic Summary" and 3-5 actionable insights.
+    // Construct High-Speed GPT-4o-mini prompt
+    const prompt = `Precision Bio-Acoustic Analysis Summary:
+- Wellness: ${avgWellness.toFixed(1)}/100 (${trendDirection})
+- Emotions: ${topEmotions.join(', ')}
+- Risk Triggers: ${highRiskCount}
+- VAD: V=${avgValence.toFixed(2)}, A=${avgArousal.toFixed(2)}, D=${avgDominance.toFixed(2)}
 
-VOICE ANALYSIS SUMMARY (Historical Window):
-- Total analysis data points: ${recentAnalyses.length}
-- Average wellness score: ${avgWellness.toFixed(1)}/100
-- Trend direction: ${trendDirection}
-- Dominant emotions: ${topEmotions.join(', ')}
-- High-risk triggers: ${highRiskCount}
-- VAD scores: Valence=${avgValence.toFixed(2)}, Arousal=${avgArousal.toFixed(2)}, Dominance=${avgDominance.toFixed(2)}
-
-PRECISION CLINICAL DATA (Last 10 Samples):
+Recent Samples:
 ${diagnosticSummary}
 
-CORRELATIONS WITH OTHER BIOMETRICS:
-${correlationsSummary}
+Task: Provide 3-5 hyper-specific medical-acoustic reflections as a JSON array.
+Format:
+[{"type":"positive|alert|suggestion","title":"...","description":"...","priority":1-100,"confidence":${confidenceScore.toFixed(2)},"recommendations":["..."]}]`;
 
-DIAGNOSTIC CONTEXT:
-The user is recording multiple voice memos to provide enough data for a multi-sample precision diagnostic. Each sample provides a snapshot of their neuro-acoustic state. Look for consistency across samples or sudden shifts in vocal tension (jitter) and fatigue (shimmer) which correlate with burnout or autonomic nervous system strain.
-
-Please provide insights as a JSON array with this structure:
-[
-  {
-    "type": "positive|alert|suggestion|achievement",
-    "title": "Precision Insight Title",
-    "description": "Synthesized insight from multiple samples",
-    "priority": 1-100,
-    "confidence": ${confidenceScore.toFixed(2)},
-    "recommendations": ["specific action 1", "specific action 2"]
-  }
-]
-
-Guidelines:
-- If fewer than 5 clinical samples are provided, state that more data is needed for a "Precision Tier" diagnostic.
-- "positive": User showing healthy stabilization across samples.
-- "alert": Persistent high tension or sudden physiological shifts detected.
-- "suggestion": Personalized somatic or metabolic alignment recommendations.
-- Recommendations must be hyper-specific and relate back to the biomarkers (e.g., if Jitter is high, suggest nervous system regulation).`;
-
-    // Call GPT-4
+    // Call GPT-4o-mini (Faster & Lower Latency)
     const message = await openai.chat.completions.create({
-      model: 'gpt-4-turbo-preview',
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
-          content: 'You are a mental wellness AI assistant specialized in voice analysis insights. Always respond with valid JSON.'
+          content: 'Expert Bio-Acoustic Specialist. Provide ultra-concise JSON analysis.'
         },
         {
           role: 'user',
           content: prompt
         }
       ],
-
-      max_tokens: 1500,
+      max_tokens: 800,
       response_format: { type: 'json_object' }
     });
 
