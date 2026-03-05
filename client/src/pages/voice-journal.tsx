@@ -2,9 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation, Link } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { UnifiedVoiceRecorder } from "@/components/voice/UnifiedVoiceRecorder";
+import { VoiceHistoryList } from "@/components/voice/VoiceHistoryList";
 import { useToast } from "@/hooks/use-toast";
+
 import {
-  Loader2, Mic, Clock, Zap, Activity, Play
+  Loader2, Mic, Clock, Zap, Activity, Play, Pause
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -13,7 +15,7 @@ interface VoiceEntry {
   duration: number;
   moodBefore?: number;
   moodAfter?: number;
-  tags: string[];
+  tags?: string[];
   recordedAt?: string;
   createdAt?: string;
   audioUrl?: string;
@@ -25,14 +27,6 @@ interface VoiceEntry {
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────────
-
-function getMoodLabel(score: number) {
-  if (score >= 8) return { label: "Flourishing", emoji: "🌟", color: "text-emerald-600" };
-  if (score >= 6) return { label: "Stable", emoji: "😊", color: "text-sky-600" };
-  if (score >= 4) return { label: "Neutral", emoji: "😐", color: "text-amber-600" };
-  if (score >= 2) return { label: "Low", emoji: "😔", color: "text-orange-600" };
-  return { label: "Struggling", emoji: "😰", color: "text-rose-600" };
-}
 
 const VOICE_EXPERT_ACTIONS: Record<string, { title: string; activityId: string; durationMinutes: number; instructions: string }> = {
   'fear': { title: '5-4-3-2-1 Grounding', activityId: 'grounding-1', durationMinutes: 3, instructions: 'Your voice indicates high arousal & tension. Name 5 things you see, 4 you touch, 3 you hear, 2 you smell, 1 you taste.' },
@@ -68,9 +62,6 @@ function getTopEmotionFromEntry(entry: VoiceEntry): string {
   return sorted.length > 0 ? sorted[0][0] : 'neutral';
 }
 
-
-// ── main page ─────────────────────────────────────────────────────────────────
-
 export default function VoiceJournal() {
   const [, setLocation] = useLocation();
   const [isSaving, setIsSaving] = useState(false);
@@ -85,11 +76,11 @@ export default function VoiceJournal() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch entries with React Query for built-in caching and refetching
+  // Fetch entries with limit 50
   const { data: entriesData, isLoading: isLoadingEntries } = useQuery<{ entries: any[] }>({
     queryKey: ["/api/voice-entries"],
     queryFn: async () => {
-      const res = await fetch('/api/voice-entries?limit=10', { credentials: 'include' });
+      const res = await fetch('/api/voice-entries?limit=50', { credentials: 'include' });
       if (!res.ok) throw new Error('Failed to fetch entries');
       return res.json();
     }
@@ -101,15 +92,14 @@ export default function VoiceJournal() {
     title: 'Voice Note'
   }));
 
-  // Auto-scroll to the snapshot card whenever it appears
+  // Update current snapshot if entries change
   useEffect(() => {
     if (recentEntries.length > 0 && !sessionSnapshot && !isSaving) {
       handleSelectEntry(recentEntries[0]);
     }
-  }, [entriesData, isSaving]); // Only run when entries data arrives or saving finishes
+  }, [entriesData, isSaving]);
 
   const handleSave = async (data: any) => {
-    // Extract dominant emotion from live session data immediately, before any API call
     const emotionCounts: Record<string, number> = {};
     (data.emotions || []).forEach((em: any) => {
       const name = (typeof em === 'string' ? em : em.primary_emotion || em.emotion || em.label || '').toLowerCase().trim();
@@ -118,10 +108,9 @@ export default function VoiceJournal() {
     const sorted = Object.entries(emotionCounts).sort(([, a], [, b]) => b - a);
     const topEmotion = sorted.length > 0 ? sorted[0][0] : 'neutral';
 
-    // Set snapshot IMMEDIATELY - don't wait for API
     setSessionSnapshot({ emotion: topEmotion, savedEntry: null });
-
     setIsSaving(true);
+
     try {
       const formData = new FormData();
       formData.append("audio", data.audioBlob, "voice-entry.webm");
@@ -136,7 +125,6 @@ export default function VoiceJournal() {
       if (!response.ok) throw new Error("Failed to save voice entry");
       const result = await response.json();
 
-      // Update snapshot with the actual saved entry (for audio playback URL)
       const savedEntry: VoiceEntry = {
         id: result.entry?.id || `temp-${Date.now()}`,
         duration: data.duration,
@@ -153,7 +141,7 @@ export default function VoiceJournal() {
       setResetKey(prev => prev + 1);
     } catch (err) {
       console.error("Error saving voice entry:", err);
-      toast({ title: "Error saving entry", description: "Your analysis still shows above.", variant: "destructive" });
+      toast({ title: "Error saving entry", variant: "destructive" });
     } finally {
       setIsSaving(false);
     }
@@ -165,29 +153,30 @@ export default function VoiceJournal() {
       emotion: topEmotion,
       savedEntry: entry
     });
-
-    // Reset recorder key to stop any active live session if desired
-    // (Optional, keeps UI clean)
-    // setResetKey(prev => prev + 1);
-
-    // Scroll to snapshot
     setTimeout(() => {
       snapshotRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 100);
   };
 
-  const handlePlayPause = (entry: VoiceEntry, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation(); // Don't trigger handleSelectEntry if clicking play
+  const handlePlayPause = (entry: VoiceEntry) => {
     if (!entry.audioUrl) {
-      toast({ title: "Audio not available", description: "This entry doesn't have an audio recording", variant: "destructive" });
+      toast({ title: "Audio not available", variant: "destructive" });
       return;
     }
-    if (playingId === entry.id && audioRef.current) { audioRef.current.pause(); setPlayingId(null); return; }
+    if (playingId === entry.id && audioRef.current) {
+      audioRef.current.pause();
+      setPlayingId(null);
+      return;
+    }
     if (audioRef.current) audioRef.current.pause();
+
     const audio = new Audio(entry.audioUrl);
     audioRef.current = audio;
     setPlayingId(entry.id);
-    audio.play().catch(() => { toast({ title: "Playback error", variant: "destructive" }); setPlayingId(null); });
+    audio.play().catch(() => {
+      toast({ title: "Playback error", variant: "destructive" });
+      setPlayingId(null);
+    });
     audio.onended = () => setPlayingId(null);
   };
 
@@ -195,89 +184,72 @@ export default function VoiceJournal() {
     return (
       <div className="min-h-screen aurora-bg flex items-center justify-center">
         <div className="glass-card w-full max-w-sm p-8 text-center animate-pulse-slow">
-          <div className="inline-block relative mb-6">
-            <div className="absolute inset-0 bg-indigo-200 rounded-full animate-ping opacity-75"></div>
-            <div className="relative bg-white/50 p-4 rounded-full backdrop-blur-md">
-              <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
-            </div>
-          </div>
+          <Loader2 className="h-10 w-10 animate-spin text-indigo-600 mx-auto mb-6" />
           <h3 className="text-xl font-bold text-slate-800 mb-2">Syncing Neural Resonance...</h3>
-          <p className="text-slate-600">Aligning bio-acoustic markers with forensic emotional intonation.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen aurora-bg pb-24 flex flex-col relative">
-      {/* Subtle animated background mesh */}
+    <div className="min-h-screen aurora-bg pb-32 flex flex-col relative overflow-x-hidden">
       <div className="absolute inset-0 z-0 opacity-30 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 60%)' }} />
 
-      {/* Top Nav */}
-      <nav className="relative z-40 h-12 sm:h-20 flex items-center justify-center bg-transparent mb-1 sm:mb-4">
-        <div className="font-black tracking-widest uppercase text-slate-800 text-[9px] sm:text-xs flex items-center gap-1.5 sm:gap-2 bg-white/40 backdrop-blur-3xl px-4 py-1.5 sm:px-6 sm:py-2.5 rounded-full border border-white/50 shadow-sm">
-          <Mic className="h-3 w-3 sm:h-4 sm:w-4 text-indigo-600" /> Neural Resonance
+      <nav className="relative z-40 h-20 flex items-center justify-center mb-4">
+        <div className="font-black tracking-widest uppercase text-slate-800 text-xs flex items-center gap-2 bg-white/40 backdrop-blur-3xl px-6 py-2.5 rounded-full border border-white/50 shadow-sm">
+          <Mic className="h-4 w-4 text-indigo-600" /> Neural Resonance
         </div>
       </nav>
 
-      <div className="container max-w-5xl mx-auto px-4 sm:px-6 flex-1 flex flex-col relative z-10 self-center w-full">
-
-        {/* ── Immersive Recorder ── */}
+      <div className="container max-w-4xl mx-auto px-4 sm:px-6 flex-1 flex flex-col relative z-10">
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full flex flex-col justify-center"
+          className="mb-12"
         >
           <UnifiedVoiceRecorder key={resetKey} onSave={handleSave} />
         </motion.div>
 
-        {/* ── Post-Recording Snapshot (Vocal Snapshot / Expert AI Output) ── */}
         <AnimatePresence>
           {sessionSnapshot && !isSaving && (
             <div ref={snapshotRef}>
               <motion.div
-                initial={{ opacity: 0, y: 40, scale: 0.94 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                transition={{ type: "spring", bounce: 0, duration: 0.8 }}
-                className="mt-3 sm:mt-8 mb-24 sm:mb-32 max-w-2xl mx-auto w-full"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="mb-20"
               >
-                <div className="bg-slate-900 rounded-[1.5rem] sm:rounded-[2rem] p-5 sm:p-10 relative overflow-hidden shadow-2xl border border-slate-800">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+                <div className="bg-slate-900 rounded-[2.5rem] p-8 sm:p-12 relative overflow-hidden shadow-2xl border border-slate-800">
                   <div className="relative z-10">
-
-                    {/* Header */}
-                    <div className="flex items-center gap-4 mb-6">
-                      <div className="bg-gradient-to-br from-rose-400 to-rose-600 rounded-2xl w-12 h-12 flex items-center justify-center shadow-lg shadow-rose-500/30">
-                        <Zap className="w-6 h-6 text-white" />
+                    <div className="flex items-center gap-4 mb-8">
+                      <div className="bg-gradient-to-br from-rose-400 to-rose-600 rounded-2xl w-14 h-14 flex items-center justify-center shadow-xl">
+                        <Zap className="w-7 h-7 text-white" />
                       </div>
                       <div>
-                        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-300/80 mb-1">Vocal Snapshot</div>
-                        <div className="text-white font-bold tracking-tight text-lg">
-                          Dominant State: <span className="capitalize text-rose-200 font-serif italic">{sessionSnapshot.emotion}</span>
+                        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-300/80 mb-1">Session Protocol</div>
+                        <div className="text-white font-bold tracking-tight text-xl">
+                          Dominant State: <span className="capitalize text-rose-200 italic">{sessionSnapshot.emotion}</span>
                         </div>
                       </div>
                     </div>
 
-                    {/* AI Action */}
                     {(() => {
                       const action = VOICE_EXPERT_ACTIONS[sessionSnapshot.emotion] || VOICE_EXPERT_ACTIONS['default'];
                       return (
                         <>
-                          <h3 className="text-3xl font-black mb-4 tracking-tight text-white leading-tight">
+                          <h3 className="text-4xl font-black mb-6 tracking-tight text-white leading-tight">
                             {action.title}
                           </h3>
-                          <p className="text-slate-300 text-base leading-relaxed mb-8 font-medium max-w-lg opacity-90">
+                          <p className="text-slate-400 text-lg leading-relaxed mb-10 font-medium opacity-90">
                             {action.instructions}
                           </p>
                           <div className="flex flex-wrap items-center gap-4">
-                            <div className="flex items-center gap-2 bg-white/10 px-5 py-3 rounded-full text-slate-300 text-xs font-bold border border-white/5">
+                            <div className="flex items-center gap-2 bg-white/5 px-6 py-4 rounded-full text-slate-300 text-xs font-bold border border-white/5">
                               <Clock className="w-4 h-4 text-slate-400" />
                               {action.durationMinutes} min Protocol
                             </div>
                             <Link href={`/activities/${action.activityId}`}>
-                              <button className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-400 text-white px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:shadow-[0_0_25px_rgba(99,102,241,0.6)] hover:scale-105 active:scale-95">
+                              <button className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-400 text-white px-10 py-4 rounded-full text-xs font-black uppercase tracking-widest transition-all shadow-[0_0_25px_rgba(99,102,241,0.4)]">
                                 <Activity className="w-4 h-4" /> Begin Now
                               </button>
                             </Link>
@@ -286,102 +258,58 @@ export default function VoiceJournal() {
                       );
                     })()}
 
-                    {/* Inline Audio Player */}
-                    {(() => {
-                      const playEntry = sessionSnapshot.savedEntry;
-                      if (!playEntry?.audioUrl) return null;
-                      return (
-                        <div className="mt-8 pt-6 border-t border-slate-700/50 flex flex-col gap-3">
-                          <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center justify-between">
-                            <span>Latest Recording</span>
-                            <span className="text-emerald-400 flex items-center gap-1">
-                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Saved securely
-                            </span>
+                    {sessionSnapshot.savedEntry?.audioUrl && (
+                      <div className="mt-12 pt-8 border-t border-slate-800 flex flex-col gap-4">
+                        <div className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-500">Latest Recording Playback</div>
+                        <div className="flex items-center gap-4 bg-slate-800/40 rounded-3xl p-5 border border-slate-700">
+                          <button
+                            onClick={() => handlePlayPause(sessionSnapshot.savedEntry!)}
+                            className="w-12 h-12 rounded-full bg-indigo-500 text-white flex items-center justify-center shadow-lg"
+                          >
+                            {playingId === sessionSnapshot.savedEntry.id ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 ml-0.5 fill-current" />}
+                          </button>
+                          <div className="flex-1 bg-slate-700 h-1 rounded-full overflow-hidden">
+                            {playingId === sessionSnapshot.savedEntry.id && (
+                              <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: sessionSnapshot.savedEntry.duration }} className="h-full bg-indigo-400" />
+                            )}
                           </div>
-                          <div className="flex items-center gap-4 bg-slate-800/50 rounded-2xl p-4 border border-slate-700">
-                            <button
-                              onClick={(e) => handlePlayPause(playEntry, e)}
-                              className="w-10 h-10 shrink-0 rounded-full bg-indigo-500 hover:bg-indigo-400 border border-indigo-400/50 flex items-center justify-center text-white transition-all shadow-lg shadow-indigo-500/20"
-                            >
-                              {playingId === playEntry.id
-                                ? <div className="w-3 h-3 bg-white rounded-sm animate-pulse" />
-                                : <Play className="w-4 h-4 ml-0.5" />
-                              }
-                            </button>
-                            <div className="flex-1">
-                              <div className="h-1.5 w-full bg-slate-700 rounded-full overflow-hidden relative">
-                                {playingId === playEntry.id ? (
-                                  <motion.div
-                                    initial={{ width: "0%" }}
-                                    animate={{ width: "100%" }}
-                                    transition={{ duration: playEntry.duration || 60, ease: "linear" }}
-                                    className="absolute left-0 top-0 bottom-0 bg-indigo-400 rounded-full"
-                                  />
-                                ) : (
-                                  <div className="absolute left-0 top-0 bottom-0 w-0 bg-indigo-400 rounded-full" />
-                                )}
-                              </div>
-                            </div>
-                            <div className="text-xs font-mono font-bold text-slate-400 shrink-0">
-                              {playEntry.duration
-                                ? `${Math.floor(playEntry.duration / 60)}:${(playEntry.duration % 60).toString().padStart(2, '0')}`
-                                : '0:00'
-                              }
-                            </div>
-                          </div>
+                          <span className="text-xs font-mono font-bold text-slate-400">
+                            {Math.floor(sessionSnapshot.savedEntry.duration / 60)}:{(sessionSnapshot.savedEntry.duration % 60).toString().padStart(2, '0')}
+                          </span>
                         </div>
-                      );
-                    })()}
-
-                    {/* Record Another button */}
-                    <button
-                      onClick={() => { setSessionSnapshot(null); queryClient.invalidateQueries({ queryKey: ["/api/voice-entries"] }); }}
-                      className="mt-4 sm:mt-6 w-full py-2.5 sm:py-3 rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-all border border-transparent hover:border-white/10"
-                    >
-                      Initiate New Calibration
-                    </button>
-
+                      </div>
+                    )}
                   </div>
                 </div>
               </motion.div>
             </div>
           )}
         </AnimatePresence>
-      </div>
 
-      {/* ── Sleek Post-Recording History Strip ── */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 sm:p-6 z-30 pointer-events-none">
-        <div className="container max-w-5xl mx-auto flex items-end justify-center sm:justify-end pointer-events-none">
-          <div className="flex gap-3 overflow-x-auto pb-2 pt-4 pointer-events-auto snap-x hide-scrollbar max-w-full px-4 sm:px-0">
-            {recentEntries.slice(0, 8).map((entry) => (
-              <div
-                key={entry.id}
-                onClick={() => handleSelectEntry(entry)}
-                className={`snap-start flex-shrink-0 cursor-pointer group backdrop-blur-xl border shadow-lg shadow-slate-200/50 rounded-full px-5 py-3 flex items-center gap-4 transition-all hover:scale-105 active:scale-95 ${sessionSnapshot?.savedEntry?.id === entry.id
-                  ? 'bg-indigo-950/90 border-indigo-500/50 ring-2 ring-indigo-500/20'
-                  : 'bg-white/70 hover:bg-white border-white/60'
-                  }`}
-              >
-                <div
-                  onClick={(e) => handlePlayPause(entry, e)}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${playingId === entry.id ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/30' : 'bg-slate-100 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-500'}`}
-                >
-                  {playingId === entry.id
-                    ? <div className="w-2.5 h-2.5 bg-white rounded-sm animate-pulse" />
-                    : <Play className="w-3.5 h-3.5 ml-0.5" />
-                  }
-                </div>
-                <div className="flex flex-col pr-2">
-                  <span className={`text-sm font-black leading-none mb-1 ${sessionSnapshot?.savedEntry?.id === entry.id ? 'text-white' : 'text-slate-800'}`}>
-                    {entry.recordedAt ? new Date(entry.recordedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
-                  </span>
-                  <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600 leading-none flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Saved
-                  </span>
-                </div>
-              </div>
-            ))}
+        {/* ── RECORDING HISTORY SECTION ── */}
+        <div className="mt-12 mb-24">
+          <div className="flex items-center justify-between mb-8 px-2">
+            <div>
+              <h2 className="text-2xl font-black text-slate-800 tracking-tight">Recording History</h2>
+              <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Review your past bio-acoustic reflections</p>
+            </div>
+            <div className="bg-indigo-500/10 text-indigo-600 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-500/20">
+              {recentEntries.length} Records
+            </div>
           </div>
+
+          {isLoadingEntries ? (
+            <div className="flex flex-col items-center justify-center py-20 opacity-50">
+              <Loader2 className="w-8 h-8 animate-spin mb-4 text-indigo-500" />
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing Repository...</p>
+            </div>
+          ) : (
+            <VoiceHistoryList
+              entries={recentEntries}
+              playingId={playingId}
+              onPlayPause={handlePlayPause}
+            />
+          )}
         </div>
       </div>
     </div>
