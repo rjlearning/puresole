@@ -384,15 +384,15 @@ export default function AuthPage() {
           )}
 
           {/* Toggle Login/Register */}
-          <div className="mt-6 text-center">
+          <div className="mt-8 text-center bg-slate-50 -mx-8 -mb-8 p-6 border-t border-slate-100 rounded-b-xl">
             <button
               onClick={toggleMode}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="text-sm text-slate-500 hover:text-slate-900 transition-colors py-2 px-4 hover:bg-slate-100 rounded-lg"
             >
               {isLogin
                 ? "Don't have an account? "
                 : "Already have an account? "}
-              <span className="font-semibold text-blue-600">
+              <span className="font-bold text-primary ml-1">
                 {isLogin ? "Sign up" : "Sign in"}
               </span>
             </button>

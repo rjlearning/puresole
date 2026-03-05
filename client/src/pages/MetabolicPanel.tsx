@@ -63,8 +63,8 @@ export default function MetabolicPanel() {
     }, {});
 
     return (
-        <div className="container mx-auto p-6 font-sans">
-            <div className="mb-4">
+        <div className="container mx-auto p-4 md:p-10 font-sans">
+            <div className="mb-6">
                 <Link href="/women">
                     <Button variant="ghost" size="sm" className="text-slate-500 hover:text-rose-500 hover:bg-rose-50 -ml-2 h-8">
                         <ChevronLeft className="w-4 h-4 mr-1" />
@@ -75,8 +75,8 @@ export default function MetabolicPanel() {
 
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 font-serif">Metabolic Panel</h1>
-                    <p className="text-slate-500">Biomarker-driven precision health tracking.</p>
+                    <h1 className="text-3xl font-black text-slate-900 tracking-tight">Metabolic Panel</h1>
+                    <p className="text-slate-500 font-medium">Biomarker-driven precision health tracking.</p>
                 </div>
 
                 <div className="flex flex-wrap gap-4 items-center w-full lg:w-auto">
@@ -95,7 +95,7 @@ export default function MetabolicPanel() {
                                 <span className="absolute text-[10px] font-bold text-slate-700">{analysis.recoveryScore}</span>
                             </div>
                             <div>
-                                <p className="text-[8px] uppercase font-bold text-slate-400 tracking-widest">Recovery Score</p>
+                                <p className="text-[9px] uppercase font-black text-slate-400 tracking-widest">Recovery Score</p>
                                 <p className="text-sm font-bold text-slate-900">Precision Analysis</p>
                             </div>
                         </Card>
@@ -130,7 +130,7 @@ export default function MetabolicPanel() {
                                     {isOptimal ? 'Optimal' : 'Needs Focus'}
                                 </span>
                             </div>
-                            <h3 className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">{key}</h3>
+                            <h3 className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">{key}</h3>
                             <div className="flex items-baseline gap-1 mb-2">
                                 <span className="text-2xl font-bold text-slate-800">{val || '--'}</span>
                                 <span className="text-[10px] text-slate-400 font-bold">{range.unit}</span>

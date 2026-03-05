@@ -102,8 +102,8 @@ export default function PostpartumOnboarding() {
                 <div className="min-h-[400px]">
                     {step === 0 && (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <h2 className="text-3xl font-bold text-slate-900 mb-4 font-serif">Welcome to Precision Health</h2>
-                            <p className="text-slate-600 mb-8 leading-relaxed">
+                            <h2 className="text-3xl font-black text-slate-900 mb-6 tracking-tight leading-tight">Welcome to Precision Health</h2>
+                            <p className="text-slate-600 mb-8 leading-relaxed text-lg">
                                 We're going to build a health protocol designed specifically for your unique biology.
                                 By understanding your current life phase, biomarkers, and wearable data, we can personalize your nutrition
                                 and lifestyle for optimal vitality.
