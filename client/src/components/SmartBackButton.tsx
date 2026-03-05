@@ -20,14 +20,22 @@ export default function SmartBackButton() {
         '/women',
         '/community',
         '/settings',
-        '/men'
+        '/men',
+        '/assessment',
+        '/check-in',
+        '/sos',
+        '/crisis-support'
     ];
 
     useEffect(() => {
         // Check if the current exact path is in the hidden paths list
         // or if we're on a root level path that acts as a dashboard
-        const shouldHide = hiddenPaths.includes(location) ||
+        const shouldHide =
+            hiddenPaths.includes(location) ||
             location.startsWith('/auth') ||
+            location.startsWith('/treatment-plan') ||
+            location.startsWith('/reports/') ||
+            (location.startsWith('/activities/') && location !== '/activities') ||
             (location.startsWith('/women/') && location !== '/women');
         setIsVisible(!shouldHide);
     }, [location]);
