@@ -130,7 +130,7 @@ Return JSON with a single field: {"sentiment_score": <number between -1 and 1>}"
 Return the sentiment score as a JSON object."""
 
             response = self.client.chat.completions.create(
-                model="gpt-4",
+                model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
