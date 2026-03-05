@@ -322,8 +322,8 @@ export default function VoiceAnalysisDashboard() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard icon={Mic} label="Samples Collected" value={data.stats.total_analyses} gradient="bg-[#0f172a]" sub="Rich dataset for trend analysis" />
           <StatCard icon={Clock} label="Vocal Exposure" value={`${data.stats.total_duration_minutes}m`} gradient="bg-[#0f172a]" sub="Session duration metrics" />
-          <StatCard icon={TrendingUp} label="Pathological Trend" value={data.stats.current_trend} gradient="bg-[#0f172a]" sub="30-day directional delta" />
-          <StatCard icon={Heart} label="Vitality Index" value={`${data.stats.avg_wellness.toFixed(0)}`} gradient="bg-[#0f172a]" sub="Normalized wellness coefficient" />
+          <StatCard icon={TrendingUp} label="Pathological Trend" value={data.stats.current_trend} gradient="bg-[#0f172a]" sub="Latest 10 directional delta" />
+          <StatCard icon={Heart} label="Vitality Index" value={`${data.stats.avg_wellness.toFixed(0)}`} gradient="bg-[#0f172a]" sub="Mean of last 10 samples" />
         </div>
 
         {/* ── Health Triangle Grid ─────────────────────────────────────────── */}
