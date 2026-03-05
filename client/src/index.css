@@ -7,50 +7,44 @@
 
 @layer base {
   :root {
-    /* Ethereal / Smooth Palette */
+    /* High Contrast / Supabase Inspired Palette */
 
-    /* Backgrounds: Soft, Airy */
-    --background: 210 40% 98%;
-    /* #F3F6FA */
+    /* Backgrounds: Crisp & Deep */
+    --background: 210 40% 98%; /* Light grey-white fallback */
     --foreground: 222 47% 11%;
-    /* #0F172A */
-
-    /* Cards: Frosted Glass */
+    
+    /* Pure White for Cards in Light Mode */
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Primary: Soft Blurple */
-    --primary: 250 84% 67%;
-    /* #818CF8 */
-    --primary-foreground: 0 0% 100%;
+    /* Primary: Vibrant Supabase Green */
+    --primary: 153 60% 53%; /* #3ecf8e */
+    --primary-foreground: 153 60% 5%;
 
-    /* Secondary: Peachy Pink */
-    --secondary: 320 81% 80%;
-    /* #FBCFE8 */
-    --secondary-foreground: 320 90% 20%;
+    /* Secondary: Slate for contrast */
+    --secondary: 215 25% 27%;
+    --secondary-foreground: 210 40% 98%;
 
-    /* Accent: Minty Cyan */
-    --accent: 180 70% 85%;
-    /* #CCFBF1 */
-    --accent-foreground: 180 90% 20%;
+    /* Accent: Indigo for brand depth */
+    --accent: 250 84% 67%; 
+    --accent-foreground: 250 84% 15%;
 
-    /* Muted: Cool Mist */
+    /* Muted: Professional Grays */
     --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted-foreground: 215.4 16.3% 40%; /* Slightly darker for contrast */
 
-    /* Destructive: Soft Rose */
-    --destructive: 0 84.2% 80%;
-    --destructive-foreground: 0 90% 20%;
+    /* Destructive: Error Red */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 90%;
-    --input: 214.3 31.8% 90%;
-    --ring: 250 84% 67%;
+    --border: 214.3 31.8% 85%; /* Sharper borders */
+    --input: 214.3 31.8% 85%;
+    --ring: 153 60% 53%;
 
-    --radius: 2rem;
-    /* Super Rounded / Organic */
+    --radius: 0.75rem; /* Modern sharp-rounded corners, not super-round */
   }
 }
 
@@ -66,14 +60,14 @@
 
 /* Ethereal Utilities */
 
-/* Glass Card */
+/* Glass Card - Tighter and Cleaner */
 .glass-card {
-  @apply bg-white/40 backdrop-blur-xl border border-white/50 shadow-lg shadow-indigo-100/20 rounded-[2rem] transition-all duration-500 hover:shadow-xl hover:shadow-indigo-200/30 hover:-translate-y-1;
+  @apply bg-white border border-slate-200 shadow-sm rounded-xl transition-all duration-300 hover:shadow-md hover:border-slate-300;
 }
 
-/* Glass Panel (Darker/More Opaque) */
+/* Glass Panel - More Opaque and Define */
 .glass-panel {
-  @apply bg-white/70 backdrop-blur-2xl border border-white/60 shadow-xl shadow-slate-200/50 rounded-[2.5rem];
+  @apply bg-white border border-slate-200 shadow-lg rounded-2xl;
 }
 
 /* Ethereal Button */
@@ -182,101 +176,30 @@ h6 {
 /* Target: iPhone SE (375px) → iPhone 16 Pro Max (430px) and Android phones */
 @media (max-width: 639px) {
 
-  /* Tighten all page containers */
-  .container {
-    padding-left: 0.75rem !important;
-    padding-right: 0.75rem !important;
-  }
+  /* Restore standard padding - remove aggressive !important overrides */
+  /* This allows component-specific padding to work as intended */
 
-  /* Heading scale-down */
+  /* Heading scale-down - slightly less aggressive */
   h1 {
-    font-size: 1.5rem !important;
+    font-size: 1.75rem !important;
     line-height: 1.2 !important;
   }
 
   h2 {
-    font-size: 1.2rem !important;
-    line-height: 1.3 !important;
+    font-size: 1.4rem !important;
   }
 
   h3 {
-    font-size: 1rem !important;
-    line-height: 1.4 !important;
+    font-size: 1.1rem !important;
   }
 
-  /* Reduce large section padding */
-  .py-12 {
-    padding-top: 1.25rem !important;
-    padding-bottom: 1.25rem !important;
-  }
-
-  .py-16 {
-    padding-top: 1.5rem !important;
-    padding-bottom: 1.5rem !important;
-  }
-
-  .py-20 {
-    padding-top: 2rem !important;
-    padding-bottom: 2rem !important;
-  }
-
-  .pb-20 {
-    padding-bottom: 4rem !important;
-  }
-
-  .pb-28 {
-    padding-bottom: 4.5rem !important;
-  }
-
-  .pt-10 {
-    padding-top: 0.5rem !important;
-  }
-
-  .pt-12 {
-    padding-top: 1rem !important;
-  }
-
-  /* Collapse large space-y gaps */
-  .space-y-24>*+* {
-    margin-top: 1.5rem !important;
-  }
-
-  .space-y-16>*+* {
-    margin-top: 1.25rem !important;
-  }
-
-  .space-y-12>*+* {
-    margin-top: 1rem !important;
-  }
-
-  .space-y-8>*+* {
-    margin-top: 0.75rem !important;
-  }
-
-  /* Compress large margin-bottoms */
+  /* Compress large margins but keep breathing room */
   .mb-12 {
-    margin-bottom: 1rem !important;
+    margin-bottom: 2rem !important;
   }
 
   .mb-8 {
-    margin-bottom: 0.75rem !important;
-  }
-
-  .mb-6 {
-    margin-bottom: 0.5rem !important;
-  }
-
-  /* Card internal padding */
-  .p-10 {
-    padding: 1rem !important;
-  }
-
-  .p-8 {
-    padding: 0.875rem !important;
-  }
-
-  .p-6 {
-    padding: 0.75rem !important;
+    margin-bottom: 1.5rem !important;
   }
 
   /* Glass-card removes translate hover on mobile (faster tap) */

@@ -41,11 +41,11 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Settings</h1>
-          <p className="text-gray-600">Manage your account and preferences</p>
+    <div className="min-h-screen bg-slate-50 p-6 md:p-10">
+      <div className="max-w-6xl mx-auto">
+        <div className="mb-10">
+          <h1 className="text-4xl font-bold text-slate-900 mb-3 tracking-tight font-serif">Settings</h1>
+          <p className="text-slate-500 font-medium">Manage your account, billing, and preferences.</p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -121,13 +121,13 @@ export default function Settings() {
                   const Icon = item.icon;
                   return (
                     <Link key={item.label} href={item.href}>
-                      <div className="flex items-start gap-3 p-4 bg-white rounded-xl border hover:border-primary/30 hover:bg-primary/5 transition-all cursor-pointer group">
-                        <div className="w-9 h-9 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
-                          <Icon className="w-4 h-4 text-primary" />
+                      <div className="flex items-start gap-4 p-5 bg-white rounded-xl border border-slate-200 hover:border-primary/50 hover:shadow-sm transition-all cursor-pointer group">
+                        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                          <Icon className="w-5 h-5 text-primary" />
                         </div>
                         <div>
-                          <p className="font-semibold text-sm text-gray-900">{item.label}</p>
-                          <p className="text-xs text-gray-500 mt-0.5">{item.sub}</p>
+                          <p className="font-bold text-sm text-slate-900">{item.label}</p>
+                          <p className="text-xs text-slate-500 mt-1 leading-relaxed">{item.sub}</p>
                         </div>
                       </div>
                     </Link>
@@ -176,9 +176,9 @@ export default function Settings() {
                   />
                 </div>
 
-                <div className="pt-6 border-t border-gray-100">
-                  <h3 className="text-sm font-medium text-gray-900 mb-2">Contact Support & Feedback</h3>
-                  <p className="text-sm text-gray-600 mb-4">
+                <div className="pt-8 border-t border-slate-100">
+                  <h3 className="text-sm font-bold text-slate-900 mb-2 uppercase tracking-wider">Contact Support & Feedback</h3>
+                  <p className="text-sm text-slate-500 mb-6 leading-relaxed">
                     Have a question, feature request, or found a bug? Let us know.
                   </p>
                   <Button
