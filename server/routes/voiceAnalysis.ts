@@ -139,6 +139,28 @@ router.post('/voice/upload', requireAuth, upload.single('audio'), async (req: Re
       },
     });
 
+    // Enforce 50-memo limit for voice_analyses
+    try {
+      const { rows: userAnalyses } = await pool.query(
+        'SELECT id, audio_file_path FROM voice_analyses WHERE user_id = $1 ORDER BY created_at ASC',
+        [user.id]
+      );
+
+      if (userAnalyses.length > 50) {
+        const analysesToDelete = userAnalyses.slice(0, userAnalyses.length - 50);
+        for (const analysisToDelete of analysesToDelete) {
+          if (analysisToDelete.audio_file_path) {
+            await deleteAudioFile(analysisToDelete.audio_file_path);
+          }
+          await cancelJob(analysisToDelete.id);
+          await pool.query('DELETE FROM voice_analyses WHERE id = $1', [analysisToDelete.id]);
+        }
+        console.log(`🧹 Cleaned up ${analysesToDelete.length} old voice analyses for user ${user.id}`);
+      }
+    } catch (cleanupError) {
+      console.error('Error during voice analysis cleanup:', cleanupError);
+    }
+
     res.status(202).json({
       message: 'Audio uploaded and queued for analysis',
       analysisId,

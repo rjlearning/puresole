@@ -4,7 +4,7 @@ import path from "path";
 import fs from "fs";
 import { db } from "./db";
 import * as schema from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, asc } from "drizzle-orm";
 import { supabase } from "./supabase";
 
 // Configure multer for file uploads
@@ -125,6 +125,34 @@ export function registerVoiceRoutes(app: Express) {
             emotionData: parsedEmotions,
           })
           .returning();
+
+        // Enforce 50-memo limit per user
+        try {
+          const userEntries = await db.query.voiceEntries.findMany({
+            where: eq(schema.voiceEntries.userId, userId),
+            orderBy: [asc(schema.voiceEntries.recordedAt)],
+          });
+
+          if (userEntries.length > 50) {
+            const entriesToDelete = userEntries.slice(0, userEntries.length - 50);
+            for (const entryToDelete of entriesToDelete) {
+              // Delete file from disk
+              if (entryToDelete.audioUrl) {
+                const filePath = path.join(process.cwd(), entryToDelete.audioUrl);
+                if (fs.existsSync(filePath)) {
+                  fs.unlinkSync(filePath);
+                }
+              }
+              // Delete from database
+              await db
+                .delete(schema.voiceEntries)
+                .where(eq(schema.voiceEntries.id, entryToDelete.id));
+            }
+            console.log(`🧹 Cleaned up ${entriesToDelete.length} old voice entries for user ${userId}`);
+          }
+        } catch (cleanupError) {
+          console.error("Error during voice entry cleanup:", cleanupError);
+        }
 
         res.json({
           message: "Voice entry saved successfully",
