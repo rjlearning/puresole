@@ -159,7 +159,7 @@ export default function MainNavigation() {
       </nav >
 
       {/* Mobile Navigation - Glass Bar */}
-      < nav className="fixed bottom-6 left-6 right-6 lg:hidden glass-panel px-6 py-4 flex justify-between items-center z-50 shadow-2xl shadow-indigo-100/50" >
+      <nav className="fixed bottom-4 left-4 right-4 lg:hidden glass-panel px-4 py-3 flex justify-between items-center z-50 shadow-xl shadow-indigo-100/20 border border-white/40">
         {
           navItems.map((item) => {
             const active = isActive(item.href);
@@ -167,10 +167,10 @@ export default function MainNavigation() {
               <Link key={item.name} href={item.href}>
                 <div className={`flex flex-col items-center gap-1 transition-all duration-300 ${active ? 'text-indigo-600 -translate-y-1' : 'text-slate-400'
                   }`}>
-                  <div className={`p-2 rounded-full transition-all ${active ? 'bg-indigo-50 shadow-sm' : ''}`}>
-                    <item.icon className="w-6 h-6" />
+                  <div className={`p-1.5 rounded-full transition-all ${active ? 'bg-indigo-50 shadow-sm' : ''}`}>
+                    <item.icon className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
-                  <span className={`text-[9px] font-bold tracking-wide transition-opacity duration-300 ${active ? 'opacity-100' : 'opacity-60'}`}>
+                  <span className={`text-[8px] font-bold tracking-wide transition-opacity duration-300 ${active ? 'opacity-100' : 'opacity-60'}`}>
                     {item.name}
                   </span>
                 </div>
@@ -178,35 +178,31 @@ export default function MainNavigation() {
             );
           })
         }
-        < Link href="/sos" >
+        <Link href="/sos">
           <div className={`flex flex-col items-center gap-1 transition-all duration-300 ${isActive('/sos') ? 'text-rose-500 -translate-y-1' : 'text-rose-400/70'}`}>
-            <div className={`p-2 rounded-full transition-all ${isActive('/sos') ? 'bg-rose-50 shadow-sm' : 'bg-rose-50/50'}`}>
-              <ShieldAlert className="w-6 h-6" />
+            <div className={`p-1.5 rounded-full transition-all ${isActive('/sos') ? 'bg-rose-50 shadow-sm' : 'bg-rose-50/50'}`}>
+              <ShieldAlert className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <span className={`text-[9px] font-bold tracking-wide transition-opacity duration-300 ${isActive('/sos') ? 'opacity-100' : 'opacity-60'}`}>
-              SOS
-            </span>
+            <span className={`text-[8px] font-bold tracking-wide transition-opacity duration-300 ${isActive('/sos') ? 'opacity-100' : 'opacity-60'}`}>SOS</span>
           </div>
-        </Link >
+        </Link>
 
 
         {/* Mobile logout via profile icon */}
-        < div className="relative" >
+        <div className="relative">
           <div
             className={`flex flex-col items-center gap-1 transition-all duration-300 cursor-pointer ${isActive('/settings') ? 'text-indigo-600 -translate-y-1' : 'text-slate-400'}`}
             onClick={() => setShowUserMenu(v => !v)}
           >
-            <div className={`p-2 rounded-full transition-all ${isActive('/settings') ? 'bg-indigo-50 shadow-sm' : ''}`}>
-              <User className="w-6 h-6" />
+            <div className={`p-1.5 rounded-full transition-all ${isActive('/settings') ? 'bg-indigo-50 shadow-sm' : ''}`}>
+              <User className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <span className={`text-[9px] font-bold tracking-wide transition-opacity duration-300 ${isActive('/settings') ? 'opacity-100' : 'opacity-60'}`}>
-              Me
-            </span>
+            <span className={`text-[8px] font-bold tracking-wide transition-opacity duration-300 ${isActive('/settings') ? 'opacity-100' : 'opacity-60'}`}>Me</span>
           </div>
 
           {
             showUserMenu && (
-              <div className="absolute bottom-full right-0 mb-2 w-44 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-10">
+              <div className="absolute bottom-full right-0 mb-4 w-44 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-10 animate-in fade-in slide-in-from-bottom-2 duration-200">
                 <Link href="/settings">
                   <div className="flex items-center gap-3 px-4 py-3 hover:bg-indigo-50 cursor-pointer text-slate-700" onClick={() => setShowUserMenu(false)}>
                     <Settings className="w-4 h-4" />
@@ -224,8 +220,8 @@ export default function MainNavigation() {
               </div>
             )
           }
-        </div >
-      </nav >
+        </div>
+      </nav>
     </>
   );
 }
