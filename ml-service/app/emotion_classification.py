@@ -98,9 +98,9 @@ Be sensitive and nuanced in your analysis. Return JSON only."""
                 transcript, acoustic_summary, mood_before
             )
 
-            # Call GPT-4
+            # Call GPT-4o-mini
             response = self.client.chat.completions.create(
-                model="gpt-4",
+                model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}

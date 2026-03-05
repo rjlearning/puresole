@@ -70,27 +70,28 @@ export async function getChatCompletion(
     const maxTokens = settings.response_length === 'concise' ? 150 :
       settings.response_length === 'detailed' ? 500 : 300;
 
-    // Call OpenAI API
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o', // Upgraded to gpt-4o for speed and intelligence
-      messages: [
-        { role: 'system', content: systemPrompt },
-        ...messages
-      ],
-      max_tokens: maxTokens,
+    // Call OpenAI API and emotion detection in parallel for speed
+    const userMessageContent = messages[messages.length - 1].content;
 
-      presence_penalty: 0.6,
-      frequency_penalty: 0.3,
-    });
+    const [completion, emotionDetected] = await Promise.all([
+      openai.chat.completions.create({
+        model: 'gpt-4o-mini', // Upgraded to mini for maximum speed
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...messages
+        ],
+        max_tokens: maxTokens,
+        presence_penalty: 0.6,
+        frequency_penalty: 0.3,
+      }),
+      detectEmotion(userMessageContent)
+    ]);
 
     const response = completion.choices[0].message.content || 'I apologize, but I\'m having trouble responding right now. Please try again.';
     const tokensUsed = completion.usage?.total_tokens || 0;
 
     // Detect crisis indicators
-    const hasCrisisIndicators = settings.crisis_monitoring && detectCrisisIndicators(response, messages[messages.length - 1].content);
-
-    // Detect emotion from user message
-    const emotionDetected = await detectEmotion(messages[messages.length - 1].content);
+    const hasCrisisIndicators = settings.crisis_monitoring && detectCrisisIndicators(response, userMessageContent);
 
     return {
       response,
@@ -127,7 +128,7 @@ Message: "${text}"
 Emotion:`;
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-4o-mini',
       messages: [{ role: 'user', content: emotionPrompt }],
       max_tokens: 10,
 
@@ -172,7 +173,7 @@ export async function generateConversationTitle(messages: Message[]): Promise<st
 Respond with ONLY the title, nothing else.`;
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-4o-mini',
       messages: [{ role: 'user', content: titlePrompt }],
       max_tokens: 20,
 
@@ -222,7 +223,7 @@ Provide insights as JSON array with format:
 ]`;
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-4o-mini',
       messages: [{ role: 'user', content: insightPrompt }],
       max_tokens: 500,
 
