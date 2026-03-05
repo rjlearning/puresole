@@ -42,21 +42,20 @@ export async function generateVoiceInsights(userId: string): Promise<VoiceInsigh
       [userId]
     );
 
-    // Get recent analyses for additional context
+    // Get recent analyses for additional context (Last 20 analyses)
     const { rows: recentAnalyses } = await pool.query(
       `SELECT
         wellness_score,
-      primary_emotion,
-      risk_level,
-      valence,
-      arousal,
-      dominance,
-      acoustic_features,
-      created_at
+        primary_emotion,
+        risk_level,
+        valence,
+        arousal,
+        dominance,
+        acoustic_features,
+        created_at
        FROM voice_analyses
        WHERE user_id = $1
          AND processing_status = 'completed'
-         AND created_at >= NOW() - INTERVAL '30 days'
        ORDER BY created_at DESC
        LIMIT 20`,
       [userId]
@@ -135,9 +134,9 @@ export async function generateVoiceInsights(userId: string): Promise<VoiceInsigh
       : 'No strong correlations detected yet';
 
     // Construct GPT-4 prompt
-    const prompt = `You are an AI mental wellness analyst. Analyze this user's voice analysis data from the past 30 days and provide 3-5 actionable insights.
+    const prompt = `You are an AI mental wellness analyst. Analyze this user's voice analysis data from their most recent ${recentAnalyses.length} recordings and provide 3-5 actionable insights.
 
-VOICE ANALYSIS SUMMARY (Last 30 days):
+VOICE ANALYSIS SUMMARY (Latest ${recentAnalyses.length} Recordings):
 - Total recordings: ${recentAnalyses.length}
 - Average wellness score: ${avgWellness.toFixed(1)}/100
 - Trend direction: ${trendDirection}

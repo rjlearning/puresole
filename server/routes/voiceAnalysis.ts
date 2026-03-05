@@ -667,16 +667,23 @@ router.get('/voice/dashboard', requireAuth, async (req: Request, res: Response) 
       ).catch(() => ({ rows: [] })), // Handle if table doesn't exist
       // Statistics
       pool.query(
-        `SELECT
-          COUNT(*) as total_analyses,
+        `WITH recent_stats AS (
+          SELECT wellness_score, duration_seconds, risk_level
+          FROM voice_analyses
+          WHERE user_id = $1 AND processing_status = 'completed'
+          ORDER BY created_at DESC
+          LIMIT 10
+        )
+        SELECT
+          (SELECT COUNT(*) FROM voice_analyses WHERE user_id = $1 AND processing_status = 'completed') as total_analyses,
           AVG(wellness_score) as avg_wellness,
           AVG(duration_seconds) as avg_duration,
-          SUM(duration_seconds) as total_duration,
-          COUNT(CASE WHEN risk_level = 'high' OR risk_level = 'critical' THEN 1 END) as high_risk_count
-         FROM voice_analyses
-         WHERE user_id = $1 AND processing_status = 'completed'`,
+          SUM(duration_seconds) as recent_duration,
+          (SELECT SUM(duration_seconds) FROM voice_analyses WHERE user_id = $1 AND processing_status = 'completed') as total_duration,
+          COUNT(CASE WHEN risk_level = 'high' OR risk_level = 'critical' THEN 1 END) as recent_high_risk_count
+         FROM recent_stats`,
         [user.id]
-      ).catch(() => ({ rows: [{ total_analyses: 0, avg_wellness: 0, avg_duration: 0, total_duration: 0, high_risk_count: 0 }] }))
+      ).catch(() => ({ rows: [{ total_analyses: 0, avg_wellness: 0, avg_duration: 0, total_duration: 0, recent_high_risk_count: 0 }] }))
     ]);
 
     // Process recent analyses
@@ -770,7 +777,7 @@ router.get('/voice/dashboard', requireAuth, async (req: Request, res: Response) 
         avg_wellness: avgWellness,
         current_trend: currentTrend,
         total_duration_minutes: totalDurationMinutes,
-        high_risk_count: parseInt(stats.high_risk_count) || 0
+        high_risk_count: parseInt(stats.recent_high_risk_count) || 0
       }
     };
 
