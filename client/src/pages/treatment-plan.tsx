@@ -307,9 +307,9 @@ export default function TreatmentPlan() {
           </div>
         </motion.div>
 
-        {/* ── Week Nav — horizontal scroll on mobile ── */}
-        <div className="mb-4">
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory">
+        {/* ── Week Nav — horizontal scroll on mobile with fading edge cue ── */}
+        <div className="mb-8 relative">
+          <div className="flex items-center gap-2 overflow-x-auto pb-4 scrollbar-none snap-x snap-mandatory pr-12 relative z-10">
             {allWeeks.map((week) => {
               const isCurrent = week === selectedWeek;
               const isPast = (treatmentPlan?.currentWeek || 1) > week;
@@ -317,8 +317,8 @@ export default function TreatmentPlan() {
                 <button
                   key={week}
                   onClick={() => setSelectedWeek(week)}
-                  className={`shrink-0 snap-start flex items-center gap-2 px-4 py-2.5 rounded-2xl border text-sm font-bold transition-all duration-200 ${isCurrent
-                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200'
+                  className={`shrink-0 snap-start flex items-center gap-2 px-6 py-3 rounded-2xl border text-sm font-bold transition-all duration-200 ${isCurrent
+                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-200'
                     : isPast
                       ? 'bg-emerald-50 border-emerald-100 text-emerald-600'
                       : 'bg-white border-slate-100 text-slate-400 hover:border-slate-200'
@@ -331,11 +331,13 @@ export default function TreatmentPlan() {
               );
             })}
           </div>
+          {/* Fading edge cue */}
+          <div className="absolute top-0 right-0 bottom-4 w-16 bg-gradient-to-l from-[#fafafa] to-transparent z-20 pointer-events-none" />
         </div>
 
         {/* ── Module List ── */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between px-1">
+        <div className="space-y-6">
+          <div className="flex items-center justify-between px-1 mb-2">
             <div className="flex items-center gap-2">
               <div className="w-1 h-5 bg-indigo-500 rounded-full" />
               <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">Week {selectedWeek}</h3>

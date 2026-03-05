@@ -45,7 +45,7 @@ export default function WomenPage() {
     };
 
     return (
-        <div className="min-h-screen pb-24 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-rose-50 via-white to-slate-50 overflow-hidden">
+        <div className="min-h-screen pb-32 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-rose-50 via-white to-slate-50 overflow-hidden">
 
             {/* ── Subtle Background Decoral ── */}
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-rose-200/20 blur-[120px] rounded-full -mr-64 -mt-32 pointer-events-none" />
@@ -102,8 +102,8 @@ export default function WomenPage() {
                         </p>
                         <Link href="/phase-select">
                             <motion.button whileTap={{ scale: 0.95 }}
-                                className="sm:hidden w-full flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-slate-900 text-white shadow-xl shadow-slate-900/20 text-[11px] font-black uppercase tracking-[0.2em]">
-                                <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
+                                className="sm:hidden w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-slate-900 text-white shadow-xl shadow-slate-900/20 text-[10px] font-black uppercase tracking-[0.2em]">
+                                <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
                                 Reset Internal Phase
                             </motion.button>
                         </Link>
@@ -119,26 +119,26 @@ export default function WomenPage() {
                 </motion.div>
 
                 {/* ── Precision Protocol Mastery ── */}
-                <motion.div variants={itemVariants} initial="hidden" animate="visible" className="mb-8">
+                <motion.div variants={itemVariants} initial="hidden" animate="visible" className="mb-10 px-1">
                     <Link href="/women/onboarding">
-                        <div className="bg-indigo-950 rounded-[3rem] p-8 sm:p-12 border border-white/10 shadow-2xl flex flex-col lg:flex-row items-center justify-between gap-10 hover:shadow-rose-500/10 transition-all cursor-pointer group relative overflow-hidden">
+                        <div className="bg-indigo-950 rounded-[2.5rem] sm:rounded-[3rem] p-7 sm:p-12 border border-white/10 shadow-2xl flex flex-col lg:flex-row items-center justify-between gap-10 hover:shadow-rose-500/10 transition-all cursor-pointer group relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-rose-500/20 to-transparent" />
-                            <div className="flex flex-col sm:flex-row items-center gap-8 relative z-10 text-center sm:text-left">
-                                <div className="w-20 h-20 rounded-[2rem] bg-indigo-900 flex items-center justify-center shadow-xl group-hover:rotate-6 transition-transform shrink-0">
-                                    <Brain className="w-10 h-10 text-rose-400" />
+                            <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8 relative z-10 text-center sm:text-left">
+                                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-[1.5rem] sm:rounded-[2rem] bg-indigo-900 flex items-center justify-center shadow-xl group-hover:rotate-6 transition-transform shrink-0">
+                                    <Brain className="w-8 h-8 sm:w-10 sm:h-10 text-rose-400" />
                                 </div>
-                                <div>
-                                    <div className="inline-flex items-center gap-2 mb-2 bg-rose-500/20 px-3 py-1 rounded-full border border-rose-500/30">
+                                <div className="px-2">
+                                    <div className="inline-flex items-center gap-2 mb-3 bg-rose-500/20 px-3 py-1 rounded-full border border-rose-500/30">
                                         <Sparkles className="w-3 h-3 text-rose-400" />
                                         <span className="text-[9px] font-black text-rose-400 uppercase tracking-widest">Foundational Protocol</span>
                                     </div>
-                                    <h3 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">Biometric Precision Protocol</h3>
-                                    <p className="text-base sm:text-lg text-indigo-200/70 font-medium mt-2 max-w-xl">
+                                    <h3 className="text-xl sm:text-4xl font-black text-white tracking-tight leading-tight">Biometric Precision Protocol</h3>
+                                    <p className="text-sm sm:text-lg text-indigo-100/60 font-medium mt-3 max-w-xl">
                                         Initialize your biometric and endocrine-specific nutrition alignment. Metabolic factors and energy stabilization depend on this protocol.
                                     </p>
                                 </div>
                             </div>
-                            <Button className="rounded-2xl h-16 px-12 bg-white text-indigo-950 hover:bg-rose-500 hover:text-white font-black text-sm uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95 shrink-0 w-full lg:w-auto border-none">
+                            <Button className="rounded-2xl h-14 sm:h-16 px-10 sm:px-12 bg-white text-indigo-950 hover:bg-rose-500 hover:text-white font-black text-xs sm:text-sm uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95 shrink-0 w-full lg:w-auto border-none">
                                 Start Synchronization
                             </Button>
                         </div>
@@ -160,23 +160,23 @@ export default function WomenPage() {
                                             <Sparkles className="w-7 h-7 text-indigo-300" />
                                         </div>
                                         <div className="flex flex-col">
-                                            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Cognitive State</span>
-                                            <h3 className="font-black text-2xl tracking-tight">Hub Insights</h3>
+                                            <span className="text-[10px] font-black text-indigo-300 uppercase tracking-widest">Cognitive State</span>
+                                            <h3 className="font-black text-2xl tracking-tight text-white line-height-tight">Hub Insights</h3>
                                         </div>
                                     </div>
 
-                                    <div className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-6 sm:p-8 space-y-6">
-                                        <p className="text-indigo-50 leading-relaxed font-bold text-lg sm:text-xl">
+                                    <div className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-7 sm:p-8 space-y-6">
+                                        <p className="text-white leading-relaxed font-bold text-lg sm:text-xl">
                                             Day {cycleData.day} metabolic transition.
                                         </p>
-                                        <div className="space-y-4">
+                                        <div className="space-y-5">
                                             <div className="flex gap-4 items-start">
-                                                <div className="w-2 h-2 rounded-full bg-rose-400 mt-2.5 shrink-0 shadow-[0_0_10px_rgba(251,113,133,0.5)]" />
-                                                <p className="text-sm sm:text-base text-indigo-200/90 font-medium">Increase complex carb intake (cortisol stability).</p>
+                                                <div className="w-2 h-2 rounded-full bg-rose-400 mt-2 shrink-0 shadow-[0_0_10px_rgba(251,113,133,0.5)]" />
+                                                <p className="text-sm sm:text-base text-indigo-100 font-semibold">Increase complex carb intake (cortisol stability).</p>
                                             </div>
                                             <div className="flex gap-4 items-start">
-                                                <div className="w-2 h-2 rounded-full bg-indigo-400 mt-2.5 shrink-0 shadow-[0_0_10px_rgba(129,140,248,0.5)]" />
-                                                <p className="text-sm sm:text-base text-indigo-200/90 font-medium">15m Somatic movement for nervous support.</p>
+                                                <div className="w-2 h-2 rounded-full bg-indigo-400 mt-2 shrink-0 shadow-[0_0_10px_rgba(129,140,248,0.5)]" />
+                                                <p className="text-sm sm:text-base text-indigo-100 font-semibold">15m Somatic movement for nervous support.</p>
                                             </div>
                                         </div>
                                     </div>
