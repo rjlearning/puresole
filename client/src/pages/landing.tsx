@@ -333,20 +333,16 @@ export default function Landing() {
               {/* Redesigned: Compact Side-by-Side Horizontal Layout for Mobile */}
               <div className="flex flex-row items-center gap-2 md:gap-12 group">
 
-                {/* Action Card (Reformatted to notched industrial shape) */}
+                {/* Action Card (Fixed size for consistency) */}
                 <div
-                  className={`shrink-0 md:flex-1 ${feature.actionBg} border border-slate-100 p-4 md:p-8 relative overflow-hidden transition-all duration-500 hover:shadow-xl hover:-translate-y-1 z-10 flex flex-col items-center md:items-start justify-center min-w-[100px] md:min-w-0 min-h-[120px] md:min-h-0`}
-                  style={{
-                    borderRadius: '1rem',
-                    clipPath: 'polygon(0% 0%, 100% 0%, 100% 88%, 88% 100%, 0% 100%)'
-                  }}
+                  className={`shrink-0 ${feature.actionBg} border border-slate-100 p-4 md:p-8 relative overflow-hidden transition-all duration-500 hover:shadow-xl hover:-translate-y-1 z-10 flex flex-col items-center md:items-start justify-center w-[130px] h-[130px] md:w-auto md:h-auto md:flex-1 rounded-[3rem] shadow-sm`}
                 >
                   <div className="absolute top-0 right-0 w-20 h-20 bg-slate-50 rounded-bl-full -z-10 transition-transform group-hover:scale-110 opacity-50"></div>
                   <div className="flex items-center gap-1 md:mb-4">
                     <div className="w-5 h-5 md:w-8 md:h-8 rounded-full bg-slate-900 flex items-center justify-center text-white text-[8px] md:text-[10px] font-black italic">0{idx + 1}</div>
                     <Badge variant="secondary" className="hidden md:inline-flex bg-slate-100 text-slate-400 border-none font-black tracking-widest uppercase text-[9px]">Action</Badge>
                   </div>
-                  <h3 className="text-[10px] md:text-2xl font-black text-slate-800 leading-tight text-center md:text-left max-w-[90px] md:max-w-none hyphens-none">{feature.action}</h3>
+                  <h3 className="text-[10px] md:text-2xl font-black text-slate-800 leading-tight text-center md:text-left max-w-[100px] md:max-w-none hyphens-none">{feature.action}</h3>
                   <p className="hidden md:block text-base text-slate-500 font-medium leading-relaxed">{feature.actionDesc}</p>
                 </div>
 
