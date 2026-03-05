@@ -113,19 +113,27 @@ export async function generateVoiceInsights(userId: string): Promise<VoiceInsigh
         trendsData.slice(0, 7).reduce((sum, t) => sum + t.avg_wellness_score, 0) / 7 ? 'improving' : 'declining')
       : 'stable';
 
-    // Extract recent clinical biomarkers
-    const recentBiomarkers = recentAnalyses
-      .map(a => a.acoustic_features?.opensmile_biomarkers)
-      .filter(b => b != null);
+    // Extract recent clinical biomarkers (Last 10 recordings for diagnostic precision)
+    const voiceDiagnosticData = recentAnalyses
+      .slice(0, 10)
+      .map(a => ({
+        recordedAt: a.created_at,
+        wellnessScore: a.wellness_score,
+        primaryEmotion: a.primary_emotion,
+        biomarkers: a.acoustic_features?.opensmile_biomarkers
+      }))
+      .filter(d => d.biomarkers != null);
 
-    let biomarkerSummary = "No clinical biomarkers available.";
-    if (recentBiomarkers.length > 0) {
-      const latest = recentBiomarkers[0];
-      biomarkerSummary = `
-- Vocal Tension (Jitter): ${latest.jitterLocal_sma3nz_amean || 'N/A'} (High implies stress/anxiety)
-- Breathiness/Fatigue (Shimmer): ${latest.shimmerLocaldB_sma3nz_amean || 'N/A'} (High implies fatigue)
-- Mean Pitch (F0): ${latest.F0semitoneFrom27_5Hz_sma3nz_amean || 'N/A'}
-- Harmonics-to-Noise (HNR): ${latest.HNRdBACF_sma3nz_amean || 'N/A'} (Clarity of voice)`;
+    let diagnosticSummary = "Insufficient clinical biomarker data for precision diagnostic (need at least 5 samples).";
+    let confidenceScore = Math.min(0.95, (voiceDiagnosticData.length / 10) * 0.9 + 0.1);
+
+    if (voiceDiagnosticData.length > 0) {
+      diagnosticSummary = voiceDiagnosticData.map(d => `
+- [${new Date(d.recordedAt).toLocaleDateString()}] Wellness: ${d.wellnessScore}, Emotion: ${d.primaryEmotion}
+  - Vocal Tension (Jitter): ${d.biomarkers.jitterLocal_sma3nz_amean || 'N/A'}
+  - Breathiness (Shimmer): ${d.biomarkers.shimmerLocaldB_sma3nz_amean || 'N/A'}
+  - Mean Pitch (F0): ${d.biomarkers.F0semitoneFrom27_5Hz_sma3nz_amean || 'N/A'}
+  - Clarity (HNR): ${d.biomarkers.HNRdBACF_sma3nz_amean || 'N/A'}`).join('\n');
     }
 
     // Prepare correlations summary
@@ -133,48 +141,44 @@ export async function generateVoiceInsights(userId: string): Promise<VoiceInsigh
       ? correlationsData.map(c => `${c.correlated_with_type}: ${(c.correlation_strength * 100).toFixed(0)}%`).join(', ')
       : 'No strong correlations detected yet';
 
-    // Construct GPT-4 prompt
-    const prompt = `You are an AI mental wellness analyst. Analyze this user's voice analysis data from their most recent ${recentAnalyses.length} recordings and provide 3-5 actionable insights.
+    // Construct GPT-4 prompt with Precision Diagnostic Focus
+    const prompt = `You are a Senior AI Mental Wellness & Voice Biomarker Specialist. Analyze this user's longitudinal voice data to provide a "Precision Diagnostic Summary" and 3-5 actionable insights.
 
-VOICE ANALYSIS SUMMARY (Latest ${recentAnalyses.length} Recordings):
-- Total recordings: ${recentAnalyses.length}
+VOICE ANALYSIS SUMMARY (Historical Window):
+- Total analysis data points: ${recentAnalyses.length}
 - Average wellness score: ${avgWellness.toFixed(1)}/100
 - Trend direction: ${trendDirection}
 - Dominant emotions: ${topEmotions.join(', ')}
-- High-risk analyses: ${highRiskCount}
+- High-risk triggers: ${highRiskCount}
 - VAD scores: Valence=${avgValence.toFixed(2)}, Arousal=${avgArousal.toFixed(2)}, Dominance=${avgDominance.toFixed(2)}
 
-CLINICAL VOCAL BIOMARKERS (Latest Recording):
-${biomarkerSummary}
+PRECISION CLINICAL DATA (Last 10 Samples):
+${diagnosticSummary}
 
-CORRELATIONS WITH OTHER METRICS:
+CORRELATIONS WITH OTHER BIOMETRICS:
 ${correlationsSummary}
 
-HEALTH CONTEXT:
-This data comes from voice recordings analyzed for emotional wellness, mental health tracking, and personal growth.
+DIAGNOSTIC CONTEXT:
+The user is recording multiple voice memos to provide enough data for a multi-sample precision diagnostic. Each sample provides a snapshot of their neuro-acoustic state. Look for consistency across samples or sudden shifts in vocal tension (jitter) and fatigue (shimmer) which correlate with burnout or autonomic nervous system strain.
 
 Please provide insights as a JSON array with this structure:
 [
   {
     "type": "positive|alert|suggestion|achievement",
-    "title": "Concise insight title (5-10 words)",
-    "description": "1-2 sentence detailed insight with actionable information",
+    "title": "Precision Insight Title",
+    "description": "Synthesized insight from multiple samples",
     "priority": 1-100,
-    "confidence": 0.0-1.0,
+    "confidence": ${confidenceScore.toFixed(2)},
     "recommendations": ["specific action 1", "specific action 2"]
   }
 ]
 
 Guidelines:
-- "positive": User showing improvement or healthy patterns
-- "alert": User needs attention or showing concerning patterns
-- "suggestion": Actionable recommendations for improvement
-- "achievement": User reaching milestones or goals
-- Priority 80-100: Critical/high-impact insights
-- Priority 40-79: Moderate insights with useful information
-- Priority 1-39: Low-priority observations
-- Confidence based on data quality and statistical significance
-- Recommendations should be specific and achievable within 24-48 hours`;
+- If fewer than 5 clinical samples are provided, state that more data is needed for a "Precision Tier" diagnostic.
+- "positive": User showing healthy stabilization across samples.
+- "alert": Persistent high tension or sudden physiological shifts detected.
+- "suggestion": Personalized somatic or metabolic alignment recommendations.
+- Recommendations must be hyper-specific and relate back to the biomarkers (e.g., if Jitter is high, suggest nervous system regulation).`;
 
     // Call GPT-4
     const message = await openai.chat.completions.create({
