@@ -192,7 +192,7 @@ export default function VoiceJournal() {
   }
 
   return (
-    <div className="min-h-screen aurora-bg pb-32 flex flex-col relative overflow-x-hidden">
+    <div className="aurora-bg pb-32 flex flex-col relative">
       <div className="absolute inset-0 z-0 opacity-30 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 60%)' }} />
 
       <nav className="relative z-40 h-20 flex items-center justify-center mb-4">
