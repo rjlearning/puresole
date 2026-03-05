@@ -333,14 +333,20 @@ export default function Landing() {
               {/* Redesigned: Compact Side-by-Side Horizontal Layout for Mobile */}
               <div className="flex flex-row items-center gap-2 md:gap-12 group">
 
-                {/* Action Card (Compact Bubble on Mobile, Full on Desktop) */}
-                <div className={`shrink-0 md:flex-1 ${feature.actionBg} border border-slate-100 p-3 md:p-8 rounded-full md:rounded-[3rem] shadow-sm relative overflow-hidden transition-all duration-500 hover:shadow-xl hover:-translate-y-1 z-10 flex flex-col items-center md:items-start justify-center min-w-[80px] md:min-w-0 px-4 py-3 md:px-8 md:py-8`}>
+                {/* Action Card (Reformatted to notched industrial shape) */}
+                <div
+                  className={`shrink-0 md:flex-1 ${feature.actionBg} border border-slate-100 p-4 md:p-8 relative overflow-hidden transition-all duration-500 hover:shadow-xl hover:-translate-y-1 z-10 flex flex-col items-center md:items-start justify-center min-w-[100px] md:min-w-0 min-h-[120px] md:min-h-0`}
+                  style={{
+                    borderRadius: '1rem',
+                    clipPath: 'polygon(0% 0%, 100% 0%, 100% 88%, 88% 100%, 0% 100%)'
+                  }}
+                >
                   <div className="absolute top-0 right-0 w-20 h-20 bg-slate-50 rounded-bl-full -z-10 transition-transform group-hover:scale-110 opacity-50"></div>
                   <div className="flex items-center gap-1 md:mb-4">
                     <div className="w-5 h-5 md:w-8 md:h-8 rounded-full bg-slate-900 flex items-center justify-center text-white text-[8px] md:text-[10px] font-black italic">0{idx + 1}</div>
                     <Badge variant="secondary" className="hidden md:inline-flex bg-slate-100 text-slate-400 border-none font-black tracking-widest uppercase text-[9px]">Action</Badge>
                   </div>
-                  <h3 className="text-[8.5px] md:text-2xl font-black text-slate-800 leading-tight text-center md:text-left max-w-[80px] md:max-w-none hyphens-none">{feature.action}</h3>
+                  <h3 className="text-[10px] md:text-2xl font-black text-slate-800 leading-tight text-center md:text-left max-w-[90px] md:max-w-none hyphens-none">{feature.action}</h3>
                   <p className="hidden md:block text-base text-slate-500 font-medium leading-relaxed">{feature.actionDesc}</p>
                 </div>
 
@@ -449,8 +455,8 @@ export default function Landing() {
           </motion.div>
 
           <div className="mt-12 pt-8 border-t border-white/10 text-center lg:text-left">
-            <p className="text-[10px] md:text-xs text-slate-500 font-medium max-w-2xl">
-              <span className="text-indigo-400 font-bold uppercase tracking-tighter mr-2">Therapeutic Basis:</span>
+            <p className="text-[11px] md:text-sm text-slate-300 font-medium max-w-2xl leading-relaxed">
+              <span className="text-indigo-300 font-bold uppercase tracking-tight mr-2">Therapeutic Basis:</span>
               PureSoul integrates principles of CBT, Somatic, and DBT for self-growth. This is for educational purposes and is not medical advice, clinical therapy, or a substitute for professional diagnosis.
             </p>
           </div>
