@@ -156,34 +156,34 @@ export default function WomenPage() {
                             <div className="relative z-10 h-full flex flex-col justify-between">
                                 <div>
                                     <div className="flex items-center gap-3 mb-8">
-                                        <div className="bg-indigo-500/20 p-4 rounded-[1.5rem] border border-indigo-400/20">
-                                            <Sparkles className="w-7 h-7 text-indigo-300" />
+                                        <div className="bg-indigo-500/10 p-4 rounded-[1.5rem] border border-indigo-400/20">
+                                            <Sparkles className="w-7 h-7 text-indigo-600" />
                                         </div>
                                         <div className="flex flex-col">
-                                            <span className="text-[10px] font-black text-indigo-300 uppercase tracking-widest">Cognitive State</span>
-                                            <h3 className="font-black text-2xl tracking-tight text-white line-height-tight">Hub Insights</h3>
+                                            <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Cognitive State</span>
+                                            <h3 className="font-black text-2xl tracking-tight text-slate-900 line-height-tight">Hub Insights</h3>
                                         </div>
                                     </div>
 
-                                    <div className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-7 sm:p-8 space-y-6">
-                                        <p className="text-white leading-relaxed font-bold text-lg sm:text-xl">
+                                    <div className="bg-white border border-rose-100 rounded-[2.5rem] p-7 sm:p-8 shadow-sm space-y-6">
+                                        <p className="text-slate-800 leading-relaxed font-bold text-lg sm:text-xl">
                                             Day {cycleData.day} metabolic transition.
                                         </p>
                                         <div className="space-y-5">
                                             <div className="flex gap-4 items-start">
-                                                <div className="w-2 h-2 rounded-full bg-rose-400 mt-2 shrink-0 shadow-[0_0_10px_rgba(251,113,133,0.5)]" />
-                                                <p className="text-sm sm:text-base text-indigo-100 font-semibold">Increase complex carb intake (cortisol stability).</p>
+                                                <div className="w-2 h-2 rounded-full bg-rose-400 mt-2 shrink-0 shadow-[0_0_10px_rgba(251,113,133,0.3)]" />
+                                                <p className="text-sm sm:text-base text-slate-600 font-semibold">Increase complex carb intake (cortisol stability).</p>
                                             </div>
                                             <div className="flex gap-4 items-start">
-                                                <div className="w-2 h-2 rounded-full bg-indigo-400 mt-2 shrink-0 shadow-[0_0_10px_rgba(129,140,248,0.5)]" />
-                                                <p className="text-sm sm:text-base text-indigo-100 font-semibold">15m Somatic movement for nervous support.</p>
+                                                <div className="w-2 h-2 rounded-full bg-indigo-400 mt-2 shrink-0 shadow-[0_0_10px_rgba(129,140,248,0.3)]" />
+                                                <p className="text-sm sm:text-base text-slate-600 font-semibold">15m Somatic movement for nervous support.</p>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <Link href="/dashboard">
-                                    <button className="mt-10 flex items-center gap-3 text-indigo-300 font-black text-xs uppercase tracking-[0.25em] group-hover:text-white transition-all">
+                                    <button className="mt-10 flex items-center gap-3 text-indigo-600 font-black text-xs uppercase tracking-[0.25em] group-hover:text-indigo-900 transition-all">
                                         Clinical Protocol <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                     </button>
                                 </Link>
