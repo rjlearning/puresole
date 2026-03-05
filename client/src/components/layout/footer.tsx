@@ -42,10 +42,10 @@ export default function Footer() {
                     </p>
 
                     {/* Legal links — pill row */}
-                    <nav className="flex flex-wrap gap-x-6 gap-y-2" aria-label="Legal navigation">
+                    <nav className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-x-6 gap-y-3" aria-label="Legal navigation">
                         {LEGAL_LINKS.map(l => (
                             <Link key={l.href + l.label} href={l.href}>
-                                <span className="text-[11px] text-slate-400 hover:text-indigo-300 transition-colors cursor-pointer whitespace-nowrap">
+                                <span className="text-[11px] text-slate-400 hover:text-indigo-300 transition-colors cursor-pointer lg:whitespace-nowrap">
                                     {l.label}
                                 </span>
                             </Link>

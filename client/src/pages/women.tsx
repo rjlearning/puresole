@@ -45,7 +45,7 @@ export default function WomenPage() {
     };
 
     return (
-        <div className="min-h-screen pb-32 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-rose-50 via-white to-slate-50 overflow-hidden">
+        <div className="min-h-screen pb-32 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-rose-50 via-white to-slate-50 overflow-x-hidden relative max-w-full">
 
             {/* ── Subtle Background Decoral ── */}
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-rose-200/20 blur-[120px] rounded-full -mr-64 -mt-32 pointer-events-none" />
@@ -91,7 +91,7 @@ export default function WomenPage() {
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
                             </span>
-                            <span className="text-[9px] font-black text-rose-600 uppercase tracking-[0.2em]">Bio-Hormonal Sync Active</span>
+                            <span className="text-[8px] sm:text-[9px] font-black text-rose-600 uppercase tracking-wider sm:tracking-[0.2em]">Bio-Hormonal Sync Active</span>
                         </motion.div>
                         <h2 className="text-3xl sm:text-6xl font-black text-slate-900 leading-[1.05] tracking-tight mb-5">
                             Optimizing for your <br />
@@ -151,7 +151,7 @@ export default function WomenPage() {
 
                     {/* Insights - Large Card */}
                     <motion.div variants={itemVariants} className="sm:col-span-2 lg:col-span-3 lg:row-span-2 group">
-                        <div className="h-full min-h-[320px] rounded-[3rem] bg-indigo-950 p-8 sm:p-10 text-white relative overflow-hidden shadow-2xl">
+                        <div className="h-full min-h-[320px] rounded-[2rem] sm:rounded-[3rem] bg-rose-50 p-6 sm:p-10 text-slate-900 relative overflow-hidden shadow-sm border border-rose-100">
                             <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/20 blur-[100px] rounded-full -mr-40 -mt-40 pointer-events-none" />
                             <div className="relative z-10 h-full flex flex-col justify-between">
                                 <div>

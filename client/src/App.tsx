@@ -178,7 +178,7 @@ function Router() {
       {isAuthenticated && <MainNavigation />}
       {isAuthenticated && <SoulCoreHub />}
       {isAuthenticated && <OnboardingManager />}
-      <div className={`min-h-screen mesh-bg ${isAuthenticated ? "lg:ml-80 lg:pl-8 pb-28 lg:pb-0" : ""}`}>
+      <div className={`min-h-screen mesh-bg overflow-x-hidden ${isAuthenticated ? "lg:ml-80 lg:pl-8 pb-28 lg:pb-0" : ""}`}>
         <Suspense fallback={
           <div className="min-h-screen flex items-center justify-center bg-slate-50/50 backdrop-blur-sm">
             <div className="flex flex-col items-center gap-4">

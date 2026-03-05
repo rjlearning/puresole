@@ -159,7 +159,7 @@ export default function MainNavigation() {
       </nav >
 
       {/* Mobile Navigation - Glass Bar */}
-      <nav className="fixed bottom-4 left-4 right-4 lg:hidden glass-panel px-4 py-3 flex justify-between items-center z-50 shadow-xl shadow-indigo-100/20 border border-white/40">
+      <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md lg:hidden glass-panel px-4 py-3 flex justify-between items-center z-50 shadow-xl shadow-indigo-100/20 border border-white/40">
         {
           navItems.map((item) => {
             const active = isActive(item.href);

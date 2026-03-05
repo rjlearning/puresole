@@ -40,7 +40,7 @@ export default function MenPage() {
     };
 
     return (
-        <div className="min-h-screen pb-24 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-indigo-950 overflow-hidden text-slate-200">
+        <div className="min-h-screen pb-24 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-indigo-950 overflow-x-hidden text-slate-200 relative max-w-full">
 
             {/* ── Background Decoral ── */}
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-500/10 blur-[120px] rounded-full -mr-64 -mt-32 pointer-events-none" />
