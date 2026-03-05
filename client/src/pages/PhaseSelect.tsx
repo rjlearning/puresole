@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePhase, PHASES, PhaseInfo, LifePhase, Gender } from "@/context/PhaseContext";
 import { ChevronRight, Lock, Sparkles, Check, UserIcon, Zap } from "lucide-react";
+import Logo from "@/components/Logo";
 
 // ── Quiz questions ────────────────────────────────────────────────────────────
 // Note: Gender is step 0, but it branches.
@@ -99,11 +100,8 @@ export default function PhaseSelect() {
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-rose-50/30 flex items-center justify-center px-4 py-12">
 
             {/* Logo */}
-            <div className="fixed top-6 left-1/2 -translate-x-1/2 flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-rose-400 to-violet-500 flex items-center justify-center">
-                    <span className="text-white font-black text-sm">PS</span>
-                </div>
-                <span className="font-black text-slate-800 text-lg tracking-tight">PureSoul</span>
+            <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50">
+                <Logo size="sm" />
             </div>
 
             <div className="w-full max-w-lg">
