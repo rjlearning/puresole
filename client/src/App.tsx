@@ -333,7 +333,7 @@ function Router() {
               <ProtectedRoute><FloweringDashboard /></ProtectedRoute>
             </Route>
             <Route path="/">
-              {isAuthenticated ? <PhaseDashboard /> : <Landing />}
+              {isAuthenticated ? <Dashboard /> : <Landing />}
             </Route>
             {/* ── Legal & Compliance routes (public) ── */}
             <Route path="/legal/privacy"><PrivacyNoticePage /></Route>

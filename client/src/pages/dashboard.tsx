@@ -1,171 +1,201 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
-import { Link, useLocation } from "wouter";
-import { FeedbackModal } from "@/components/FeedbackModal";
-import { motion } from "framer-motion";
-import { Mic, Activity, Heart, MessageSquare, Crown, Zap, ArrowRight, Compass, Calendar, Target } from "lucide-react";
-import { WellnessHalo } from "@/components/voice/WellnessHalo";
-import ProgressChart from "@/components/dashboard/progress-chart";
+import { useLocation } from "wouter";
+import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles, Mic, Brain, Heart, Wind, Waves } from "lucide-react";
 
-export default function FeedDashboard() {
-  const { toast } = useToast();
+export default function AmbientDashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [listeningState, setListeningState] = useState<'idle' | 'listening' | 'analyzing' | 'insight'>('idle');
+  const [insightText, setInsightText] = useState("");
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const dataArrayRef = useRef<Uint8Array | null>(null);
+  const [volume, setVolume] = useState(0);
 
-  const { data: voiceData } = useQuery<{ entries: any[] }>({ queryKey: ["/api/voice-entries"], retry: false });
   const { data: assessments = [] } = useQuery<any[]>({ queryKey: ["/api/assessments"], retry: false });
-  const { data: treatmentPlans = [] } = useQuery<any[]>({ queryKey: ["/api/treatment-plans"], retry: false });
-  const { data: progressData = [] } = useQuery<any[]>({ queryKey: ["/api/progress/user"], retry: false });
-  const { data: subscription } = useQuery<any>({ queryKey: ["/api/subscription"], enabled: isAuthenticated, retry: false });
+  const recentAssessment = assessments[0];
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({ title: "Session Expired", description: "Redirecting...", variant: "destructive" });
-      setTimeout(() => { window.location.href = "/api/login"; }, 500);
+    if (!isAuthenticated) return;
+    
+    // Auto-start ambient listening (requires user gesture technically in some browsers, but we try)
+    const initAudio = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        analyserRef.current = audioContextRef.current.createAnalyser();
+        analyserRef.current.fftSize = 256;
+        const source = audioContextRef.current.createMediaStreamSource(stream);
+        source.connect(analyserRef.current);
+        const bufferLength = analyserRef.current.frequencyBinCount;
+        dataArrayRef.current = new Uint8Array(bufferLength);
+        
+        setListeningState('listening');
+
+        const updateVolume = () => {
+          if (!analyserRef.current || !dataArrayRef.current) return;
+          analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+          let sum = 0;
+          for (let i = 0; i < bufferLength; i++) {
+            sum += dataArrayRef.current[i];
+          }
+          const avg = sum / bufferLength;
+          setVolume(avg);
+          requestAnimationFrame(updateVolume);
+        };
+        updateVolume();
+
+      } catch (err) {
+        console.error("Microphone access denied or not available", err);
+      }
+    };
+
+    // We simulate the zero-click ambient listening starting after a short delay
+    const timer = setTimeout(() => {
+      initAudio();
+    }, 1500);
+
+    return () => {
+      clearTimeout(timer);
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+    };
+  }, [isAuthenticated]);
+
+  // Simulate an AI workflow when user stops talking (volume drops after being high)
+  const talkingRef = useRef(false);
+  const silenceTimerRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (listeningState !== 'listening') return;
+
+    if (volume > 40) {
+      talkingRef.current = true;
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    } else if (volume < 10 && talkingRef.current) {
+      if (!silenceTimerRef.current) {
+        silenceTimerRef.current = setTimeout(() => {
+          setListeningState('analyzing');
+          setTimeout(() => {
+            setInsightText("I hear a bit of tension in your voice today. Would you like a 2-minute ground exercise?");
+            setListeningState('insight');
+          }, 3000);
+        }, 2000);
+      }
     }
-  }, [isAuthenticated, isLoading, toast]);
+  }, [volume, listeningState]);
 
   if (isLoading || !isAuthenticated) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950">
-      <div className="relative w-12 h-12">
-        <div className="absolute inset-0 border-4 border-indigo-500/20 rounded-full" />
-        <div className="absolute inset-0 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-      </div>
+      <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
     </div>
   );
 
-  const latestVoice = voiceData?.entries?.[0];
-  const emotion = latestVoice?.emotionData?.[0]?.label || "Stable";
-  const recentAssessment = assessments[0];
-  const activePlan = treatmentPlans.find((p: any) => p.status === 'active');
-
+  // Dynamic colors based on volume to make it "breathe"
+  const scale = 1 + (volume / 255) * 0.5;
+  const blur = 40 + (volume / 255) * 60;
+  
   return (
-    <div className="min-h-screen bg-slate-950 text-white pb-24" data-testid="dashboard-feed">
-      {/* ── Fixed Header ── */}
-      <div className="bg-slate-950/80 backdrop-blur-md border-b border-slate-800/60 px-4 py-4 sticky top-0 z-50">
-        <div className="max-w-xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <span className="font-black text-white text-lg">P</span>
-            </div>
-            <div>
-              <h1 className="text-lg font-black text-white leading-none">My Feed</h1>
-              <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mt-0.5">Focus: {activePlan?.title || "Exploring"}</p>
-            </div>
+    <div className="min-h-screen bg-slate-950 text-white overflow-hidden relative" data-testid="ambient-dashboard">
+      
+      {/* Background Ambient Mesh */}
+      <div className="absolute inset-0 z-0 flex items-center justify-center opacity-60">
+        <motion.div 
+          animate={{
+            scale: scale,
+            filter: `blur(${blur}px)`,
+          }}
+          transition={{ duration: 0.1 }}
+          className="w-[60vw] h-[60vw] max-w-[500px] max-h-[500px] rounded-full bg-gradient-to-tr from-indigo-600 via-purple-500 to-rose-500 absolute"
+        />
+        <motion.div 
+          animate={{
+            scale: listeningState === 'analyzing' ? [1, 1.2, 1] : 1,
+            rotate: listeningState === 'analyzing' ? 360 : 0
+          }}
+          transition={{ duration: 3, repeat: listeningState === 'analyzing' ? Infinity : 0 }}
+          className="w-[40vw] h-[40vw] max-w-[300px] max-h-[300px] rounded-full bg-gradient-to-bl from-cyan-400 to-blue-600 absolute mix-blend-screen blur-3xl opacity-50"
+        />
+      </div>
+
+      <div className="relative z-10 w-full h-screen flex flex-col items-center justify-between p-8 pb-32">
+        
+        {/* Header (Minimal) */}
+        <div className="w-full flex justify-between items-start">
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1">PureSoul Ambient</p>
+            <h1 className="text-xl font-black text-white mix-blend-overlay">Hello, {user?.firstName || 'there'}</h1>
           </div>
-          <button onClick={() => setFeedbackOpen(true)} className="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-all border border-slate-700">
-            <MessageSquare className="w-4 h-4 text-slate-400" />
-          </button>
+          <div className="w-10 h-10 rounded-full border border-slate-800 bg-slate-900/50 backdrop-blur-md flex items-center justify-center">
+             <Mic className={`w-4 h-4 ${listeningState === 'listening' ? 'text-rose-400 animate-pulse' : 'text-slate-500'}`} />
+          </div>
         </div>
-      </div>
 
-      <div className="max-w-xl mx-auto px-4 pt-6 space-y-6">
+        {/* Center interaction space */}
+        <div className="flex-1 flex flex-col items-center justify-center text-center w-full max-w-sm mx-auto">
+          <AnimatePresence mode="wait">
+            {listeningState === 'idle' && (
+              <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <p className="text-lg font-light text-slate-300">Waking up...</p>
+              </motion.div>
+            )}
 
-        {/* ── CARD 1: Quick Voice Journal (Instagram Story Style) ── */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative">
-          <div className="absolute -inset-1 bg-gradient-to-r from-rose-500 via-purple-500 to-indigo-500 rounded-[2.5rem] blur opacity-20" />
-          <div className="bg-slate-900 border border-slate-700 p-6 rounded-[2.5rem] relative overflow-hidden group cursor-pointer" onClick={() => setLocation('/voice-journal')}>
-            <div className="absolute top-0 right-0 p-8 opacity-5">
-              <Mic className="w-32 h-32 text-white" />
-            </div>
-            <div className="flex items-center gap-4 relative z-10">
-              <div className="w-16 h-16 rounded-full bg-slate-800 border-2 border-indigo-500 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-                <Mic className="w-6 h-6 text-indigo-400" />
-              </div>
-              <div>
-                <h2 className="text-xl font-black text-white">Record Audio Journal</h2>
-                <p className="text-xs text-slate-400 mt-1">AI will analyze your vocal biomarkers & emotions.</p>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+            {listeningState === 'listening' && (
+              <motion.div key="listening" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }}>
+                <p className="text-2xl font-light text-white leading-tight">I'm listening.<br/>How are you feeling right now?</p>
+                <p className="text-xs text-slate-400 mt-4 tracking-widest uppercase">Just speak naturally</p>
+              </motion.div>
+            )}
 
-        {/* ── CARD 2: Daily Vibe Check (Insight Stream) ── */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <div className="bg-gradient-to-br from-indigo-900/40 to-slate-900 border border-indigo-500/20 p-6 rounded-[2rem] shadow-xl">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-indigo-400" />
-                <span className="text-xs font-black uppercase tracking-widest text-indigo-400">Current Vibe</span>
-              </div>
-              {latestVoice && <span className="text-[10px] text-slate-500 font-bold">{new Date(latestVoice.recordedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
-            </div>
-            
-            <div className="flex flex-col items-center mb-6">
-              <div className="scale-75 mb-[-2rem]">
-                <WellnessHalo stage="balance" energyLevel={3} />
-              </div>
-              <h3 className="text-3xl font-black text-white capitalize italic">"{emotion}"</h3>
-              <p className="text-xs text-slate-400 mt-2 text-center">Based on your latest voice snapshot</p>
-            </div>
-          </div>
-        </motion.div>
+            {listeningState === 'analyzing' && (
+              <motion.div key="analyzing" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
+                <Brain className="w-12 h-12 text-indigo-300 mx-auto mb-4 animate-pulse" />
+                <p className="text-xl font-light text-indigo-100">Analyzing focal patterns...</p>
+              </motion.div>
+            )}
 
-        {/* ── CARD 3: Recent Assessment Insight ── */}
-        {recentAssessment && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <div className="bg-slate-900 border border-slate-800 p-6 rounded-[2rem]">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-rose-500/20 flex items-center justify-center">
-                  <Heart className="w-4 h-4 text-rose-500" />
+            {listeningState === 'insight' && (
+              <motion.div 
+                key="insight" 
+                initial={{ opacity: 0, y: 20 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                className="w-full bg-slate-900/40 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem] shadow-2xl"
+              >
+                <Sparkles className="w-8 h-8 text-amber-300 mb-6 mx-auto" />
+                <p className="text-xl font-medium text-white leading-relaxed mb-8">
+                  "{insightText}"
+                </p>
+                <div className="flex flex-col gap-3">
+                  <button 
+                    onClick={() => setLocation('/activities')}
+                    className="w-full py-4 rounded-2xl bg-white text-slate-950 font-bold text-sm tracking-wide hover:scale-[1.02] transition-transform"
+                  >
+                    Start Breathing Exercise
+                  </button>
+                  <button 
+                    onClick={() => setListeningState('listening')}
+                    className="w-full py-4 rounded-2xl bg-slate-800/50 text-slate-300 font-bold text-sm tracking-wide hover:bg-slate-800 transition-colors"
+                  >
+                    Keep Talking
+                  </button>
                 </div>
-                <div>
-                  <p className="text-xs font-black uppercase tracking-widest text-slate-500">{recentAssessment.type.replace('_', ' ')} Insight</p>
-                  <p className="text-[10px] text-slate-600">{new Date(recentAssessment.createdAt).toLocaleDateString()}</p>
-                </div>
-              </div>
-              <p className="text-sm font-medium text-slate-300 leading-relaxed italic border-l-2 border-slate-700 pl-4 py-1">
-                "{recentAssessment.aiAnalysis?.substring(0, 200)}..."
-              </p>
-              <Link href="/assessment">
-                <button className="mt-4 text-xs font-bold text-indigo-400 flex items-center gap-1 hover:text-indigo-300 transition-colors">
-                  Take new assessment <ArrowRight className="w-3 h-3" />
-                </button>
-              </Link>
-            </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Floating Context Pill (replaces old clunky cards) */}
+        {recentAssessment && listeningState !== 'insight' && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="absolute bottom-24 bg-slate-900/60 backdrop-blur-md border border-slate-700/50 px-5 py-3 rounded-full flex items-center gap-3 cursor-pointer hover:bg-slate-800/80 transition-colors" onClick={() => setLocation('/assessment')}>
+            <Heart className="w-4 h-4 text-rose-400" />
+            <span className="text-xs font-medium text-slate-300">Last check-in: {recentAssessment.severity.replace('_', ' ')}</span>
           </motion.div>
         )}
-
-        {/* ── CARD 4: Recommended Activity Actions ── */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="grid grid-cols-2 gap-4">
-          <Link href="/activities">
-            <div className="bg-slate-900 border border-slate-800 p-5 rounded-[2rem] hover:bg-slate-800/50 transition-colors cursor-pointer group">
-              <Activity className="w-6 h-6 text-emerald-400 mb-3 group-hover:scale-110 transition-transform" />
-              <h4 className="text-sm font-black text-white mb-1">Activities</h4>
-              <p className="text-[10px] text-slate-500">Mindful exercises</p>
-            </div>
-          </Link>
-          <Link href="/treatment-plan">
-            <div className="bg-slate-900 border border-slate-800 p-5 rounded-[2rem] hover:bg-slate-800/50 transition-colors cursor-pointer group">
-              <Compass className="w-6 h-6 text-amber-400 mb-3 group-hover:scale-110 transition-transform" />
-              <h4 className="text-sm font-black text-white mb-1">Journey Plan</h4>
-              <p className="text-[10px] text-slate-500">Your custom path</p>
-            </div>
-          </Link>
-        </motion.div>
-
-        {/* ── CARD 5: Progress Mini-Chart ── */}
-        {progressData && progressData.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="bg-slate-900 border border-slate-800 p-6 rounded-[2rem] overflow-hidden">
-            <div className="flex items-center justify-between mb-4">
-               <div className="flex flex-col">
-                 <span className="text-sm font-black text-white">Activity Pulse</span>
-                 <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mt-1">Last 7 Days</span>
-               </div>
-               <Calendar className="w-5 h-5 text-slate-600" />
-            </div>
-            <div className="h-[120px] -mx-2">
-              <ProgressChart data={progressData} />
-            </div>
-          </motion.div>
-        )}
-
       </div>
-
-      <FeedbackModal open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </div>
   );
 }

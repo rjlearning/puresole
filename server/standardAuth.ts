@@ -13,8 +13,7 @@ export function setupSession(app: Express) {
 
   // Session configuration
   // Set secure to false for local development (HTTP), true only for production HTTPS
-  const isProduction = process.env.NODE_ENV === "production";
-  const isLocalDevelopment = !isProduction || process.env.DOCKER === "true";
+  const isProduction = process.env.NODE_ENV === "production" && process.env.DOCKER !== "true";
 
   const PgSession = connectPgSimple(session);
 
@@ -23,17 +22,17 @@ export function setupSession(app: Express) {
       store: new PgSession({
         pool,
         tableName: 'sessions',
-        createTableIfMissing: false
+        createTableIfMissing: true
       }),
       secret: sessionSecret,
       resave: false,
       saveUninitialized: false,
       proxy: isProduction, // Trust the reverse proxy for HTTPS detection
       cookie: {
-        secure: isProduction, // True in production (HTTPS required), false in dev (HTTP allowed)
+        secure: isProduction, // True in production (HTTPS required), false in dev/Docker (HTTP allowed)
         httpOnly: true,
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-        sameSite: "lax",
+        sameSite: isProduction ? "lax" : "lax",
       },
     })
   );
