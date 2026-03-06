@@ -62,7 +62,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-white mesh-bg overflow-hidden flex flex-col pt-20 sm:pt-0" data-testid="home-page">
+    <div className="min-h-screen bg-white mesh-bg flex flex-col pt-20 sm:pt-0" data-testid="home-page">
 
       {/* ── Top Bar ── */}
       <div className="absolute top-0 inset-x-0 p-6 flex justify-between items-center z-50">
