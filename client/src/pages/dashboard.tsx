@@ -182,7 +182,7 @@ export default function AIOrchestratedDashboard() {
   const firstName = (user as any)?.firstName || "there";
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white pb-28 relative overflow-x-hidden" data-testid="ai-dashboard">
+    <div className="min-h-screen bg-slate-950 text-white pb-28 relative" data-testid="ai-dashboard">
 
       {/* ── Sticky Header ── */}
       <div className="bg-slate-950/90 backdrop-blur-md border-b border-slate-800/50 px-4 py-3 sticky top-0 z-50">

@@ -113,18 +113,16 @@ function RitualCard({ card, index, isLocked, isDone, onStart }: {
                 }
                 transition={{ duration: 0.4 }}
                 className={`relative rounded-[2rem] p-5 overflow-hidden transition-all duration-300 ${isDone
-                        ? "bg-slate-900/60 opacity-60"
-                        : isLocked
-                            ? "bg-slate-900/40 opacity-50"
-                            : "bg-slate-900"
+                    ? "bg-slate-900/60 opacity-60"
+                    : isLocked
+                        ? "bg-slate-900/40 opacity-50"
+                        : "bg-slate-900"
                     }`}
             >
                 {/* Breathing glow inside card */}
                 {!isDone && !isLocked && (
-                    <motion.div
+                    <div
                         className={`absolute -top-10 -right-10 w-40 h-40 rounded-full bg-gradient-to-br ${card.color} blur-3xl opacity-10 pointer-events-none`}
-                        animate={{ scale: [1, 1.3, 1], opacity: [0.08, 0.18, 0.08] }}
-                        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                     />
                 )}
 
@@ -132,17 +130,15 @@ function RitualCard({ card, index, isLocked, isDone, onStart }: {
                     {/* Emoji with pulsing ring */}
                     <div className="relative shrink-0">
                         {!isDone && !isLocked && (
-                            <motion.div
-                                className={`absolute -inset-2 rounded-full bg-gradient-to-br ${card.color} opacity-25 blur-md`}
-                                animate={{ scale: [0.9, 1.2, 0.9] }}
-                                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                            <div
+                                className={`absolute -inset-2 rounded-full bg-gradient-to-br ${card.color} opacity-20 blur-md`}
                             />
                         )}
                         <div className={`relative w-14 h-14 rounded-2xl flex items-center justify-center text-2xl ${isDone
-                                ? "bg-slate-800/60"
-                                : isLocked
-                                    ? "bg-slate-800/40"
-                                    : `bg-gradient-to-br ${card.color} shadow-lg`
+                            ? "bg-slate-800/60"
+                            : isLocked
+                                ? "bg-slate-800/40"
+                                : `bg-gradient-to-br ${card.color} shadow-lg`
                             }`}>
                             {isLocked ? <Lock className="w-5 h-5 text-slate-600" /> : card.emoji}
                         </div>
@@ -246,12 +242,8 @@ export function TodaysProtocol({ onAllComplete }: TodaysProtocolProps) {
             {showConfetti && <Confetti />}
 
             <div className="relative">
-                {/* Ambient background wash behind the whole section */}
-                <motion.div
-                    className="absolute -inset-4 rounded-[3rem] bg-gradient-to-br from-indigo-900/20 via-transparent to-slate-900/0 pointer-events-none blur-xl"
-                    animate={{ opacity: [0.5, 0.9, 0.5] }}
-                    transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                />
+                {/* Static ambient background — no animation to block scroll */}
+                <div className="absolute -inset-4 rounded-[3rem] bg-gradient-to-br from-indigo-900/15 via-transparent to-slate-900/0 pointer-events-none blur-xl" />
 
                 <div className="relative z-10">
                     {/* Header */}
