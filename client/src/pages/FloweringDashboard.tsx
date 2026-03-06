@@ -163,7 +163,7 @@ export default function FloweringDashboard() {
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}
                     className="grid grid-cols-4 gap-3">
                     {[
-                        { icon: "📅", label: "Period Log", href: "/women-cycle" },
+                        { icon: "📅", label: "Period Log", href: "/women/cycle" },
                         { icon: "📔", label: "Journal", href: "/voice-journal" },
                         { icon: "🧘", label: "Mindfulness", href: "/activities" },
                         { icon: "👥", label: "Community", href: "/community" },
