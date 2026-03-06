@@ -11,6 +11,12 @@ import WellnessTrendChart from '@/components/voice/WellnessTrendChart';
 import AnalysisHistoryList from '@/components/voice/AnalysisHistoryList';
 import InsightsPanel from '@/components/voice/InsightsPanel';
 import VocalBiomarkersPanel from '@/components/voice/VocalBiomarkersPanel';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import EmotionalRadar from '@/components/voice/EmotionalRadar';
 import SocialHealthDonut from '@/components/voice/SocialHealthDonut';
@@ -236,16 +242,64 @@ export default function VoiceAnalysisDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [useMockData, setUseMockData] = useState(false);
 
-  useEffect(() => { fetchDashboardData(); }, []);
+  useEffect(() => { fetchDashboardData(); }, [useMockData]);
 
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true);
       setError(null);
+
+      if (useMockData) {
+        // Return rich mock data to demonstrate the UI
+        setData({
+          recent_analyses: Array.from({ length: 5 }).map((_, i) => ({
+            id: `mock-${i}`,
+            primary_emotion: ['joy', 'calm', 'focus', 'anxiety'][i % 4],
+            emotion_confidence: 0.85,
+            wellness_score: 75 + (Math.random() * 20 - 10),
+            valence: 0.6, arousal: 0.4, dominance: 0.7,
+            risk_level: 'low',
+            duration_seconds: 120,
+            created_at: new Date(Date.now() - i * 86400000).toISOString(),
+            transcript: "This is a mock transcript to demonstrate the UI layout.",
+            biomarkers: {
+              jitter: 0.02, shimmer: 0.03, nhr: 0.01,
+              f0_mean: 120, energy_rms: 0.1
+            }
+          })),
+          trends_30day: Array.from({ length: 30 }).map((_, i) => ({
+            period_start: new Date(Date.now() - (29 - i) * 86400000).toISOString(),
+            avg_wellness_score: 60 + Math.sin(i / 3) * 20 + Math.random() * 10
+          })),
+          top_insights: [
+            { id: 1, type: 'pattern', title: 'Morning Clarity', description: 'Your vocal energy peaks between 8AM and 10AM.' },
+            { id: 2, type: 'correlation', title: 'Rest Recovery', description: 'Strong correlation between recent sleep and vocal stability.' }
+          ],
+          correlations: [],
+          stats: {
+            total_analyses: 42,
+            avg_wellness: 81,
+            current_trend: 'improving',
+            total_duration_minutes: 120
+          }
+        });
+        setTimeout(() => setIsLoading(false), 800);
+        return;
+      }
+
       const res = await fetch('/api/voice/dashboard', { credentials: 'include' });
       if (!res.ok) throw new Error('Failed to fetch dashboard data');
-      setData(await res.json());
+      const json = await res.json();
+
+      // If no data exists, suggest using mock data
+      if (json.stats?.total_analyses === 0) {
+        setError("No voice analyses found. Click the settings gear icon to Load Mock Data.");
+        setData(json);
+      } else {
+        setData(json);
+      }
     } catch (err) {
       setError('Failed to load voice analysis dashboard');
     } finally {
@@ -272,8 +326,14 @@ export default function VoiceAnalysisDashboard() {
       <div className="min-h-screen flex items-center justify-center p-6 bg-[#020617]">
         <div className="bg-rose-950/20 border border-rose-500/30 text-rose-400 p-8 rounded-3xl max-w-md text-center shadow-2xl">
           <AlertCircle className="w-12 h-12 mx-auto mb-4 text-rose-500" />
-          <h3 className="text-lg font-black uppercase tracking-widest mb-2">Systems Offline</h3>
-          <p className="text-sm font-medium text-rose-400/70">{error || 'Failed to sync clinical data'}</p>
+          <h3 className="text-lg font-black uppercase tracking-widest mb-2">Needs Data</h3>
+          <p className="text-sm font-medium text-rose-400/70 mb-6">{error || 'Please record a voice sample to view insights.'}</p>
+          <button
+            onClick={() => setUseMockData(true)}
+            className="px-6 py-2 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 rounded-xl font-bold uppercase tracking-widest text-xs transition-colors"
+          >
+            Load Demo Data
+          </button>
         </div>
       </div>
     );
@@ -312,7 +372,22 @@ export default function VoiceAnalysisDashboard() {
             <Link href="/voice-journal">
               <button className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-lg shadow-indigo-600/20 active:scale-95">Record New Sample</button>
             </Link>
-            <button className="p-3 bg-slate-900 border border-slate-800 text-slate-400 rounded-2xl hover:text-white transition-colors"><Settings className="w-5 h-5" /></button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className={`p-3 border rounded-2xl transition-colors ${useMockData ? 'bg-indigo-500/20 border-indigo-500/30 text-indigo-400' : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'}`}>
+                  <Settings className="w-5 h-5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-slate-900 border-slate-800 text-slate-300 w-48">
+                <DropdownMenuItem
+                  className="cursor-pointer hover:bg-slate-800 hover:text-white focus:bg-slate-800 focus:text-white"
+                  onClick={() => setUseMockData(!useMockData)}
+                >
+                  <Activity className="w-4 h-4 mr-2" />
+                  {useMockData ? 'Disable Mock Data' : 'Load Mock Data'}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
