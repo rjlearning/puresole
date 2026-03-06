@@ -49,7 +49,7 @@ RUN apk add --no-cache dumb-init
 
 # Create app user
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
+  adduser -S nodejs -u 1001
 
 WORKDIR /app
 
@@ -104,5 +104,5 @@ ENV PORT=4000
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start the application (run TypeScript directly with tsx)
-CMD ["npx", "tsx", "server/index.ts"]
+# Start the application (runs db:push then starts the server)
+CMD ["npm", "start"]
