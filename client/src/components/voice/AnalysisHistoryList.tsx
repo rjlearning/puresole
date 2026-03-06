@@ -204,7 +204,10 @@ export default function AnalysisHistoryList({ analyses, isDark }: AnalysisHistor
                       e.stopPropagation();
                       if (confirm('Are you sure you want to delete this voice analysis?')) {
                         try {
-                          await fetch(`/api/voice-entries/${analysis.id}`, { method: 'DELETE' });
+                          await fetch(`/api/voice-entries/${analysis.id}`, {
+                            method: 'DELETE',
+                            credentials: 'include'
+                          });
                           window.location.reload();
                         } catch (err) {
                           console.error(err);
