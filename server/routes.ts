@@ -565,6 +565,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ─── Composite Onboarding Endpoint ─────────────────────────────────────────
+  // Creates assessment + AI analysis + treatment plan in one atomic call
+  app.post('/api/onboarding/complete', isAuthenticated, async (req: any, res) => {
+    const userId = (req.user as any).id;
+    try {
+      const { responses, userGoals } = req.body as {
+        responses: Record<string, any>;
+        userGoals?: string[];
+      };
+
+      if (!responses || typeof responses !== 'object') {
+        return res.status(400).json({ message: 'responses object is required' });
+      }
+
+      // 1. Persist the assessment
+      const assessment = await storage.createAssessment({
+        userId,
+        type: 'baseline_onboarding',
+        responses,
+        score: 0,
+        severity: null,
+        aiAnalysis: null,
+        recommendations: null,
+        riskFactors: null
+      } as any);
+
+      // 2. Analyse with OpenAI
+      const analysis = await analyzeAssessment(
+        'baseline_onboarding',
+        responses,
+        0
+      );
+
+      // 3. Generate full plan
+      const aiPlan = await generateTreatmentPlan(analysis, 'baseline_onboarding', userGoals);
+
+      // 4. Persist plan
+      const plan = await storage.createTreatmentPlan({
+        userId,
+        assessmentId: assessment.id,
+        title: aiPlan.title,
+        description: aiPlan.description,
+        totalWeeks: aiPlan.totalWeeks,
+        modules: aiPlan.modules,
+        goals: aiPlan.goals
+      });
+
+      // 5. Persist modules
+      for (const mod of aiPlan.modules) {
+        await storage.createTreatmentModule({
+          planId: plan.id,
+          title: mod.title,
+          description: mod.description,
+          week: mod.week,
+          order: mod.week,
+          content: {
+            activities: mod.activities,
+            learningObjectives: mod.learningObjectives
+          }
+        });
+      }
+
+      res.json({ planId: plan.id, analysisSnapshot: analysis });
+    } catch (err) {
+      console.error('Onboarding complete failed:', err);
+      res.status(500).json({ message: 'Failed to complete onboarding' });
+    }
+  });
+
   // Treatment plan routes
   app.post('/api/treatment-plans', isAuthenticated, async (req: any, res) => {
     try {
