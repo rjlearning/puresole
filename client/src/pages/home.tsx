@@ -73,7 +73,7 @@ export default function Home() {
           <span className="text-xs font-black uppercase tracking-[0.3em] text-slate-800">PureSoul</span>
         </div>
         <Link href="/settings">
-          <button className="w-10 h-10 rounded-full bg-white/50 backdrop-blur-md border border-white flex items-center justify-center shadow-sm">
+          <button className="w-10 h-10 rounded-full bg-white/50 backdrop-blur-lg border border-white flex items-center justify-center shadow-sm">
             <div className="w-6 h-6 rounded-full bg-slate-200 animate-pulse" />
           </button>
         </Link>
@@ -144,7 +144,7 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1, duration: 1 }}
               >
-                <div className="bg-white/40 backdrop-blur-2xl border border-white/60 p-6 sm:p-10 rounded-[3rem] shadow-2xl shadow-indigo-100/20 group relative overflow-hidden">
+                <div className="bg-white/40 backdrop-blur-lg border border-white/60 p-6 sm:p-10 rounded-[3rem] shadow-2xl shadow-indigo-100/20 group relative overflow-hidden">
                   <div className="absolute top-0 right-0 p-8 opacity-10">
                     <Activity className="w-24 h-24 text-indigo-900" />
                   </div>
