@@ -81,6 +81,9 @@ COPY --chown=nodejs:nodejs server/db/migrations ./server/db/migrations
 # Copy any other necessary files
 COPY --chown=nodejs:nodejs server/exports ./server/exports
 
+# Create uploads directory and set permissions BEFORE switching to non-root user
+RUN mkdir -p /app/uploads && chown -R nodejs:nodejs /app/uploads
+
 # Change ownership of all files to nodejs user (including node_modules)
 RUN chown -R nodejs:nodejs /app
 
