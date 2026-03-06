@@ -1,201 +1,209 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Mic, Brain, Heart, Wind, Waves } from "lucide-react";
+import { Sparkles, Brain, Wind, Heart, Activity, Compass, ArrowRight, MessageSquare, Zap } from "lucide-react";
+import { FeedbackModal } from "@/components/FeedbackModal";
 
-export default function AmbientDashboard() {
+export default function OneTapDashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
-  const [listeningState, setListeningState] = useState<'idle' | 'listening' | 'analyzing' | 'insight'>('idle');
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [sliderValue, setSliderValue] = useState(50);
+  const [interactionState, setInteractionState] = useState<'prompt' | 'processing' | 'reward'>('prompt');
   const [insightText, setInsightText] = useState("");
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const dataArrayRef = useRef<Uint8Array | null>(null);
-  const [volume, setVolume] = useState(0);
 
   const { data: assessments = [] } = useQuery<any[]>({ queryKey: ["/api/assessments"], retry: false });
   const recentAssessment = assessments[0];
 
   useEffect(() => {
-    if (!isAuthenticated) return;
-    
-    // Auto-start ambient listening (requires user gesture technically in some browsers, but we try)
-    const initAudio = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-        analyserRef.current = audioContextRef.current.createAnalyser();
-        analyserRef.current.fftSize = 256;
-        const source = audioContextRef.current.createMediaStreamSource(stream);
-        source.connect(analyserRef.current);
-        const bufferLength = analyserRef.current.frequencyBinCount;
-        dataArrayRef.current = new Uint8Array(bufferLength);
-        
-        setListeningState('listening');
-
-        const updateVolume = () => {
-          if (!analyserRef.current || !dataArrayRef.current) return;
-          analyserRef.current.getByteFrequencyData(dataArrayRef.current);
-          let sum = 0;
-          for (let i = 0; i < bufferLength; i++) {
-            sum += dataArrayRef.current[i];
-          }
-          const avg = sum / bufferLength;
-          setVolume(avg);
-          requestAnimationFrame(updateVolume);
-        };
-        updateVolume();
-
-      } catch (err) {
-        console.error("Microphone access denied or not available", err);
-      }
-    };
-
-    // We simulate the zero-click ambient listening starting after a short delay
-    const timer = setTimeout(() => {
-      initAudio();
-    }, 1500);
-
-    return () => {
-      clearTimeout(timer);
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
-    };
-  }, [isAuthenticated]);
-
-  // Simulate an AI workflow when user stops talking (volume drops after being high)
-  const talkingRef = useRef(false);
-  const silenceTimerRef = useRef<any>(null);
-
-  useEffect(() => {
-    if (listeningState !== 'listening') return;
-
-    if (volume > 40) {
-      talkingRef.current = true;
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-    } else if (volume < 10 && talkingRef.current) {
-      if (!silenceTimerRef.current) {
-        silenceTimerRef.current = setTimeout(() => {
-          setListeningState('analyzing');
-          setTimeout(() => {
-            setInsightText("I hear a bit of tension in your voice today. Would you like a 2-minute ground exercise?");
-            setListeningState('insight');
-          }, 3000);
-        }, 2000);
-      }
+    if (!isLoading && !isAuthenticated) {
+      setTimeout(() => { window.location.href = "/api/login"; }, 500);
     }
-  }, [volume, listeningState]);
+  }, [isAuthenticated, isLoading]);
 
   if (isLoading || !isAuthenticated) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950">
-      <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+      <div className="w-12 h-12 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin" />
     </div>
   );
 
-  // Dynamic colors based on volume to make it "breathe"
-  const scale = 1 + (volume / 255) * 0.5;
-  const blur = 40 + (volume / 255) * 60;
-  
+  const handleOrbRelease = () => {
+    if (interactionState !== 'prompt') return;
+    setInteractionState('processing');
+    
+    // Simulate AI processing the micro-interaction and generating a reward
+    setTimeout(() => {
+      if (sliderValue > 70) {
+        setInsightText("High energy today! Let's channel that momentum into a focused productivity burst.");
+      } else if (sliderValue < 30) {
+        setInsightText("I sense your energy is low. Let's start with a gentle 60-second reset.");
+      } else {
+        setInsightText("You're feeling balanced. A quick mindfulness check-in will help maintain this state.");
+      }
+      setInteractionState('reward');
+    }, 1500);
+  };
+
+  // Dynamic colors based on slider interaction
+  const getOrbColor = () => {
+    if (sliderValue > 70) return "from-amber-400 to-rose-500";
+    if (sliderValue < 30) return "from-blue-500 to-indigo-600";
+    return "from-emerald-400 to-teal-500";
+  };
+
+  const getBlurIntensity = () => {
+    return 20 + Math.abs(sliderValue - 50);
+  };
+
   return (
-    <div className="min-h-screen bg-slate-950 text-white overflow-hidden relative" data-testid="ambient-dashboard">
+    <div className="min-h-screen bg-slate-950 text-white pb-24 relative overflow-x-hidden" data-testid="onetap-dashboard">
       
-      {/* Background Ambient Mesh */}
-      <div className="absolute inset-0 z-0 flex items-center justify-center opacity-60">
-        <motion.div 
-          animate={{
-            scale: scale,
-            filter: `blur(${blur}px)`,
-          }}
-          transition={{ duration: 0.1 }}
-          className="w-[60vw] h-[60vw] max-w-[500px] max-h-[500px] rounded-full bg-gradient-to-tr from-indigo-600 via-purple-500 to-rose-500 absolute"
-        />
-        <motion.div 
-          animate={{
-            scale: listeningState === 'analyzing' ? [1, 1.2, 1] : 1,
-            rotate: listeningState === 'analyzing' ? 360 : 0
-          }}
-          transition={{ duration: 3, repeat: listeningState === 'analyzing' ? Infinity : 0 }}
-          className="w-[40vw] h-[40vw] max-w-[300px] max-h-[300px] rounded-full bg-gradient-to-bl from-cyan-400 to-blue-600 absolute mix-blend-screen blur-3xl opacity-50"
-        />
+      {/* ── Fixed Header ── */}
+      <div className="bg-slate-950/80 backdrop-blur-md border-b border-slate-800/60 px-4 py-4 sticky top-0 z-50">
+        <div className="max-w-xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-indigo-500 to-rose-500 p-[2px]">
+              <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
+                <span className="font-black text-white text-sm">P</span>
+              </div>
+            </div>
+            <div>
+              <h1 className="text-lg font-black text-white leading-none tracking-tight">PureSoul</h1>
+            </div>
+          </div>
+          <button onClick={() => setFeedbackOpen(true)} className="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center hover:bg-slate-800 transition-all border border-slate-700">
+            <MessageSquare className="w-4 h-4 text-slate-400" />
+          </button>
+        </div>
       </div>
 
-      <div className="relative z-10 w-full h-screen flex flex-col items-center justify-between p-8 pb-32">
+      <div className="max-w-xl mx-auto px-4 pt-8 space-y-8">
         
-        {/* Header (Minimal) */}
-        <div className="w-full flex justify-between items-start">
-          <div>
-            <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1">PureSoul Ambient</p>
-            <h1 className="text-xl font-black text-white mix-blend-overlay">Hello, {user?.firstName || 'there'}</h1>
-          </div>
-          <div className="w-10 h-10 rounded-full border border-slate-800 bg-slate-900/50 backdrop-blur-md flex items-center justify-center">
-             <Mic className={`w-4 h-4 ${listeningState === 'listening' ? 'text-rose-400 animate-pulse' : 'text-slate-500'}`} />
-          </div>
-        </div>
-
-        {/* Center interaction space */}
-        <div className="flex-1 flex flex-col items-center justify-center text-center w-full max-w-sm mx-auto">
+        {/* ── THE DAILY ORBIT (Micro-Interaction) ── */}
+        <div className="bg-slate-900 border border-slate-800 p-8 rounded-[3rem] relative overflow-hidden flex flex-col items-center justify-center min-h-[400px]">
+          
           <AnimatePresence mode="wait">
-            {listeningState === 'idle' && (
-              <motion.div key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <p className="text-lg font-light text-slate-300">Waking up...</p>
+            
+            {/* STATE 1: Prompt */}
+            {interactionState === 'prompt' && (
+              <motion.div key="prompt" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, y: -20 }} className="flex flex-col items-center w-full">
+                <span className="text-[10px] uppercase font-black tracking-[0.2em] text-indigo-400 mb-6 flex items-center gap-2">
+                  <Sparkles className="w-3 h-3" /> Daily Pulse
+                </span>
+                
+                <h2 className="text-2xl font-light text-center leading-tight mb-12 px-4 shadow-sm">
+                  How is your <span className="font-semibold text-white">energy level</span> feeling right now?
+                </h2>
+
+                {/* Interactive Slider Orb Area */}
+                <div className="relative w-full px-8 py-10 flex flex-col items-center">
+                  <div className="absolute w-[2px] h-full bg-slate-800 rounded-full top-0" />
+                  
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="100" 
+                    value={sliderValue}
+                    onChange={(e) => setSliderValue(parseInt(e.target.value))}
+                    onMouseUp={handleOrbRelease}
+                    onTouchEnd={handleOrbRelease}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-grab active:cursor-grabbing z-20"
+                    style={{ writingMode: 'vertical-rl' } as any} // Makes the range slider vertical natively in some browsers, but we map visual
+                  />
+
+                  {/* Visual Orb */}
+                  <motion.div 
+                    animate={{ 
+                      y: -((sliderValue - 50) * 1.5), // Maps 0-100 to vertical movement
+                      scale: 1 + (Math.abs(sliderValue - 50) / 100) * 0.2,
+                    }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    className={`nav-orb relative z-10 w-24 h-24 rounded-full bg-gradient-to-tr ${getOrbColor()} shadow-2xl flex items-center justify-center`}
+                    style={{ 
+                      boxShadow: `0 0 ${getBlurIntensity()}px ${getBlurIntensity() / 2}px rgba(99, 102, 241, 0.4)`
+                    }}
+                  >
+                    <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm border border-white/40 flex items-center justify-center">
+                       <Zap className="w-6 h-6 text-white" />
+                    </div>
+                  </motion.div>
+                </div>
+
+                <p className="text-xs text-slate-500 font-medium uppercase tracking-widest mt-8">Drag to answer</p>
               </motion.div>
             )}
 
-            {listeningState === 'listening' && (
-              <motion.div key="listening" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }}>
-                <p className="text-2xl font-light text-white leading-tight">I'm listening.<br/>How are you feeling right now?</p>
-                <p className="text-xs text-slate-400 mt-4 tracking-widest uppercase">Just speak naturally</p>
+            {/* STATE 2: Processing */}
+            {interactionState === 'processing' && (
+              <motion.div key="processing" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center">
+                <motion.div 
+                  animate={{ rotate: 360, scale: [1, 1.2, 1] }} 
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  className={`w-24 h-24 rounded-full bg-gradient-to-tr ${getOrbColor()} blur-xl opacity-60 absolute`}
+                />
+                <Brain className="w-10 h-10 text-white relative z-10 animate-pulse" />
+                <p className="mt-6 text-sm font-medium text-slate-300 tracking-wide uppercase">Connecting patterns...</p>
               </motion.div>
             )}
 
-            {listeningState === 'analyzing' && (
-              <motion.div key="analyzing" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
-                <Brain className="w-12 h-12 text-indigo-300 mx-auto mb-4 animate-pulse" />
-                <p className="text-xl font-light text-indigo-100">Analyzing focal patterns...</p>
-              </motion.div>
-            )}
-
-            {listeningState === 'insight' && (
-              <motion.div 
-                key="insight" 
-                initial={{ opacity: 0, y: 20 }} 
-                animate={{ opacity: 1, y: 0 }} 
-                className="w-full bg-slate-900/40 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem] shadow-2xl"
-              >
-                <Sparkles className="w-8 h-8 text-amber-300 mb-6 mx-auto" />
-                <p className="text-xl font-medium text-white leading-relaxed mb-8">
+            {/* STATE 3: Reward Output */}
+            {interactionState === 'reward' && (
+              <motion.div key="reward" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center w-full px-4">
+                <div className={`w-16 h-16 rounded-full bg-gradient-to-tr ${getOrbColor()} flex items-center justify-center mb-6 shadow-xl`}>
+                  <Sparkles className="w-8 h-8 text-white" />
+                </div>
+                <p className="text-xl font-medium text-white leading-relaxed mb-8 italic">
                   "{insightText}"
                 </p>
-                <div className="flex flex-col gap-3">
-                  <button 
-                    onClick={() => setLocation('/activities')}
-                    className="w-full py-4 rounded-2xl bg-white text-slate-950 font-bold text-sm tracking-wide hover:scale-[1.02] transition-transform"
-                  >
-                    Start Breathing Exercise
-                  </button>
-                  <button 
-                    onClick={() => setListeningState('listening')}
-                    className="w-full py-4 rounded-2xl bg-slate-800/50 text-slate-300 font-bold text-sm tracking-wide hover:bg-slate-800 transition-colors"
-                  >
-                    Keep Talking
-                  </button>
-                </div>
+                <button className="w-full max-w-[200px] py-4 rounded-full bg-white text-slate-950 font-black text-sm tracking-wide hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/10 flex items-center justify-center gap-2">
+                  <Wind className="w-4 h-4" /> Start Exercise
+                </button>
               </motion.div>
             )}
+
           </AnimatePresence>
         </div>
 
-        {/* Floating Context Pill (replaces old clunky cards) */}
-        {recentAssessment && listeningState !== 'insight' && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="absolute bottom-24 bg-slate-900/60 backdrop-blur-md border border-slate-700/50 px-5 py-3 rounded-full flex items-center gap-3 cursor-pointer hover:bg-slate-800/80 transition-colors" onClick={() => setLocation('/assessment')}>
-            <Heart className="w-4 h-4 text-rose-400" />
-            <span className="text-xs font-medium text-slate-300">Last check-in: {recentAssessment.severity.replace('_', ' ')}</span>
-          </motion.div>
+
+        {/* ── SECONDARY EXPLORATION (Scrollable) ── */}
+        <div className="pt-4 grid grid-cols-2 gap-4">
+          <Link href="/activities">
+            <div className="bg-slate-900/50 backdrop-blur-sm border border-slate-800/80 p-5 rounded-[2rem] hover:bg-slate-800/80 transition-colors cursor-pointer group flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-lg">
+                <Activity className="w-5 h-5 text-emerald-400" />
+              </div>
+              <h4 className="text-sm font-bold text-white leading-tight">Explore<br/>Activities</h4>
+            </div>
+          </Link>
+          <Link href="/treatment-plan">
+             <div className="bg-slate-900/50 backdrop-blur-sm border border-slate-800/80 p-5 rounded-[2rem] hover:bg-slate-800/80 transition-colors cursor-pointer group flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-lg">
+                <Compass className="w-5 h-5 text-indigo-400" />
+              </div>
+              <h4 className="text-sm font-bold text-white leading-tight">My<br/>Journey</h4>
+            </div>
+          </Link>
+        </div>
+
+        {recentAssessment && (
+          <div className="bg-slate-900/40 border border-rose-500/10 p-5 rounded-[2rem] flex items-center justify-between cursor-pointer hover:bg-slate-900/60 transition-colors" onClick={() => setLocation('/assessment')}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center shrink-0">
+                <Heart className="w-4 h-4 text-rose-400" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Last Assessment</p>
+                <p className="text-sm font-medium text-slate-300 mt-0.5 capitalize">{recentAssessment.severity.replace('_', ' ')} Status</p>
+              </div>
+            </div>
+             <ArrowRight className="w-4 h-4 text-slate-600" />
+          </div>
         )}
+
       </div>
+      <FeedbackModal open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </div>
   );
 }
