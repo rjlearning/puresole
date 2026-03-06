@@ -205,6 +205,26 @@ export default function VoiceJournal() {
     audio.onended = () => setPlayingId(null);
   };
 
+  const handleDeleteEntry = async (id: string) => {
+    try {
+      const response = await fetch(`/api/voice-entries/${id}`, {
+        method: "DELETE",
+        credentials: "include"
+      });
+      if (!response.ok) throw new Error("Failed to delete entry");
+      queryClient.invalidateQueries({ queryKey: ["/api/voice-entries"] });
+      toast({ title: "Voice entry deleted" });
+
+      // If the deleted entry is currently captured in session snapshot, clear it
+      if (sessionSnapshot?.savedEntry?.id === id) {
+        setSessionSnapshot(null);
+      }
+    } catch (err) {
+      console.error("Error deleting entry:", err);
+      toast({ title: "Error deleting entry", variant: "destructive" });
+    }
+  };
+
   if (isSaving) {
     return (
       <div className="min-h-screen aurora-bg flex items-center justify-center">
@@ -375,6 +395,7 @@ export default function VoiceJournal() {
               entries={recentEntries}
               playingId={playingId}
               onPlayPause={handlePlayPause}
+              onDelete={handleDeleteEntry}
             />
           )}
         </div>

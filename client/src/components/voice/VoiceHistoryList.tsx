@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Play, Pause, Clock, Calendar, CheckCircle2 } from 'lucide-react';
+import { Play, Pause, Clock, Calendar, CheckCircle2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export interface VoiceEntry {
@@ -22,6 +22,7 @@ interface VoiceHistoryListProps {
     entries: VoiceEntry[];
     playingId: string | null;
     onPlayPause: (entry: VoiceEntry) => void;
+    onDelete?: (id: string) => void;
 }
 
 const formatDuration = (seconds: number) => {
@@ -49,7 +50,7 @@ const formatTime = (dateString?: string) => {
     });
 };
 
-export function VoiceHistoryList({ entries, playingId, onPlayPause }: VoiceHistoryListProps) {
+export function VoiceHistoryList({ entries, playingId, onPlayPause, onDelete }: VoiceHistoryListProps) {
     if (entries.length === 0) {
         return (
             <div className="text-center py-12 bg-slate-900/40 rounded-[2rem] border border-slate-800">
@@ -125,6 +126,23 @@ export function VoiceHistoryList({ entries, playingId, onPlayPause }: VoiceHisto
                         <div className="sm:hidden text-right">
                             <span className="text-xs font-mono font-bold text-slate-400">{formatDuration(entry.duration)}</span>
                         </div>
+
+                        {/* Delete Button */}
+                        {onDelete && (
+                            <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (confirm('Delete this voice recording?')) {
+                                        onDelete(entry.id);
+                                    }
+                                }}
+                                className="w-10 h-10 rounded-full shrink-0 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors ml-2"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </Button>
+                        )}
                     </div>
 
                     {/* Progress Bar (Visible when playing) */}
