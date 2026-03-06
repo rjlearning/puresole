@@ -32,7 +32,7 @@ export default function OneTapDashboard() {
   const handleOrbRelease = () => {
     if (interactionState !== 'prompt') return;
     setInteractionState('processing');
-    
+
     // Simulate AI processing the micro-interaction and generating a reward
     setTimeout(() => {
       if (sliderValue > 70) {
@@ -59,7 +59,7 @@ export default function OneTapDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white pb-24 relative overflow-x-hidden" data-testid="onetap-dashboard">
-      
+
       {/* ── Fixed Header ── */}
       <div className="bg-slate-950/80 backdrop-blur-md border-b border-slate-800/60 px-4 py-4 sticky top-0 z-50">
         <div className="max-w-xl mx-auto flex items-center justify-between">
@@ -80,19 +80,19 @@ export default function OneTapDashboard() {
       </div>
 
       <div className="max-w-xl mx-auto px-4 pt-8 space-y-8">
-        
+
         {/* ── THE DAILY ORBIT (Micro-Interaction) ── */}
         <div className="bg-slate-900 border border-slate-800 p-8 rounded-[3rem] relative overflow-hidden flex flex-col items-center justify-center min-h-[400px]">
-          
+
           <AnimatePresence mode="wait">
-            
+
             {/* STATE 1: Prompt */}
             {interactionState === 'prompt' && (
               <motion.div key="prompt" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, y: -20 }} className="flex flex-col items-center w-full">
                 <span className="text-[10px] uppercase font-black tracking-[0.2em] text-indigo-400 mb-6 flex items-center gap-2">
                   <Sparkles className="w-3 h-3" /> Daily Pulse
                 </span>
-                
+
                 <h2 className="text-2xl font-light text-center leading-tight mb-12 px-4 shadow-sm">
                   How is your <span className="font-semibold text-white">energy level</span> feeling right now?
                 </h2>
@@ -100,11 +100,11 @@ export default function OneTapDashboard() {
                 {/* Interactive Slider Orb Area */}
                 <div className="relative w-full px-8 py-10 flex flex-col items-center">
                   <div className="absolute w-[2px] h-full bg-slate-800 rounded-full top-0" />
-                  
-                  <input 
-                    type="range" 
-                    min="0" 
-                    max="100" 
+
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
                     value={sliderValue}
                     onChange={(e) => setSliderValue(parseInt(e.target.value))}
                     onMouseUp={handleOrbRelease}
@@ -114,19 +114,19 @@ export default function OneTapDashboard() {
                   />
 
                   {/* Visual Orb */}
-                  <motion.div 
-                    animate={{ 
+                  <motion.div
+                    animate={{
                       y: -((sliderValue - 50) * 1.5), // Maps 0-100 to vertical movement
                       scale: 1 + (Math.abs(sliderValue - 50) / 100) * 0.2,
                     }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     className={`nav-orb relative z-10 w-24 h-24 rounded-full bg-gradient-to-tr ${getOrbColor()} shadow-2xl flex items-center justify-center`}
-                    style={{ 
+                    style={{
                       boxShadow: `0 0 ${getBlurIntensity()}px ${getBlurIntensity() / 2}px rgba(99, 102, 241, 0.4)`
                     }}
                   >
                     <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm border border-white/40 flex items-center justify-center">
-                       <Zap className="w-6 h-6 text-white" />
+                      <Zap className="w-6 h-6 text-white" />
                     </div>
                   </motion.div>
                 </div>
@@ -138,8 +138,8 @@ export default function OneTapDashboard() {
             {/* STATE 2: Processing */}
             {interactionState === 'processing' && (
               <motion.div key="processing" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center">
-                <motion.div 
-                  animate={{ rotate: 360, scale: [1, 1.2, 1] }} 
+                <motion.div
+                  animate={{ rotate: 360, scale: [1, 1.2, 1] }}
                   transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
                   className={`w-24 h-24 rounded-full bg-gradient-to-tr ${getOrbColor()} blur-xl opacity-60 absolute`}
                 />
@@ -157,7 +157,7 @@ export default function OneTapDashboard() {
                 <p className="text-xl font-medium text-white leading-relaxed mb-8 italic">
                   "{insightText}"
                 </p>
-                <button className="w-full max-w-[200px] py-4 rounded-full bg-white text-slate-950 font-black text-sm tracking-wide hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/10 flex items-center justify-center gap-2">
+                <button onClick={() => setLocation('/activities')} className="w-full max-w-[200px] py-4 rounded-full bg-white text-slate-950 font-black text-sm tracking-wide hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/10 flex items-center justify-center gap-2">
                   <Wind className="w-4 h-4" /> Start Exercise
                 </button>
               </motion.div>
@@ -166,26 +166,6 @@ export default function OneTapDashboard() {
           </AnimatePresence>
         </div>
 
-
-        {/* ── SECONDARY EXPLORATION (Scrollable) ── */}
-        <div className="pt-4 grid grid-cols-2 gap-4">
-          <Link href="/activities">
-            <div className="bg-slate-900/50 backdrop-blur-sm border border-slate-800/80 p-5 rounded-[2rem] hover:bg-slate-800/80 transition-colors cursor-pointer group flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-lg">
-                <Activity className="w-5 h-5 text-emerald-400" />
-              </div>
-              <h4 className="text-sm font-bold text-white leading-tight">Explore<br/>Activities</h4>
-            </div>
-          </Link>
-          <Link href="/treatment-plan">
-             <div className="bg-slate-900/50 backdrop-blur-sm border border-slate-800/80 p-5 rounded-[2rem] hover:bg-slate-800/80 transition-colors cursor-pointer group flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-lg">
-                <Compass className="w-5 h-5 text-indigo-400" />
-              </div>
-              <h4 className="text-sm font-bold text-white leading-tight">My<br/>Journey</h4>
-            </div>
-          </Link>
-        </div>
 
         {recentAssessment && (
           <div className="bg-slate-900/40 border border-rose-500/10 p-5 rounded-[2rem] flex items-center justify-between cursor-pointer hover:bg-slate-900/60 transition-colors" onClick={() => setLocation('/assessment')}>
@@ -198,7 +178,7 @@ export default function OneTapDashboard() {
                 <p className="text-sm font-medium text-slate-300 mt-0.5 capitalize">{recentAssessment.severity.replace('_', ' ')} Status</p>
               </div>
             </div>
-             <ArrowRight className="w-4 h-4 text-slate-600" />
+            <ArrowRight className="w-4 h-4 text-slate-600" />
           </div>
         )}
 
