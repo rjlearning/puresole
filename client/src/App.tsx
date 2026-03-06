@@ -120,20 +120,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// Phase-aware dashboard: redirects to /phase-select if no gender/phase chosen
-function PhaseDashboard() {
-  const { gender, phase, hasChosen } = usePhase();
-  const [, setLocation] = useLocation();
-
-  useEffect(() => {
-    if (!hasChosen) setLocation('/phase-select');
-  }, [hasChosen, setLocation]);
-
-  if (!hasChosen) return null;
-  if (gender === 'male') return <UnifiedDashboard />;
-  if (phase === 'flowering') return <FloweringDashboard />;
-  return <UnifiedDashboard />;
-}
+// Phase-aware dashboard logic removed - all users now go to unified Feed dashboard
 
 // Auth route wrapper - redirects to /dashboard if already logged in
 function AuthRoute({ children }: { children: React.ReactNode }) {
@@ -231,7 +218,7 @@ function Router() {
               <ProtectedRoute><Support /></ProtectedRoute>
             </Route>
             <Route path="/dashboard">
-              <ProtectedRoute><PhaseDashboard /></ProtectedRoute>
+              <ProtectedRoute><Dashboard /></ProtectedRoute>
             </Route>
             <Route path="/activities">
               <ProtectedRoute><ActivitiesPage /></ProtectedRoute>
