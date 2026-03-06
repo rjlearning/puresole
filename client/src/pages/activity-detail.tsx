@@ -190,10 +190,10 @@ export default function ActivityDetail() {
         description: `You earned ${data.points_earned || 10} points!`,
       });
 
-      // Brief delay to show success, then redirect
+      // Brief delay to show success, then redirect to dashboard to close the loop
       setTimeout(() => {
-        setLocation('/activities');
-      }, 1500);
+        setLocation('/dashboard');
+      }, 1200);
 
     } catch (error) {
       console.error('Failed to complete activity:', error);
@@ -592,7 +592,7 @@ export default function ActivityDetail() {
                 {submitting ? (
                   <>Saving...</>
                 ) : (
-                  <>Save & Earn Points</>
+                  <>✅ Save &amp; Return Home</>
                 )}
               </Button>
             </DialogFooter>

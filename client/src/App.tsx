@@ -78,6 +78,7 @@ const NoticePrivacyPracticesPage = lazy(() => import('./pages/legal/notice-of-pr
 const ContactUsPage = lazy(() => import('./pages/contact'));
 
 import Footer from './components/layout/footer';
+import { BottomNav } from './components/BottomNav';
 
 import './styles/airtable.css';
 
@@ -152,6 +153,7 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [location] = useLocation();
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -163,10 +165,11 @@ function Router() {
   return (
     <>
       <ScrollToTop />
-      {isAuthenticated && <SmartBackButton />}
-      {isAuthenticated && <MainNavigation />}
-      {isAuthenticated && <SoulCoreHub />}
-      {isAuthenticated && <OnboardingManager />}
+      {isAuthenticated && location !== '/dashboard' && <SmartBackButton />}
+      {isAuthenticated && location !== '/dashboard' && <MainNavigation />}
+      {isAuthenticated && location !== '/dashboard' && <SoulCoreHub />}
+      {isAuthenticated && location !== '/dashboard' && <OnboardingManager />}
+      {isAuthenticated && <BottomNav />}
       <div className={`min-h-screen mesh-bg ${isAuthenticated ? "lg:ml-80 lg:pl-8 pb-28 lg:pb-0" : ""}`}>
         <Suspense fallback={
           <div className="min-h-screen flex items-center justify-center bg-slate-50/50">
