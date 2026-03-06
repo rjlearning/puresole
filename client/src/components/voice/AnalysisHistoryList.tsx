@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Trash2 } from 'lucide-react';
 
 interface EmotionScores {
   [emotion: string]: number;
@@ -196,6 +196,27 @@ export default function AnalysisHistoryList({ analyses, isDark }: AnalysisHistor
                     </p>
                   </div>
                 )}
+
+                {/* Delete Button */}
+                <div className="mt-8 pt-6 border-t border-white/5 flex justify-end">
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (confirm('Are you sure you want to delete this voice analysis?')) {
+                        try {
+                          await fetch(`/api/voice-entries/${analysis.id}`, { method: 'DELETE' });
+                          window.location.reload();
+                        } catch (err) {
+                          console.error(err);
+                        }
+                      }
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors text-xs font-bold uppercase tracking-widest"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete Entry
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}

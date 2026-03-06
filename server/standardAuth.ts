@@ -1,6 +1,8 @@
 import { Express } from "express";
 import session from "express-session";
 import passport from "passport";
+import connectPgSimple from "connect-pg-simple";
+import { pool } from "./db";
 
 export function setupSession(app: Express) {
   const sessionSecret = process.env.SESSION_SECRET;
@@ -14,8 +16,15 @@ export function setupSession(app: Express) {
   const isProduction = process.env.NODE_ENV === "production";
   const isLocalDevelopment = !isProduction || process.env.DOCKER === "true";
 
+  const PgSession = connectPgSimple(session);
+
   app.use(
     session({
+      store: new PgSession({
+        pool,
+        tableName: 'sessions',
+        createTableIfMissing: false
+      }),
       secret: sessionSecret,
       resave: false,
       saveUninitialized: false,

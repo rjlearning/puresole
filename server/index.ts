@@ -5,6 +5,7 @@ import { registerRoutes } from "./routes";
 import activitiesRoutes from './routes/activities';
 import { registerVoiceRoutes } from "./voice-routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { runVoiceCleanupJob } from "./services/voiceCleanup";
 import helmet from "helmet";
 import cors from "cors";
 import plansRouter from './routes/plans';
@@ -120,6 +121,10 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Start background jobs
+  runVoiceCleanupJob().catch(console.error);
+  setInterval(() => runVoiceCleanupJob().catch(console.error), 24 * 60 * 60 * 1000);
+
   // IMPORTANT: registerRoutes sets up session & passport middleware FIRST
   const server = await registerRoutes(app);
 

@@ -157,7 +157,8 @@ function TrendBadge({ trend }: { trend: 'improving' | 'stable' | 'declining' }) 
 
 // ─── Wellness Gauge ───────────────────────────────────────────────────────────
 function WellnessGauge({ score }: { score: number }) {
-  const pct = Math.min(100, Math.max(0, Math.round(isFinite(score) ? score : 0)));
+  const validScore = typeof score === 'number' && !isNaN(score) && isFinite(score) ? score : 0;
+  const pct = Math.min(100, Math.max(0, Math.round(validScore)));
   const color = pct >= 70 ? '#10b981' : pct >= 45 ? '#f59e0b' : '#f43f5e';
   const label = pct >= 70 ? 'Thriving' : pct >= 45 ? 'Moderate' : 'Low';
 
