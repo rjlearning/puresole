@@ -21,6 +21,8 @@ const Landing = lazy(() => import("@/pages/landing"));
 const Home = lazy(() => import("@/pages/home"));
 const Assessment = lazy(() => import("@/pages/assessment"));
 const Dashboard = lazy(() => import("@/pages/dashboard"));
+const OnboardingAssessment = lazy(() => import("@/pages/OnboardingAssessment"));
+const VoiceAnalyzer = lazy(() => import("@/pages/VoiceAnalyzer"));
 const TreatmentPlan = lazy(() => import("@/pages/treatment-plan"));
 const Admin = lazy(() => import("@/pages/admin"));
 const Subscribe = lazy(() => import("@/pages/subscribe"));
@@ -193,6 +195,9 @@ function Router() {
             <Route path="/voice-journal">
               <ProtectedRoute><VoiceJournal /></ProtectedRoute>
             </Route>
+            <Route path="/voice-analyzer">
+              <ProtectedRoute><VoiceAnalyzer /></ProtectedRoute>
+            </Route>
             <Route path="/assessment">
               <ProtectedRoute><Assessment /></ProtectedRoute>
             </Route>
@@ -216,6 +221,9 @@ function Router() {
             </Route>
             <Route path="/support">
               <ProtectedRoute><Support /></ProtectedRoute>
+            </Route>
+            <Route path="/onboarding">
+              <ProtectedRoute><OnboardingAssessment /></ProtectedRoute>
             </Route>
             <Route path="/dashboard">
               <ProtectedRoute><Dashboard /></ProtectedRoute>

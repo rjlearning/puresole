@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation, Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Brain, Wind, Heart, Activity, Compass, ArrowRight, MessageSquare, Zap } from "lucide-react";
+import { Sparkles, Brain, Wind, Heart, Activity, Compass, ArrowRight, MessageSquare, Zap, Mic } from "lucide-react";
 import { FeedbackModal } from "@/components/FeedbackModal";
 
 export default function OneTapDashboard() {
@@ -14,14 +14,16 @@ export default function OneTapDashboard() {
   const [interactionState, setInteractionState] = useState<'prompt' | 'processing' | 'reward'>('prompt');
   const [insightText, setInsightText] = useState("");
 
-  const { data: assessments = [] } = useQuery<any[]>({ queryKey: ["/api/assessments"], retry: false });
+  const { data: assessments = [], isLoading: assessLoading } = useQuery<any[]>({ queryKey: ["/api/assessments"], retry: false });
   const recentAssessment = assessments[0];
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       setTimeout(() => { window.location.href = "/api/login"; }, 500);
+    } else if (isAuthenticated && !assessLoading && assessments.length === 0) {
+      setLocation('/onboarding');
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, isLoading, assessLoading, assessments.length, setLocation]);
 
   if (isLoading || !isAuthenticated) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950">
@@ -76,6 +78,36 @@ export default function OneTapDashboard() {
           <button onClick={() => setFeedbackOpen(true)} className="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center hover:bg-slate-800 transition-all border border-slate-700">
             <MessageSquare className="w-4 h-4 text-slate-400" />
           </button>
+        </div>
+        {/* ── BONUS TOOL: VOICE ANALYZER ── */}
+        <div className="pt-2">
+          <Link href="/voice-analyzer">
+            <div className="bg-gradient-to-r from-slate-900 to-indigo-900/40 border border-slate-800/80 p-5 rounded-[2rem] hover:border-indigo-500/50 transition-colors cursor-pointer group flex items-center justify-between overflow-hidden relative">
+
+              {/* Audio wave aesthetic */}
+              <div className="absolute right-0 top-0 bottom-0 w-32 opacity-20 group-hover:opacity-40 transition-opacity">
+                <div className="w-full h-full flex items-center gap-1">
+                  {[1, 2, 3, 4, 5, 6].map(i => (
+                    <div key={i} className="w-1 bg-indigo-400 rounded-full" style={{ height: `${20 + Math.random() * 60}%` }} />
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 relative z-10">
+                <div className="w-12 h-12 rounded-full bg-slate-800/80 backdrop-blur-md flex items-center justify-center border border-indigo-500/20 group-hover:scale-110 transition-transform shadow-lg shadow-indigo-500/10">
+                  <Mic className="w-5 h-5 text-indigo-400" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white mb-0.5">Vocal Biomarkers</h4>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Bonus Assessment</p>
+                </div>
+              </div>
+
+              <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center relative z-10 group-hover:bg-white text-slate-500 group-hover:text-slate-900 transition-colors">
+                <ArrowRight className="w-4 h-4" />
+              </div>
+            </div>
+          </Link>
         </div>
       </div>
 
@@ -157,7 +189,7 @@ export default function OneTapDashboard() {
                 <p className="text-xl font-medium text-white leading-relaxed mb-8 italic">
                   "{insightText}"
                 </p>
-                <button onClick={() => setLocation('/activities')} className="w-full max-w-[200px] py-4 rounded-full bg-white text-slate-950 font-black text-sm tracking-wide hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/10 flex items-center justify-center gap-2">
+                <button onClick={() => setLocation('/activities?recommended=true')} className="w-full max-w-[200px] py-4 rounded-full bg-white text-slate-950 font-black text-sm tracking-wide hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/10 flex items-center justify-center gap-2">
                   <Wind className="w-4 h-4" /> Start Exercise
                 </button>
               </motion.div>
