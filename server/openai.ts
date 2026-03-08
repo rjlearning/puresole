@@ -12,6 +12,8 @@ interface AssessmentAnalysis {
   treatmentPriorities: string[];
   crisisRisk: boolean;
   summary: string;
+  somaticInsights?: string[]; // New: focus on physical-emotional connection
+  clinicalConsiderations?: string[]; // New: focus on clinical history (asthma, etc.)
 }
 
 interface TreatmentPlan {
@@ -41,7 +43,13 @@ interface Activity {
 export async function analyzeAssessment(
   assessmentType: string,
   responses: Record<string, any>,
-  score: number
+  score: number,
+  userContext?: {
+    gender?: string,
+    age?: number,
+    clinicalHistory?: string[],
+    painPoints?: string[]
+  }
 ): Promise<AssessmentAnalysis> {
   try {
     const prompt = `
@@ -58,10 +66,19 @@ Provide your analysis in JSON format with the following structure:
   "recommendations": ["list of evidence-based recommendations"],
   "treatmentPriorities": ["list of treatment priorities"],
   "crisisRisk": boolean,
-  "summary": "comprehensive summary of the assessment"
+  "summary": "comprehensive summary of the assessment",
+  "somaticInsights": ["insights connecting physical pain points to emotional states"],
+  "clinicalConsiderations": ["how clinical history like asthma or insomnia impacts this assessment"]
 }
 
+${userContext ? `User Context:
+- Gender: ${userContext.gender}
+- Age: ${userContext.age}
+- Clinical History: ${userContext.clinicalHistory?.join(', ')}
+- Physical Pain Points: ${userContext.painPoints?.join(', ')}` : ''}
+
 Base your analysis on clinical guidelines and evidence-based practices. If the assessment indicates any crisis risk (suicide ideation, self-harm, etc.), set crisisRisk to true.
+Pay special attention to the Vagus Nerve connection if anxiety is high and physical tension (neck/back) is present.
 `;
 
     const response = await openai.chat.completions.create({
@@ -89,7 +106,12 @@ Base your analysis on clinical guidelines and evidence-based practices. If the a
 export async function generateTreatmentPlan(
   assessmentAnalysis: AssessmentAnalysis,
   assessmentType: string,
-  userGoals?: string[]
+  userGoals?: string[],
+  userContext?: {
+    dietaryPreferences?: string[],
+    allergies?: string[],
+    primaryMoodStruggle?: string
+  }
 ): Promise<TreatmentPlan> {
   try {
     const prompt = `
@@ -131,6 +153,13 @@ The treatment plan should:
 4. Include daily activities and weekly lessons
 5. Be tailored to the severity level and specific issues identified
 6. Include crisis management strategies if crisisRisk is true
+7. INTEGRATE BIO-SYNC NUTRITION: If dietary preferences/allergies are provided, suggest mood-supportive neuro-nutrition (cortisol management, gut-anxiety connection).
+8. INTEGRATE SOMATIC PRACTICES: If physical tension is noted, include specific somatic visualizations or Vagus Nerve stimulation exercises.
+
+${userContext ? `User Nutrition Context:
+- Dietary Preferences: ${userContext.dietaryPreferences?.join(', ')}
+- Allergies: ${userContext.allergies?.join(', ')}
+- Primary Mood Struggle: ${userContext.primaryMoodStruggle}` : ''}
 `;
 
     const response = await openai.chat.completions.create({

@@ -41,6 +41,9 @@ import {
   type InsertUsageMetric,
   type SupportTicket,
   type InsertSupportTicket,
+  resilienceTrends,
+  type ResilienceTrend,
+  type InsertResilienceTrend,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, lte } from "drizzle-orm";
@@ -127,6 +130,11 @@ export interface IStorage {
   getWellnessActivity(id: string): Promise<any | undefined>;
   createActivityCompletion(completion: any): Promise<any>;
   getActivityCompletionsByUser(userId: string, startDate?: Date, endDate?: Date): Promise<any[]>;
+
+  // Resilience trend operations
+  createResilienceTrend(trend: InsertResilienceTrend): Promise<ResilienceTrend>;
+  getResilienceTrendsByUser(userId: string): Promise<ResilienceTrend[]>;
+  getResilienceTrendsByCoach(coachId: string): Promise<ResilienceTrend[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -671,6 +679,31 @@ export class DatabaseStorage implements IStorage {
       .from(userActivityCompletions)
       .where(eq(userActivityCompletions.userId, userId))
       .orderBy(desc(userActivityCompletions.completedAt));
+  }
+
+  // Resilience trend operations
+  async createResilienceTrend(trend: InsertResilienceTrend): Promise<ResilienceTrend> {
+    const [newTrend] = await db
+      .insert(resilienceTrends)
+      .values(trend)
+      .returning();
+    return newTrend;
+  }
+
+  async getResilienceTrendsByUser(userId: string): Promise<ResilienceTrend[]> {
+    return await db
+      .select()
+      .from(resilienceTrends)
+      .where(eq(resilienceTrends.userId, userId))
+      .orderBy(desc(resilienceTrends.recordedAt));
+  }
+
+  async getResilienceTrendsByCoach(coachId: string): Promise<ResilienceTrend[]> {
+    return await db
+      .select()
+      .from(resilienceTrends)
+      .where(eq(resilienceTrends.coachId, coachId))
+      .orderBy(desc(resilienceTrends.recordedAt));
   }
 }
 

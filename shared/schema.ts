@@ -55,6 +55,22 @@ export const users = pgTable("users", {
   age: integer("age"),
   activityLevel: varchar("activity_level", { length: 50 }), // e.g., 'sedentary', 'light', 'moderate', 'active', 'very_active'
   fitnessGoal: varchar("fitness_goal", { length: 50 }), // e.g., 'cut', 'maintain', 'bulk', 'recomp'
+
+  // PULSE Expert Fields: Bio-sync & Clinical History
+  gender: varchar("gender", { length: 20 }),
+  birthYear: integer("birth_year"),
+  physicalPainPoints: jsonb("physical_pain_points").$type<string[]>().default(sql`'[]'::jsonb`), // e.g., ['neck_pain', 'back_tension', 'headaches']
+  clinicalHistory: jsonb("clinical_history").$type<string[]>().default(sql`'[]'::jsonb`), // e.g., ['anxiety', 'depression', 'insomnia', 'asthma']
+
+  // PULSE Expert Fields: Neuro-Nutrition
+  dietaryPreferences: jsonb("dietary_preferences").$type<string[]>().default(sql`'[]'::jsonb`),
+  allergies: jsonb("allergies").$type<string[]>().default(sql`'[]'::jsonb`),
+  primaryMoodStruggle: varchar("primary_mood_struggle", { length: 100 }),
+
+  // PULSE Expert Fields: Level 4 Coaching
+  assignedCoachId: varchar("assigned_coach_id"), // Matches Coach Sarah in screenshots
+  growthLevel: integer("growth_level").default(1), // Level 1-4
+
   freeAccessUntil: timestamp("free_access_until"), // Admin-granted complimentary access expiry
   freeAccessNote: text("free_access_note"),         // Admin note for the exception
   createdAt: timestamp("created_at").defaultNow(),
@@ -369,6 +385,17 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   wearableDataPoints: many(wearableDataPoints),
   mealPlans: many(mealPlans),
   supplementProtocols: many(supplementProtocols),
+  coach: one(users, {
+    fields: [users.assignedCoachId],
+    references: [users.id],
+    relationName: 'user_coach'
+  }),
+  coachedUsers: many(users, {
+    relationName: 'user_coach'
+  }),
+  resilienceTrends: many(resilienceTrends, {
+    relationName: 'user_trends'
+  }),
 }));
 
 export const assessmentsRelations = relations(assessments, ({ one, many }) => ({
@@ -1631,3 +1658,34 @@ export const insertUserFeedbackSchema = createInsertSchema(userFeedbacks).omit({
 
 export type UserFeedback = typeof userFeedbacks.$inferSelect;
 export type InsertUserFeedback = z.infer<typeof insertUserFeedbackSchema>;
+// PULSE Resilience Trends (Level 4 Professional Care)
+export const resilienceTrends = pgTable("resilience_trends", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  coachId: varchar("coach_id").references(() => users.id),
+
+  trendData: jsonb("trend_data").notNull(), // Weekly scores and data points
+  summary: text("summary").notNull(), // Pro Transformation Report summary
+  nextMilestones: jsonb("next_milestones").$type<string[]>().default(sql`'[]'::jsonb`),
+
+  recordedAt: timestamp("recorded_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Resilience Trends Relations
+export const resilienceTrendsRelations = relations(resilienceTrends, ({ one }) => ({
+  user: one(users, {
+    fields: [resilienceTrends.userId],
+    references: [users.id],
+    relationName: 'user_trends'
+  }),
+  coach: one(users, {
+    fields: [resilienceTrends.coachId],
+    references: [users.id],
+    relationName: 'coach_trends'
+  }),
+}));
+
+export type ResilienceTrend = typeof resilienceTrends.$inferSelect;
+export type InsertResilienceTrend = typeof resilienceTrends.$inferInsert;
+export const insertResilienceTrendSchema = createInsertSchema(resilienceTrends).omit({ id: true, createdAt: true });

@@ -18,6 +18,15 @@ export function sanitizeUser(user: User | undefined): Partial<User> | null {
     lastName: user.lastName,
     profileImageUrl: user.profileImageUrl,
     isAdmin: user.isAdmin,
+    gender: user.gender,
+    birthYear: user.birthYear,
+    physicalPainPoints: user.physicalPainPoints,
+    clinicalHistory: user.clinicalHistory,
+    dietaryPreferences: user.dietaryPreferences,
+    allergies: user.allergies,
+    primaryMoodStruggle: user.primaryMoodStruggle,
+    growthLevel: user.growthLevel,
+    assignedCoachId: user.assignedCoachId,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
     // EXPLICITLY EXCLUDED (for security):
@@ -187,6 +196,7 @@ import advancedAnalyticsRouter from './routes/advancedAnalytics';
 import aiCompanionRouter from './routes/aiCompanion';
 import postpartumRouter from './routes/postpartum';
 import patternsRouter from './routes/patterns';
+import coachingRouter from './routes/coaching';
 
 // Initialize Stripe
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -240,6 +250,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // AI Companion Routes
   app.use('/api', aiCompanionRouter);
+
+  // Coaching Routes
+  app.use('/api/coaching', coachingRouter);
 
   // Postpartum Core Engine Routes
   app.use('/api/postpartum', postpartumRouter);
@@ -339,10 +352,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Analyze assessment with AI and enrich the record
       try {
+        const user = await storage.getUser(userId);
+
         const analysis = await analyzeAssessment(
           assessment.type,
           assessment.responses as Record<string, any>,
-          assessment.score as number
+          assessment.score as number,
+          user ? {
+            gender: user.gender as string,
+            age: user.age as number,
+            clinicalHistory: user.clinicalHistory as string[],
+            painPoints: user.physicalPainPoints as string[]
+          } : undefined
         );
 
         // Enrich assessment object (in memory only - no DB duplication)
@@ -588,10 +609,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           summary: assessment.aiAnalysis || ''
         };
 
+        const user = await storage.getUser(userId);
+
         const aiTreatmentPlan = await generateTreatmentPlan(
           assessmentAnalysis,
           assessment.type,
-          userGoals
+          userGoals,
+          user ? {
+            dietaryPreferences: user.dietaryPreferences as string[],
+            allergies: user.allergies as string[],
+            primaryMoodStruggle: user.primaryMoodStruggle as string
+          } : undefined
         );
 
         // Create treatment plan in database
