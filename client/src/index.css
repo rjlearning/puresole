@@ -59,15 +59,24 @@
   }
 
   html {
-    overscroll-behavior-y: auto;
-    overflow-x: hidden;
+    overscroll-behavior-y: none;
+    height: 100%;
+    -webkit-overflow-scrolling: touch;
   }
 
   body {
     @apply bg-background text-foreground;
-    overscroll-behavior-y: auto;
-    overflow-x: hidden;
+    overscroll-behavior-y: none;
+    height: 100%;
+    min-height: 100%;
+    -webkit-overflow-scrolling: touch;
   }
+}
+
+/* Fix iOS Scroll freeze: Apply x-hidden to the React root instead of global body */
+#root {
+  overflow-x: hidden;
+  width: 100%;
 }
 
 /* Ethereal Utilities */
@@ -125,7 +134,8 @@ h6 {
 
 .mesh-bg::before {
   content: "";
-  position: absolute;
+  position: fixed;
+  /* fixed prevents scroll repaint */
   inset: 0;
   z-index: -1;
   background:
@@ -135,7 +145,7 @@ h6 {
   filter: blur(60px);
   will-change: transform;
   transform: translateZ(0);
-  animation: mesh-drift 20s ease infinite alternate;
+  /* Removed animation: mesh-drift for production stability on mobile */
 }
 
 @keyframes mesh-drift {
