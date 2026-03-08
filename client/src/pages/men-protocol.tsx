@@ -10,6 +10,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import MeshBackground from "@/components/MeshBackground";
 import {
     Dialog,
     DialogContent,
@@ -82,12 +83,15 @@ export default function MenProtocol() {
     };
 
     return (
-        <div className="min-h-screen bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-slate-900 pb-24 text-slate-200 overflow-x-hidden relative max-w-full">
-            {/* Background elements */}
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent" />
-            <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-indigo-600/5 blur-[150px] rounded-full pointer-events-none" />
+        <div className="min-h-screen pb-24 text-slate-200 overflow-x-hidden relative max-w-full">
+            <MeshBackground variant="indigo" />
 
             <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 relative z-10">
+                <Link href="/men">
+                    <Button variant="ghost" size="sm" className="mb-8 rounded-full text-slate-400 hover:text-white hover:bg-white/5 font-black uppercase tracking-widest text-[10px]">
+                        <ChevronLeft className="w-4 h-4 mr-2" /> Back to Evolution Hub
+                    </Button>
+                </Link>
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-16 gap-8">
                     <div className="space-y-3">
                         <div className="flex items-center gap-3">

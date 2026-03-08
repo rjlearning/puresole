@@ -13,16 +13,24 @@ import {
     CheckCircle2,
     ShoppingCart,
     ListTodo,
-    Sparkles
+    Sparkles,
+    Activity,
+    ShieldCheck,
+    Target,
+    ArrowRight
 } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import MeshBackground from "@/components/MeshBackground";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function NutritionProtocol() {
     const queryClient = useQueryClient();
+    const { user } = useAuth();
     const [showGroceryList, setShowGroceryList] = useState(false);
 
-    const { data: plan, isLoading: planLoading } = useQuery<any>({
+    const { data: plan, isLoading: planLoading, isRefetching } = useQuery<any>({
         queryKey: ["/api/postpartum/meal-plan"],
         queryFn: async () => {
             const res = await fetch("/api/postpartum/meal-plan", { credentials: 'include' });
@@ -72,252 +80,249 @@ export default function NutritionProtocol() {
         }
     });
 
-    if (planLoading) return <div className="p-12 text-center text-slate-500 font-medium">Synthesizing adaptive protocol...</div>;
+    if (planLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-950">
+                <MeshBackground variant="rose" />
+                <div className="relative z-10 text-center space-y-4">
+                    <RefreshCw className="w-12 h-12 text-rose-500 animate-spin mx-auto opacity-50" />
+                    <p className="text-rose-200/50 font-black uppercase tracking-[0.3em] text-xs">Synthesizing Adaptive Protocol</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="container mx-auto p-6 font-sans max-w-5xl">
-            <div className="flex items-center gap-2 mb-8">
-                <Link href="/women/metabolic">
-                    <Button variant="ghost" size="sm" className="rounded-full text-slate-500 hover:bg-slate-100">
-                        <ChevronLeft className="w-4 h-4 mr-1" /> Back to Trends
+        <div className="min-h-screen pb-24 text-slate-200 overflow-x-hidden relative max-w-full">
+            <MeshBackground variant="rose" />
+
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 relative z-10">
+                <Link href="/women">
+                    <Button variant="ghost" size="sm" className="mb-8 rounded-full text-slate-400 hover:text-white hover:bg-white/5 font-black uppercase tracking-widest text-[10px]">
+                        <ChevronLeft className="w-4 h-4 mr-2" /> Back to Vitality Hub
                     </Button>
                 </Link>
-            </div>
 
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
-                <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                        <h1 className="text-4xl font-bold text-slate-900 font-serif">Precision Protocol</h1>
-                        {plan?.breastfeedingAdjustment && (
-                            <span className="flex items-center gap-1 bg-sky-50 text-sky-600 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider border border-sky-100">
-                                <Baby className="w-3 h-3" /> Lactation Support Active
-                            </span>
-                        )}
-                    </div>
-                    <p className="text-slate-500 text-lg">
-                        {context?.deliveryDate ? (
-                            `Day ${Math.max(1, Math.ceil((new Date().getTime() - new Date(context.deliveryDate).getTime()) / (1000 * 60 * 60 * 24)))} of your recovery journey.`
-                        ) : (
-                            `Your adaptive nutrition guide.`
-                        )}
-                    </p>
-                </div>
-
-                <div className="flex gap-3">
-                    <Button
-                        variant="ghost"
-                        className="rounded-2xl border-2 border-slate-100 text-slate-600 font-bold hover:bg-slate-50 gap-2 h-12"
-                        onClick={() => {
-                            setShowGroceryList(!showGroceryList);
-                            if (!groceryMutation.data) groceryMutation.mutate();
-                        }}
-                    >
-                        <ShoppingCart className="w-4 h-4" />
-                        {showGroceryList ? 'Hide List' : 'Grocery List'}
-                    </Button>
-                    <Button
-                        variant="outline"
-                        className="rounded-2xl border-2 border-indigo-100 text-indigo-600 font-bold hover:bg-indigo-50 gap-2 h-12"
-                        onClick={() => generateMutation.mutate()}
-                        disabled={generateMutation.isPending}
-                    >
-                        <RefreshCw className={`w-4 h-4 ${generateMutation.isPending ? 'animate-spin' : ''}`} />
-                        Regenerate Protocol
-                    </Button>
-                </div>
-            </div>
-
-            {showGroceryList && (
-                <Card className="p-8 border-none shadow-xl bg-white mb-10 overflow-hidden relative">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="p-2 bg-emerald-50 rounded-xl">
-                            <ListTodo className="w-5 h-5 text-emerald-600" />
+                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-16 gap-8">
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-rose-500/10 p-2.5 rounded-2xl border border-rose-500/20">
+                                <Sparkles className="w-6 h-6 text-rose-400" />
+                            </div>
+                            <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tight leading-none italic font-serif">Precision Protocol</h1>
                         </div>
-                        <h2 className="text-xl font-bold text-slate-800">Precision Shopping List</h2>
+                        <div className="flex items-center gap-4">
+                            <p className="text-lg text-slate-400 font-medium tracking-tight">
+                                {context?.deliveryDate ? (
+                                    `Day ${Math.max(1, Math.ceil((new Date().getTime() - new Date(context.deliveryDate).getTime()) / (1000 * 60 * 60 * 24)))} of recovery.`
+                                ) : (
+                                    `Your adaptive nutrition guide.`
+                                )}
+                            </p>
+                            {plan?.breastfeedingAdjustment && (
+                                <span className="flex items-center gap-2 bg-rose-500/10 text-rose-400 text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest border border-rose-500/20 whitespace-nowrap">
+                                    <Baby className="w-3 h-3" /> Lactation Support Active
+                                </span>
+                            )}
+                        </div>
                     </div>
 
-                    {groceryMutation.isPending ? (
-                        <div className="py-12 text-center text-slate-400 font-medium">Categorizing ingredients...</div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {groceryMutation.data?.categories?.map((cat: any) => (
-                                <div key={cat.name}>
-                                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">{cat.name}</h3>
-                                    <ul className="space-y-3">
-                                        {cat.items.map((item: string, i: number) => (
-                                            <li key={i} className="flex items-center gap-2 text-sm text-slate-600 font-medium">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                                {item}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </Card>
-            )}
+                    <div className="flex gap-4 w-full lg:w-auto">
+                        <Button
+                            variant="outline"
+                            className="flex-1 lg:flex-none h-14 px-6 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest text-xs border-white/10 transition-all"
+                            onClick={() => {
+                                setShowGroceryList(!showGroceryList);
+                                if (!groceryMutation.data) groceryMutation.mutate();
+                            }}
+                        >
+                            <ShoppingCart className="w-4 h-4 mr-2" /> {showGroceryList ? 'Hide List' : 'Grocery List'}
+                        </Button>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-                <StatsCard icon={Flame} label="Calories" value={plan?.targetCalories} unit="kcal" color="rose" />
-                <StatsCard icon={Zap} label="Protein" value={plan?.targetProteinGrams} unit="g" color="indigo" />
-                <StatsCard icon={Scale} label="Carbs" value={plan?.targetCarbGrams} unit="g" color="amber" />
-                <StatsCard icon={Brain} label="Fat" value={plan?.targetFatGrams} unit="g" color="teal" />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 space-y-6">
-                    <MealCard
-                        title="Breakfast"
-                        time="Morning Fuel"
-                        content={plan?.breakfast}
-                        icon="☕"
-                    />
-                    <MealCard
-                        title="Lunch"
-                        time="Peak Energy"
-                        content={plan?.lunch}
-                        icon="🥗"
-                    />
-                    <MealCard
-                        title="Dinner"
-                        time="Restorative Evening"
-                        content={plan?.dinner}
-                        icon="🥩"
-                    />
-                    <MealCard
-                        title="Snacks & Hydration"
-                        time="Metabolic Support"
-                        content={plan?.snacks}
-                        icon="🫐"
-                    />
+                        <Button
+                            onClick={() => generateMutation.mutate()}
+                            disabled={generateMutation.isPending || isRefetching}
+                            className="flex-1 lg:flex-none h-14 px-8 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-black uppercase tracking-widest text-xs shadow-[0_15px_30px_rgba(244,63,94,0.3)] border-none active:scale-95 transition-all"
+                        >
+                            <RefreshCw className={`w-4 h-4 mr-2 ${generateMutation.isPending || isRefetching ? 'animate-spin' : ''}`} />
+                            {generateMutation.isPending || isRefetching ? 'Synchronizing...' : 'Regenerate Protocol'}
+                        </Button>
+                    </div>
                 </div>
 
-                <div className="space-y-6">
-                    <Card className="p-8 border-none shadow-2xl bg-indigo-900 text-white relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-white/10 transition-colors"></div>
-                        <h3 className="text-xl font-bold mb-4 relative z-10 flex items-center gap-2">
-                            <Brain className="w-6 h-6 text-indigo-300" /> AI Reasoning
-                        </h3>
-                        <p className="text-indigo-100/90 leading-relaxed italic relative z-10 text-sm">
-                            {(plan?.adaptiveFactors?.sleep && plan?.adaptiveFactors?.hrv)
-                                ? (plan?.adaptiveFactors?.biomarkerInsights?.length > 0
-                                    ? `Integrating ${plan.adaptiveFactors.biomarkerInsights.map((i: any) => i.type).join(' & ')} needs into your ${plan?.breastfeedingAdjustment ? 'lactation-optimized' : 'recovery'} protocol with real-time wearable adjustments.`
-                                    : "Your protocol is optimized for general postpartum vitality, adjusted daily based on your wearable data.")
-                                : (plan?.adaptiveFactors?.biomarkerInsights?.length > 0
-                                    ? `Calibrating for ${plan.adaptiveFactors.biomarkerInsights.map((i: any) => i.type).join(' & ')} using clinical baselines (no wearable data active).`
-                                    : "Using recovery baseline protocols for postpartum vitality and hormone stabilization.")
-                            }
-                        </p>
-                        <div className="mt-8 pt-8 border-t border-indigo-800 relative z-10">
-                            <p className="text-[10px] uppercase font-bold text-indigo-400 tracking-widest mb-4 font-sans">Adaptive Factors</p>
-                            <div className="space-y-3">
-                                <FactorItem label="Sleep Load" value={plan?.adaptiveFactors?.sleep ? `${plan.adaptiveFactors.sleep}h` : 'Baseline'} />
-                                <FactorItem label="HRV Status" value={plan?.adaptiveFactors?.hrv ? `${plan.adaptiveFactors.hrv}ms` : 'Baseline'} />
+                {showGroceryList && (
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-12">
+                        <Card className="p-8 bg-slate-900/60 border-white/5 backdrop-blur-3xl relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl" />
+                            <div className="flex items-center gap-3 mb-8">
+                                <ListTodo className="w-5 h-5 text-emerald-400" />
+                                <h2 className="text-xl font-black text-white uppercase tracking-tight">Precision Shopping List</h2>
                             </div>
-                        </div>
-                    </Card>
 
-                    <Card className="p-8 border-none shadow-lg bg-white overflow-hidden">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="p-2 bg-rose-50 rounded-xl">
-                                <Sparkles className="w-5 h-5 text-rose-500" />
-                            </div>
-                            <h3 className="text-lg font-bold text-slate-800">Recovery Action Plan</h3>
-                        </div>
-                        <div className="space-y-4">
-                            {plan?.recoverySteps?.length > 0 ? (
-                                plan.recoverySteps.map((step: string, i: number) => (
-                                    <div key={i} className="flex gap-4 p-4 rounded-2xl bg-rose-50/30 border border-rose-100/50">
-                                        <div className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 font-bold text-xs flex-shrink-0">
-                                            {i + 1}
-                                        </div>
-                                        <p className="text-sm text-slate-700 font-medium leading-relaxed">{step}</p>
-                                    </div>
-                                ))
+                            {groceryMutation.isPending ? (
+                                <div className="py-12 text-center text-slate-500 font-black uppercase tracking-widest text-[10px]">Categorizing ingredients...</div>
                             ) : (
-                                <div className="text-center py-6 opacity-40">
-                                    <p className="text-sm text-slate-400 font-medium italic">Generating recovery steps based on biometrics...</p>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                    {groceryMutation.data?.categories?.map((cat: any) => (
+                                        <div key={cat.name} className="space-y-4">
+                                            <h3 className="text-[10px] font-black text-emerald-400/70 uppercase tracking-[0.2em]">{cat.name}</h3>
+                                            <ul className="space-y-3">
+                                                {cat.items.map((item: string, i: number) => (
+                                                    <li key={i} className="flex items-start gap-3 text-sm text-slate-300 font-medium">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                                                        {item}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
-                        </div>
-                    </Card>
+                        </Card>
+                    </motion.div>
+                )}
 
-                    <Card className="p-8 border-none shadow-lg bg-white overflow-hidden">
-                        <h3 className="text-lg font-bold text-slate-800 mb-4">Metabolic Focus</h3>
-                        <div className="space-y-4">
-                            {plan?.adaptiveFactors?.biomarkerInsights?.map((insight: any) => (
-                                <div key={insight.type} className="flex gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                                    <div className="w-2 h-full bg-rose-400 rounded-full" />
-                                    <div>
-                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{insight.type}</p>
-                                        <p className="text-sm font-bold text-slate-700">{insight.interpretation}</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+                    <StatBox label="Metabolic Load" value={plan?.targetCalories} unit="kcal" icon={Flame} color="rose" />
+                    <StatBox label="Repair Proteins" value={plan?.targetProteinGrams} unit="g" icon={Zap} color="indigo" />
+                    <StatBox label="Energy Substrate" value={plan?.targetCarbGrams} unit="g" icon={Scale} color="amber" />
+                    <StatBox label="Hormonal Anchor" value={plan?.targetFatGrams} unit="g" icon={Brain} color="teal" />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-2 space-y-6">
+                        <MealCard
+                            title="Morning Ritual"
+                            time="Metabolic Anchor"
+                            content={plan?.breakfast}
+                            icon="🍳"
+                            accent="bg-rose-500"
+                        />
+                        <MealCard
+                            title="Vitality Lunch"
+                            time="Peak Energy Window"
+                            content={plan?.lunch}
+                            icon="🥗"
+                            accent="bg-indigo-500"
+                        />
+                        <MealCard
+                            title="Restoration Meal"
+                            time="Cellular Repair"
+                            content={plan?.dinner}
+                            icon="🥩"
+                            accent="bg-teal-500"
+                        />
+                        <MealCard
+                            title="Cycle Support"
+                            time="Endocrine Fuel"
+                            content={plan?.snacks}
+                            icon="🫐"
+                            accent="bg-amber-500"
+                        />
+                    </div>
+
+                    <div className="space-y-6">
+                        <Card className="p-8 bg-slate-900 border-white/5 shadow-2xl relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full blur-2xl group-hover:bg-rose-500/10 transition-colors" />
+                            <h3 className="text-xl font-black text-rose-100 mb-6 flex items-center gap-3">
+                                <Brain className="w-6 h-6 text-rose-400" /> AI Rationale
+                            </h3>
+                            <p className="text-slate-400 leading-relaxed italic text-sm font-medium">
+                                "{(plan?.adaptiveFactors?.sleep && plan?.adaptiveFactors?.hrv)
+                                    ? (plan?.adaptiveFactors?.biomarkerInsights?.length > 0
+                                        ? `Integrating ${plan.adaptiveFactors.biomarkerInsights.map((i: any) => i.type).join(' & ')} needs into your ${plan?.breastfeedingAdjustment ? 'lactation-optimized' : 'recovery'} protocol with real-time wearable adjustments.`
+                                        : "Your protocol is optimized for general postpartum vitality, adjusted daily based on your wearable data.")
+                                    : (plan?.adaptiveFactors?.biomarkerInsights?.length > 0
+                                        ? `Calibrating for ${plan.adaptiveFactors.biomarkerInsights.map((i: any) => i.type).join(' & ')} using clinical baselines.`
+                                        : "Using recovery baseline protocols for postpartum vitality and hormone stabilization.")
+                                }"
+                            </p>
+                            <div className="mt-10 pt-8 border-t border-white/5">
+                                <p className="text-[10px] font-black text-rose-400 uppercase tracking-[0.2em] mb-6">Biometric Feedback</p>
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center bg-white/5 p-3.5 rounded-xl border border-white/5">
+                                        <span className="text-xs font-bold text-slate-400">Sleep Status</span>
+                                        <span className="text-xs font-black text-rose-400">{plan?.adaptiveFactors?.sleep ? `${plan.adaptiveFactors.sleep}h` : 'Optimal'}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center bg-white/5 p-3.5 rounded-xl border border-white/5">
+                                        <span className="text-xs font-bold text-slate-400">Recovery HRV</span>
+                                        <span className="text-xs font-black text-indigo-400">{plan?.adaptiveFactors?.hrv ? `${plan.adaptiveFactors.hrv}ms` : 'Stabilized'}</span>
                                     </div>
                                 </div>
-                            ))}
-                            {!plan?.adaptiveFactors?.biomarkerInsights?.length && (
-                                <div className="text-center py-6">
-                                    <CheckCircle2 className="w-12 h-12 text-teal-400 mx-auto mb-2 opacity-20" />
-                                    <p className="text-sm text-slate-400 font-medium">All biomarkers within range.</p>
-                                </div>
-                            )}
+                            </div>
+                        </Card>
+
+                        <Card className="p-8 bg-slate-900 border-white/5">
+                            <h3 className="text-xl font-black text-white mb-6 flex items-center gap-3">
+                                <Target className="w-6 h-6 text-emerald-400" /> Recovery Action
+                            </h3>
+                            <div className="space-y-4">
+                                {plan?.recoverySteps?.length > 0 ? (
+                                    plan.recoverySteps.map((step: string, i: number) => (
+                                        <div key={i} className="flex gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 group hover:border-rose-500/20 transition-all items-center">
+                                            <div className="bg-rose-500/10 p-2 rounded-lg text-rose-400">
+                                                <div className="w-4 h-4 flex items-center justify-center text-[10px] font-black">{i + 1}</div>
+                                            </div>
+                                            <p className="text-xs text-slate-400 font-black leading-tight uppercase tracking-wide">{step}</p>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-center py-6">
+                                        <p className="text-xs text-slate-600 font-bold italic uppercase tracking-widest">Generating bio-logical steps...</p>
+                                    </div>
+                                )}
+                            </div>
+                        </Card>
+
+                        <div className="p-6 text-center">
+                            <div className="inline-flex items-center gap-2 bg-slate-900 px-5 py-2 rounded-full border border-white/5">
+                                <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Physiological Integrity Guard</span>
+                            </div>
                         </div>
-                    </Card>
+                    </div>
                 </div>
             </div>
         </div>
     );
 }
 
-function StatsCard({ icon: Icon, label, value, unit, color }: any) {
-    const colorMap: any = {
-        rose: 'text-rose-500 bg-rose-50',
-        indigo: 'text-indigo-500 bg-indigo-50',
-        amber: 'text-amber-500 bg-amber-50',
-        teal: 'text-teal-500 bg-teal-50'
+function StatBox({ icon: Icon, label, value, unit, color }: any) {
+    const colors: any = {
+        rose: 'text-rose-400 bg-rose-500/10 border-rose-500/20',
+        indigo: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20',
+        amber: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
+        teal: 'text-teal-400 bg-teal-500/10 border-teal-500/20'
     };
 
     return (
-        <Card className="p-5 border-none shadow-md bg-white hover:shadow-xl transition-shadow group">
-            <div className="flex items-center gap-3 mb-2">
-                <div className={`p-2 rounded-xl ${colorMap[color]}`}>
+        <Card className="p-5 bg-slate-900/50 border-white/5 group hover:border-white/10 transition-all ring-1 ring-white/5">
+            <div className="flex items-center gap-3 mb-3">
+                <div className={`p-2 rounded-xl ${colors[color]}`}>
                     <Icon className="w-4 h-4" />
                 </div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</span>
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{label}</span>
             </div>
             <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">{value || '--'}</span>
-                <span className="text-[10px] text-slate-400 font-bold">{unit}</span>
+                <span className="text-2xl font-black text-white">{value || '--'}</span>
+                <span className="text-[10px] text-slate-600 font-bold uppercase">{unit}</span>
             </div>
         </Card>
     );
 }
 
-function MealCard({ title, time, content, icon }: any) {
+function MealCard({ title, time, content, icon, accent }: any) {
     return (
-        <Card className="p-8 border-none shadow-lg bg-white group hover:scale-[1.01] transition-transform overflow-hidden relative">
-            <div className="absolute top-0 right-0 p-8 text-4xl opacity-10 group-hover:scale-125 transition-transform duration-500">
-                {icon}
-            </div>
-            <div className="relative z-10">
-                <div className="flex items-center gap-2 mb-2">
-                    <Utensils className="w-4 h-4 text-indigo-500" />
-                    <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">{time}</span>
+        <Card className="p-8 bg-slate-900/60 border-white/5 backdrop-blur-xl group hover:border-rose-500/20 transition-all overflow-hidden relative">
+            <span className="absolute top-0 right-0 p-10 text-6xl opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-500">{icon}</span>
+            <div className="flex items-center gap-2 mb-4">
+                <div className={`w-1.5 h-6 ${accent} rounded-full`} />
+                <div className="flex flex-col">
+                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">{time}</span>
+                    <h3 className="text-2xl font-black text-white tracking-tight">{title}</h3>
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-4">{title}</h3>
-                <p className="text-slate-600 leading-relaxed text-lg">
-                    {content || 'Calibrating meal suggestions based on current load...'}
-                </p>
             </div>
+            <p className="text-slate-400 text-lg leading-relaxed font-medium relative z-10">{content || 'Calibrating meal suggestions...'}</p>
         </Card>
-    );
-}
-
-function FactorItem({ label, value }: any) {
-    return (
-        <div className="flex justify-between items-center text-sm font-medium">
-            <span className="text-indigo-300">{label}</span>
-            <span className="text-white bg-indigo-800 px-3 py-1 rounded-lg">{value}</span>
-        </div>
     );
 }

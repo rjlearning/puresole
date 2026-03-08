@@ -8,10 +8,20 @@ import {
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePhase } from '@/context/PhaseContext';
+import { useQuery } from '@tanstack/react-query';
+import MeshBackground from "@/components/MeshBackground";
 
 export default function MenPage() {
     const { gender } = usePhase();
     const [bodyData, setBodyData] = useState({ sleep: 7.2, energy: 4 });
+
+    const { data: protocol } = useQuery<any>({
+        queryKey: ["/api/men/protocol"]
+    });
+
+    const { data: metabolic } = useQuery<any>({
+        queryKey: ["/api/men/metabolic"]
+    });
 
     useEffect(() => {
         const bEntries = localStorage.getItem('body_entries');
@@ -40,20 +50,39 @@ export default function MenPage() {
     };
 
     return (
-        <div className="min-h-screen pb-24 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-indigo-950 overflow-x-hidden text-slate-200 relative max-w-full">
-
-            {/* ── Background Decoral ── */}
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-500/10 blur-[120px] rounded-full -mr-64 -mt-32 pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-500/10 blur-[100px] rounded-full -ml-32 -mb-32 pointer-events-none" />
+        <div className="min-h-screen pb-24 text-slate-200 relative max-w-full overflow-x-hidden" data-testid="men-hub">
+            <MeshBackground variant="indigo" />
 
             {/* ── Top Header ── */}
-            <header className="fixed top-0 inset-x-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-white/5 h-16 sm:h-20 flex items-center px-4 sm:px-6">
-                <div className="max-w-6xl mx-auto w-full flex items-center justify-between">
-                    <div>
-                        <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] leading-none mb-1">Performance Core</p>
-                        <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">Men's Evolution <span className="text-indigo-500">Hub</span></h1>
+            <header className="fixed top-0 inset-x-0 z-50 bg-slate-950/20 backdrop-blur-xl border-b border-white/5 h-16 sm:h-20 flex items-center px-4 sm:px-6">
+                <div className="max-w-6xl mx-auto w-full flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 min-w-0">
+                        <Link href="/dashboard">
+                            <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:bg-indigo-500/20 hover:text-indigo-400 transition-colors shrink-0">
+                                <Activity className="w-5 h-5 rotate-180" />
+                            </motion.button>
+                        </Link>
+                        <div className="truncate">
+                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] leading-none mb-1">Performance Core</p>
+                            <h1 className="text-xl font-black text-white tracking-tight truncate">Men's Evolution Hub</h1>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2 sm:gap-4">
+
+                    <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+                        {/* Global Navigation Links integrated into the hub header */}
+                        <div className="hidden md:flex items-center gap-6 mr-4 border-r border-white/5 pr-6">
+                            <Link href="/community">
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-indigo-400 cursor-pointer transition-colors">World</span>
+                            </Link>
+                            <Link href="/sos">
+                                <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest hover:text-rose-400 cursor-pointer transition-colors">SOS</span>
+                            </Link>
+                            <Link href="/settings">
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-indigo-400 cursor-pointer transition-colors">Settings</span>
+                            </Link>
+                        </div>
+
                         <Link href="/phase-select">
                             <motion.button whileTap={{ scale: 0.95 }}
                                 className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-2xl bg-white/5 border border-white/10 shadow-sm hover:bg-white/10 transition-all">
@@ -118,17 +147,23 @@ export default function MenPage() {
 
                                     <div className="bg-slate-900/40 backdrop-blur-3xl border border-white/5 rounded-[2.5rem] p-6 sm:p-8 space-y-6">
                                         <p className="text-indigo-50 leading-relaxed font-bold text-lg sm:text-xl">
-                                            Peak recovery window active.
+                                            {protocol?.reasoning ? "Performance Optimization Active" : "Peak recovery window active."}
                                         </p>
                                         <div className="space-y-4">
                                             <div className="flex gap-4 items-start">
                                                 <div className="w-2 h-2 rounded-full bg-cyan-400 mt-2.5 shrink-0 shadow-[0_0_10px_rgba(34,211,238,0.5)]" />
-                                                <p className="text-sm sm:text-base text-indigo-200/90 font-medium">Optimal window for high-intensity anaerobic load.</p>
+                                                <p className="text-sm sm:text-base text-indigo-200/90 font-medium">
+                                                    {protocol?.reasoning || "Optimal window for high-intensity anaerobic load."}
+                                                </p>
                                             </div>
-                                            <div className="flex gap-4 items-start">
-                                                <div className="w-2 h-2 rounded-full bg-indigo-400 mt-2.5 shrink-0 shadow-[0_0_10px_rgba(129,140,248,0.5)]" />
-                                                <p className="text-sm sm:text-base text-indigo-200/90 font-medium">Zinc & Magnesium protocol for REM support tonight.</p>
-                                            </div>
+                                            {metabolic?.latestStats && (
+                                                <div className="flex gap-4 items-start">
+                                                    <div className="w-2 h-2 rounded-full bg-indigo-400 mt-2.5 shrink-0 shadow-[0_0_10px_rgba(129,140,248,0.5)]" />
+                                                    <p className="text-sm sm:text-base text-indigo-200/90 font-medium">
+                                                        Testosterone: {metabolic.latestStats.testosterone} {metabolic.latestStats.testosterone > 600 ? '(Optimal)' : '(Analyzing)'}
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

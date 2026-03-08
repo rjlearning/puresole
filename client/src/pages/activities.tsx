@@ -210,8 +210,8 @@ export default function ActivitiesPage() {
                     <span>Any dur.</span>
                   </div>
 
-                  <button className="w-10 h-10 rounded-full bg-secondary/50 flex items-center justify-center text-secondary-foreground group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
-                    <ArrowRight className="w-5 h-5" />
+                  <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-secondary-foreground font-bold text-sm group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm active:scale-95">
+                    Start Session <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
               </CleanCard>
@@ -256,8 +256,8 @@ export default function ActivitiesPage() {
                     <span>{activity.duration} min</span>
                   </div>
 
-                  <button className="w-10 h-10 rounded-full bg-secondary/50 flex items-center justify-center text-secondary-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-all shadow-sm">
-                    <ArrowRight className="w-5 h-5" />
+                  <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-secondary-foreground font-bold text-sm group-hover:bg-primary group-hover:text-primary-foreground transition-all shadow-sm active:scale-95">
+                    Start Session <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
               </CleanCard>

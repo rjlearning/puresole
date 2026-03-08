@@ -153,11 +153,26 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
+  const { gender, hasChosen } = usePhase();
+
+  // Handle gender-based redirection for the root and dashboard paths
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && hasChosen) {
+      if (location === "/" || location === "/dashboard") {
+        if (gender === "male") {
+          setLocation("/men");
+        } else if (gender === "female") {
+          setLocation("/women");
+        }
+      }
+    }
+  }, [isLoading, isAuthenticated, hasChosen, gender, location, setLocation]);
+
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+        <div className="w-10 h-10 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -165,12 +180,12 @@ function Router() {
   return (
     <>
       <ScrollToTop />
-      {isAuthenticated && location !== '/dashboard' && <SmartBackButton />}
-      {isAuthenticated && location !== '/dashboard' && <MainNavigation />}
-      {isAuthenticated && location !== '/dashboard' && <SoulCoreHub />}
-      {isAuthenticated && location !== '/dashboard' && <OnboardingManager />}
+      {isAuthenticated && location !== '/dashboard' && !location.startsWith('/women') && !location.startsWith('/men') && <SmartBackButton />}
+      {isAuthenticated && location !== '/dashboard' && !location.startsWith('/women') && !location.startsWith('/men') && <MainNavigation />}
+      {isAuthenticated && location !== '/dashboard' && !location.startsWith('/women') && !location.startsWith('/men') && <SoulCoreHub />}
+      {isAuthenticated && location !== '/dashboard' && !location.startsWith('/women') && !location.startsWith('/men') && <OnboardingManager />}
       {isAuthenticated && <BottomNav />}
-      <div className={`min-h-screen mesh-bg ${isAuthenticated ? "lg:ml-80 lg:pl-8 pb-28 lg:pb-0" : ""}`}>
+      <div className={`min-h-screen mesh-bg ${isAuthenticated && !location.startsWith('/women') && !location.startsWith('/men') ? "lg:ml-80 lg:pl-8 pb-28 lg:pb-0" : ""}`}>
         <Suspense fallback={
           <div className="min-h-screen flex items-center justify-center bg-slate-50/50">
             <div className="flex flex-col items-center gap-4">
@@ -329,9 +344,6 @@ function Router() {
             </Route>
             <Route path="/settings">
               <ProtectedRoute><Settings /></ProtectedRoute>
-            </Route>
-            <Route path="/voice-insights">
-              <ProtectedRoute><VoiceAnalysisDashboard /></ProtectedRoute>
             </Route>
             <Route path="/voice-insights">
               <ProtectedRoute><VoiceAnalysisDashboard /></ProtectedRoute>

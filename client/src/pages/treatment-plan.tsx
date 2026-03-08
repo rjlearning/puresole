@@ -17,7 +17,8 @@ import {
   Compass,
   Zap,
   Star,
-  Play
+  Play,
+  Trophy
 } from "lucide-react";
 import TreatmentModule from "@/components/treatment/treatment-module";
 
@@ -48,9 +49,7 @@ export default function TreatmentPlan() {
   });
 
   const treatmentPlan = treatmentPlanRaw as any;
-  const hasRealContent = treatmentPlan?.modules?.some(
-    (m: any) => m.content?.activities && m.content.activities.length > 0
-  );
+  const hasRealContent = treatmentPlan?.modules?.length > 0;
 
   const { data: progressEntriesRaw } = useQuery({
     queryKey: ["/api/progress/plan", activePlanId],
@@ -66,6 +65,16 @@ export default function TreatmentPlan() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/progress/plan", activePlanId] });
       queryClient.invalidateQueries({ queryKey: ["/api/treatment-plans", activePlanId] });
+    },
+  });
+
+  const advancePhaseMutation = useMutation({
+    mutationFn: async (nextWeek: number) => {
+      await apiRequest("PATCH", `/api/treatment-plans/${activePlanId}`, { currentWeek: nextWeek });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/treatment-plans", activePlanId] });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     },
   });
 
@@ -96,12 +105,7 @@ export default function TreatmentPlan() {
       <div className="max-w-3xl mx-auto px-4 pt-12 relative z-10">
 
         {/* Header */}
-        <header className="flex items-center justify-between mb-12">
-          <Link href="/dashboard">
-            <button className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center hover:bg-slate-800 transition-colors">
-              <ArrowLeft className="w-5 h-5 text-slate-400" />
-            </button>
-          </Link>
+        <header className="flex items-center justify-end mb-12">
           <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/50 border border-slate-800/80 backdrop-blur-md">
             <Compass className="w-4 h-4 text-indigo-400" />
             <span className="text-[10px] uppercase tracking-widest font-black text-slate-300">Phase {currentWeekNum} / {allWeeks.length}</span>
@@ -160,6 +164,12 @@ export default function TreatmentPlan() {
                 shadow = "0 0 40px rgba(244, 63, 94, 0.4)";
               }
 
+              // Check if all activities for this current week are completed
+              const allActivitiesInWeek = weekModules.flatMap((m: any) => m.content?.activities || []);
+              const isWeekFullyCompleted = allActivitiesInWeek.length > 0 && allActivitiesInWeek.every((act: any) =>
+                progressEntries.some((e: any) => e.activityName === act.name && e.completed)
+              );
+
               return (
                 <div key={week} className={`relative transition-opacity duration-500 ${isLocked ? 'opacity-40 grayscale' : 'opacity-100'}`}>
 
@@ -187,8 +197,6 @@ export default function TreatmentPlan() {
                     ) : (
                       <div className="space-y-4">
                         {weekModules.map((module: any) => (
-                          // In a real scenario we'd use the updated dark TreatmentModule component 
-                          // For now, we render a highly stylized AI dark card per module
                           <div key={module.id} className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden hover:border-slate-700 transition-colors">
                             <div className="p-6">
                               <h5 className="font-bold text-white mb-2">{module.title}</h5>
@@ -196,7 +204,6 @@ export default function TreatmentPlan() {
 
                               <div className="space-y-2">
                                 {module.content?.activities?.map((activity: any, aIdx: number) => {
-                                  // Make sure we only check for this specific activity
                                   const isCompleted = progressEntries.some((e: any) => e.activityName === activity.name);
                                   return (
                                     <div key={aIdx} className={`flex items-center justify-between p-4 rounded-2xl border ${isCompleted ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-slate-950 border-slate-800'}`}>
@@ -212,7 +219,7 @@ export default function TreatmentPlan() {
 
                                       {!isCompleted && isCurrent && (
                                         <button
-                                          onClick={() => progressMutation.mutate({ planId: activePlanId, moduleId: module.id, activityName: activity.name, activityType: activity.type, date: new Date(), completed: true })}
+                                          onClick={() => setLocation(`/activities/${encodeURIComponent(activity.name)}`)}
                                           className="px-4 py-2 bg-white text-slate-950 rounded-full font-black text-xs hover:scale-105 active:scale-95 transition-all"
                                         >
                                           Start
@@ -225,6 +232,27 @@ export default function TreatmentPlan() {
                             </div>
                           </div>
                         ))}
+
+                        {/* Phase Advancement Button */}
+                        {isCurrent && isWeekFullyCompleted && week < allWeeks[allWeeks.length - 1] && (
+                          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pt-4">
+                            <button
+                              onClick={() => advancePhaseMutation.mutate(week + 1)}
+                              disabled={advancePhaseMutation.isPending}
+                              className="w-full py-4 bg-gradient-to-r from-indigo-500 to-rose-500 text-white rounded-2xl font-black text-sm hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20"
+                            >
+                              {advancePhaseMutation.isPending ? "Unlocking Neural Pathways..." : `Phase Complete — Unlock Phase ${week + 1}`}
+                            </button>
+                          </motion.div>
+                        )}
+
+                        {isCurrent && isWeekFullyCompleted && week === allWeeks[allWeeks.length - 1] && (
+                          <div className="pt-4 text-center p-6 bg-indigo-500/10 rounded-2xl border border-indigo-500/20">
+                            <Trophy className="w-8 h-8 text-indigo-400 mx-auto mb-2" />
+                            <h4 className="text-lg font-bold text-white">Journey Complete</h4>
+                            <p className="text-sm text-indigo-200 mt-1">You have mastered this protocol.</p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

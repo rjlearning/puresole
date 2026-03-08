@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Flame, X, Trophy, Zap } from "lucide-react";
 import { getStreak, hoursUntilStreakReset, hasCheckedInToday, StreakState } from "@/lib/streakEngine";
@@ -19,8 +20,10 @@ export function DailyStreakBanner({ onStreakCheck }: { onStreakCheck?: (streak: 
     const [streak, setStreak] = useState<StreakState>({ currentStreak: 0, lastCheckInDate: null, longestStreak: 0 });
     const [expanded, setExpanded] = useState(false);
     const [hoursLeft, setHoursLeft] = useState(0);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
         const s = getStreak();
         setStreak(s);
         setHoursLeft(hoursUntilStreakReset());
@@ -45,8 +48,8 @@ export function DailyStreakBanner({ onStreakCheck }: { onStreakCheck?: (streak: 
                 animate={{ opacity: 1, y: 0 }}
                 onClick={() => setExpanded(true)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${isOnFire
-                        ? "bg-gradient-to-r from-amber-500/20 to-orange-500/10 border-amber-500/40 hover:border-amber-400/60"
-                        : "bg-slate-900/60 border-slate-800 hover:border-slate-700"
+                    ? "bg-gradient-to-r from-amber-500/20 to-orange-500/10 border-amber-500/40 hover:border-amber-400/60"
+                    : "bg-slate-900/60 border-slate-800 hover:border-slate-700"
                     }`}
             >
                 <motion.span
@@ -76,91 +79,94 @@ export function DailyStreakBanner({ onStreakCheck }: { onStreakCheck?: (streak: 
             </motion.button>
 
             {/* Expanded modal */}
-            <AnimatePresence>
-                {expanded && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-[100] flex items-end justify-center p-4"
-                        onClick={() => setExpanded(false)}
-                    >
+            {mounted && createPortal(
+                <AnimatePresence>
+                    {expanded && (
                         <motion.div
-                            initial={{ y: 60, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            exit={{ y: 60, opacity: 0 }}
-                            onClick={e => e.stopPropagation()}
-                            className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-[2rem] p-6 pb-8"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-[100] flex items-end justify-center p-4"
+                            onClick={() => setExpanded(false)}
                         >
-                            {/* Header */}
-                            <div className="flex items-center justify-between mb-8">
-                                <h3 className="text-lg font-black text-white">Your Journey</h3>
-                                <button onClick={() => setExpanded(false)} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">
-                                    <X className="w-4 h-4 text-slate-400" />
-                                </button>
-                            </div>
-
-                            {/* Big streak number */}
-                            <div className="text-center mb-8">
-                                <div className="text-7xl font-black text-white mb-1 tabular-nums">{n}</div>
-                                <div className="text-slate-400 font-medium">day streak</div>
-                                {milestoneLabel && (
-                                    <div className="mt-2 text-lg font-bold text-amber-400">{milestoneLabel}</div>
-                                )}
-                            </div>
-
-                            {/* Progress to next milestone */}
-                            <div className="mb-6">
-                                <div className="flex justify-between text-xs text-slate-500 font-bold uppercase tracking-widest mb-2">
-                                    <span>{prevMilestone}d</span>
-                                    <span>Next: {nextMilestone}d</span>
+                            <motion.div
+                                initial={{ y: 60, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                exit={{ y: 60, opacity: 0 }}
+                                onClick={e => e.stopPropagation()}
+                                className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-[2rem] p-6 pb-8"
+                            >
+                                {/* Header */}
+                                <div className="flex items-center justify-between mb-8">
+                                    <h3 className="text-lg font-black text-white">Your Journey</h3>
+                                    <button onClick={() => setExpanded(false)} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">
+                                        <X className="w-4 h-4 text-slate-400" />
+                                    </button>
                                 </div>
-                                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                                    <motion.div
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${pct}%` }}
-                                        transition={{ duration: 0.8, ease: "easeOut" }}
-                                        className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500"
-                                    />
-                                </div>
-                            </div>
 
-                            {/* Stats */}
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="bg-slate-800/60 rounded-2xl p-4 text-center">
-                                    <div className="flex items-center justify-center gap-1 mb-1">
-                                        <Trophy className="w-4 h-4 text-amber-400" />
+                                {/* Big streak number */}
+                                <div className="text-center mb-8">
+                                    <div className="text-7xl font-black text-white mb-1 tabular-nums">{n}</div>
+                                    <div className="text-slate-400 font-medium">day streak</div>
+                                    {milestoneLabel && (
+                                        <div className="mt-2 text-lg font-bold text-amber-400">{milestoneLabel}</div>
+                                    )}
+                                </div>
+
+                                {/* Progress to next milestone */}
+                                <div className="mb-6">
+                                    <div className="flex justify-between text-xs text-slate-500 font-bold uppercase tracking-widest mb-2">
+                                        <span>{prevMilestone}d</span>
+                                        <span>Next: {nextMilestone}d</span>
                                     </div>
-                                    <div className="text-2xl font-black text-white">{streak.longestStreak}</div>
-                                    <div className="text-xs text-slate-500 font-medium">Longest streak</div>
-                                </div>
-                                <div className="bg-slate-800/60 rounded-2xl p-4 text-center">
-                                    <div className="flex items-center justify-center gap-1 mb-1">
-                                        <Zap className="w-4 h-4 text-indigo-400" />
+                                    <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${pct}%` }}
+                                            transition={{ duration: 0.8, ease: "easeOut" }}
+                                            className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500"
+                                        />
                                     </div>
-                                    <div className="text-2xl font-black text-white">{checkedInToday ? "✓" : `${hoursLeft}h`}</div>
-                                    <div className="text-xs text-slate-500 font-medium">{checkedInToday ? "Done today" : "Until reset"}</div>
                                 </div>
-                            </div>
 
-                            {/* Milestones row */}
-                            <div className="mt-6 flex justify-between gap-1">
-                                {MILESTONES.map(m => (
-                                    <div
-                                        key={m}
-                                        className={`flex-1 text-center py-2 rounded-xl text-xs font-black transition-all ${n >= m
+                                {/* Stats */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="bg-slate-800/60 rounded-2xl p-4 text-center">
+                                        <div className="flex items-center justify-center gap-1 mb-1">
+                                            <Trophy className="w-4 h-4 text-amber-400" />
+                                        </div>
+                                        <div className="text-2xl font-black text-white">{streak.longestStreak}</div>
+                                        <div className="text-xs text-slate-500 font-medium">Longest streak</div>
+                                    </div>
+                                    <div className="bg-slate-800/60 rounded-2xl p-4 text-center">
+                                        <div className="flex items-center justify-center gap-1 mb-1">
+                                            <Zap className="w-4 h-4 text-indigo-400" />
+                                        </div>
+                                        <div className="text-2xl font-black text-white">{checkedInToday ? "✓" : `${hoursLeft}h`}</div>
+                                        <div className="text-xs text-slate-500 font-medium">{checkedInToday ? "Done today" : "Until reset"}</div>
+                                    </div>
+                                </div>
+
+                                {/* Milestones row */}
+                                <div className="mt-6 flex justify-between gap-1">
+                                    {MILESTONES.map(m => (
+                                        <div
+                                            key={m}
+                                            className={`flex-1 text-center py-2 rounded-xl text-xs font-black transition-all ${n >= m
                                                 ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
                                                 : "bg-slate-800/40 text-slate-600"
-                                            }`}
-                                    >
-                                        {m}
-                                    </div>
-                                ))}
-                            </div>
+                                                }`}
+                                        >
+                                            {m}
+                                        </div>
+                                    ))}
+                                </div>
+                            </motion.div>
                         </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
         </>
     );
 }

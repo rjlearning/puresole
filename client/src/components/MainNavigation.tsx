@@ -59,32 +59,6 @@ export default function MainNavigation() {
           })}
         </div>
       </nav>
-
-      {/* ── MOBILE "INVISIBLE" HEADER NAVIGATION ── */}
-      {/* Eliminates bottom padding, radial compasses, and clutter by replacing them with a minimal text header */}
-      <nav
-        className={`fixed top-0 left-0 right-0 z-50 lg:hidden px-6 pt-6 pb-4 bg-gradient-to-b from-slate-950/90 to-transparent flex justify-between items-center transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}
-      >
-        {/* Compact Logo */}
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-indigo-500 to-rose-500 p-[1px]">
-            <div className="w-full h-full bg-slate-950 rounded-[7px] flex items-center justify-center">
-              <span className="font-black text-white text-[10px]">P</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Text-Only Subtle Links */}
-        <div className="flex gap-4 items-center">
-          {navItems.filter(i => i.name !== 'Home').map(item => (
-            <Link key={item.name} href={item.href}>
-              <span className={`text-[11px] uppercase tracking-widest font-bold cursor-pointer transition-colors ${isActive(item.href) ? 'text-indigo-400' : 'text-slate-500 hover:text-slate-300'}`}>
-                {item.name}
-              </span>
-            </Link>
-          ))}
-        </div>
-      </nav>
     </>
   );
 }

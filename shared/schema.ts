@@ -1,5 +1,7 @@
 import { sql } from 'drizzle-orm';
 import {
+  unique,
+  uniqueIndex,
   index,
   jsonb,
   pgTable,
@@ -88,7 +90,8 @@ export const assessmentTypeEnum = pgEnum('assessment_type', [
   'ptsd',
   'sleep_quality',
   'comprehensive',
-  'conversation_ai'
+  'conversation_ai',
+  'baseline_onboarding'
 ]);
 
 // Assessment severity enum
@@ -127,7 +130,7 @@ export const assessments = pgTable("assessments", {
   type: assessmentTypeEnum("type").notNull(),
   responses: jsonb("responses").notNull(), // Store assessment responses
   score: integer("score").default(0), // Made optional for AI-derived scores
-  severity: severityEnum("severity").notNull(),
+  severity: severityEnum("severity"),
   aiAnalysis: text("ai_analysis"), // AI-generated analysis
   recommendations: jsonb("recommendations"), // AI recommendations
   riskFactors: jsonb("risk_factors"), // Identified risk factors
@@ -237,6 +240,82 @@ export const emotionalBlueprints = pgTable("emotional_blueprints", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// ── Multi-Signal Daily Fusion Table ──────────────────────────────────────────
+// One row per user per calendar day. Fuses all available signal sources into
+// a composite mental wellness score and AI-generated insight.
+export const dailySignals = pgTable("daily_signals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  // Date string YYYY-MM-DD for easy upsert/lookup
+  signalDate: varchar("signal_date", { length: 10 }).notNull(),
+
+  // Raw signal inputs (0-100 each unless noted)
+  energyLevel: integer("energy_level"),          // from orb drag
+  moodScore: integer("mood_score"),              // from emoji tap
+  sleepQuality: integer("sleep_quality"),        // from sleep slider
+  voiceWellnessScore: integer("voice_wellness_score"), // from voiceAnalyses
+  activityCompletionRate: decimal("activity_completion_rate", { precision: 4, scale: 3 }), // 0.000-1.000
+  journalSentimentScore: decimal("journal_sentiment_score", { precision: 4, scale: 3 }), // -1.000 to 1.000
+
+  // Behavioral Fingerprinting (New in Phase 12)
+  pulseVelocityMs: integer("pulse_velocity_ms"), // Time to orb release
+  dwellTimeSeconds: integer("dwell_time_seconds"), // Time spent on dash before pulse
+
+  // Fusion outputs
+  compositeScore: integer("composite_score"),    // 0-100 weighted average
+  severityLabel: varchar("severity_label", { length: 20 }), // minimal/mild/moderate/severe
+  aiInsightText: text("ai_insight_text"),        // GPT-4o-mini generated
+  confidence: decimal("confidence", { precision: 4, scale: 3 }), // 0-1 how many signals contributed
+
+  // Full signal dump for ML training / debugging
+  rawSignals: jsonb("raw_signals"),
+
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  unique("uq_daily_signals_user_date").on(table.userId, table.signalDate),
+  index("idx_daily_signals_user_date").on(table.userId, table.signalDate),
+]);
+
+// ── Behavioral Profiles (Clinical Memory) ────────────────────────────────────
+// Stores synthesized user patterns over long periods (30-90 days).
+// Feeds into the AI Companion's "Recall" memory.
+export const behaviorProfiles = pgTable("behavior_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+
+  // Synthesized Archetype (e.g., 'Impulsive Morning Ruminator')
+  archetype: varchar("archetype", { length: 50 }),
+
+  // Dense GPT-generated summary of long-term history
+  clinicalSummary: text("clinical_summary"),
+
+  // Aggregated metrics (averages over time)
+  avgPulseVelocity: integer("avg_pulse_velocity"),
+  dwellBias: varchar("dwell_bias", { length: 20 }), // 'growth', 'recovery', 'balanced'
+
+  // Last processed date to avoid double-counting
+  lastProcessedAt: timestamp("last_processed_at"),
+
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_behavior_profiles_user").on(table.userId),
+]);
+
+export const insertDailySignalSchema = createInsertSchema(dailySignals).omit({
+  id: true, createdAt: true, updatedAt: true,
+});
+export const insertBehaviorProfileSchema = createInsertSchema(behaviorProfiles).omit({
+  id: true, createdAt: true, updatedAt: true,
+});
+
+export type DailySignal = typeof dailySignals.$inferSelect;
+export type InsertDailySignal = z.infer<typeof insertDailySignalSchema>;
+export type BehaviorProfile = typeof behaviorProfiles.$inferSelect;
+export type InsertBehaviorProfile = z.infer<typeof insertBehaviorProfileSchema>;
+
 
 // Subscription plan types enum
 export const planTypeEnum = pgEnum('plan_type', [
@@ -894,7 +973,7 @@ export const wellnessActivities = pgTable("wellness_activities", {
 export const userActivityCompletions = pgTable("user_activity_completions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  activityId: varchar("activity_id").notNull().references(() => wellnessActivities.id, { onDelete: "cascade" }),
+  activityId: varchar("activity_id").notNull(),
   completedAt: timestamp("completed_at").defaultNow(),
   durationActual: integer("duration_actual"),
   effectivenessRating: integer("effectiveness_rating"),

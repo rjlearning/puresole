@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import { useLocation } from "wouter";
 import { Flame, Check, Lock, ChevronRight } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 // ── Protocol card config ──────────────────────────────────────────────────────
+// ... (rest of imports and helpers)
 
 interface ProtocolCard {
     id: string;
@@ -25,19 +27,19 @@ function getTimeOfDay(): 'morning' | 'afternoon' | 'evening' {
 
 const PROTOCOL_SETS: Record<string, ProtocolCard[]> = {
     morning: [
-        { id: "breath-am", emoji: "🌬️", title: "Breath Expansion", subtitle: "Oxygenate body & mind", duration: "3 min", color: "from-sky-400 to-indigo-500", colorRgb: "99,102,241", category: "breathing" },
-        { id: "journal-am", emoji: "🌅", title: "Set Intentions", subtitle: "Anchor your purpose today", duration: "5 min", color: "from-violet-400 to-purple-600", colorRgb: "167,139,250", category: "journaling" },
-        { id: "ground-am", emoji: "🌿", title: "Body Scan", subtitle: "Feel grounded in the now", duration: "4 min", color: "from-emerald-400 to-teal-600", colorRgb: "52,211,153", category: "grounding" },
+        { id: "breathing-1", emoji: "🌬️", title: "Breath Expansion", subtitle: "Oxygenate body & mind", duration: "3 min", color: "from-sky-400 to-indigo-500", colorRgb: "99,102,241", category: "breathing" },
+        { id: "journaling-1", emoji: "🌅", title: "Set Intentions", subtitle: "Anchor your purpose today", duration: "5 min", color: "from-violet-400 to-purple-600", colorRgb: "167,139,250", category: "journaling" },
+        { id: "grounding-1", emoji: "🌿", title: "Body Scan", subtitle: "Feel grounded in the now", duration: "4 min", color: "from-emerald-400 to-teal-600", colorRgb: "52,211,153", category: "grounding" },
     ],
     afternoon: [
-        { id: "focus-pm", emoji: "🎯", title: "Focus Reset", subtitle: "Clear mental fog, sharpen edge", duration: "5 min", color: "from-amber-400 to-orange-500", colorRgb: "251,191,36", category: "meditation" },
-        { id: "move-pm", emoji: "⚡", title: "Energy Flow", subtitle: "Move stagnant energy", duration: "7 min", color: "from-rose-400 to-pink-600", colorRgb: "251,113,133", category: "movement" },
-        { id: "breath-pm", emoji: "🌊", title: "Box Breathing", subtitle: "Regulate nervous system", duration: "3 min", color: "from-sky-400 to-blue-600", colorRgb: "56,189,248", category: "breathing" },
+        { id: "meditation-1", emoji: "🎯", title: "Focus Reset", subtitle: "Clear mental fog, sharpen edge", duration: "5 min", color: "from-amber-400 to-orange-500", colorRgb: "251,191,36", category: "meditation" },
+        { id: "movement-1", emoji: "⚡", title: "Energy Flow", subtitle: "Move stagnant energy", duration: "7 min", color: "from-rose-400 to-pink-600", colorRgb: "251,113,133", category: "movement" },
+        { id: "breathing-2", emoji: "🌊", title: "Box Breathing", subtitle: "Regulate nervous system", duration: "3 min", color: "from-sky-400 to-blue-600", colorRgb: "56,189,248", category: "breathing" },
     ],
     evening: [
-        { id: "reflect-ev", emoji: "🌙", title: "Day Reflection", subtitle: "Process, release, integrate", duration: "5 min", color: "from-indigo-400 to-slate-500", colorRgb: "129,140,248", category: "journaling" },
-        { id: "release-ev", emoji: "🫶", title: "Somatic Release", subtitle: "Melt the tension away", duration: "8 min", color: "from-violet-400 to-indigo-600", colorRgb: "167,139,250", category: "somatic" },
-        { id: "wind-ev", emoji: "✨", title: "Wind Down", subtitle: "Prepare for deep restoration", duration: "6 min", color: "from-slate-500 to-slate-700", colorRgb: "148,163,184", category: "meditation" },
+        { id: "journaling-2", emoji: "🌙", title: "Day Reflection", subtitle: "Process, release, integrate", duration: "5 min", color: "from-indigo-400 to-slate-500", colorRgb: "129,140,248", category: "journaling" },
+        { id: "movement-2", emoji: "🫶", title: "Somatic Release", subtitle: "Melt the tension away", duration: "8 min", color: "from-violet-400 to-indigo-600", colorRgb: "167,139,250", category: "movement" },
+        { id: "meditation-2", emoji: "✨", title: "Wind Down", subtitle: "Prepare for deep restoration", duration: "6 min", color: "from-slate-500 to-slate-700", colorRgb: "148,163,184", category: "meditation" },
     ],
 };
 
@@ -207,6 +209,33 @@ export function TodaysProtocol({ onAllComplete }: TodaysProtocolProps) {
     const [showConfetti, setShowConfetti] = useState(false);
     const [allDone, setAllDone] = useState(false);
 
+    const { data: completionData } = useQuery<{ completedIds: string[] }>({
+        queryKey: ["/api/activities/completions/today"],
+        retry: false,
+        staleTime: 5000,
+    });
+
+    useEffect(() => {
+        if (completionData?.completedIds) {
+            const newCompleted = new Set(completionData.completedIds);
+            setCompleted(newCompleted);
+
+            // If we just hit 3/3 completions, show confetti
+            const tod = getTimeOfDay();
+            const cards = PROTOCOL_SETS[tod];
+            const doneCountForTod = cards.filter(c => newCompleted.has(c.id)).length;
+
+            if (doneCountForTod === cards.length && !allDone) {
+                setAllDone(true);
+                setShowConfetti(true);
+                setTimeout(() => setShowConfetti(false), 3500);
+                onAllComplete?.();
+            } else if (doneCountForTod === cards.length) {
+                setAllDone(true);
+            }
+        }
+    }, [completionData]);
+
     const tod = getTimeOfDay();
     const cards = PROTOCOL_SETS[tod];
 
@@ -214,24 +243,13 @@ export function TodaysProtocol({ onAllComplete }: TodaysProtocolProps) {
     const isLocked = (idx: number) => idx > 0 && !completed.has(cards[idx - 1].id);
 
     const handleStart = (card: ProtocolCard, idx: number) => {
-        const next = new Set(completed).add(card.id);
-        setCompleted(next);
-
-        if (next.size === cards.length) {
-            setShowConfetti(true);
-            setAllDone(true);
-            setTimeout(() => setShowConfetti(false), 3500);
-            onAllComplete?.();
+        // Navigate directly to the specific activity detail page to complete it
+        // We use an immediate navigation so the user doesn't wait
+        if (card.category === "journaling" && (card.id === "journaling-1" || card.id === "journaling-2")) {
+            setLocation(`/voice-journal?ritual=${card.id}`);
+        } else {
+            setLocation(`/activities/${card.id}`);
         }
-
-        // Navigate after brief delay so the completion animation fires
-        setTimeout(() => {
-            if (card.category === "journaling") {
-                setLocation("/voice-journal");
-            } else {
-                setLocation(`/activities?recommended=true&category=${card.category}`);
-            }
-        }, 350);
     };
 
     const doneCount = completed.size;

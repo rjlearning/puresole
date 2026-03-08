@@ -4,6 +4,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import Logo from "@/components/Logo";
+import { FlowControlBar } from "@/components/FlowControlBar";
+
+import MeshBackground from "@/components/MeshBackground";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -55,6 +58,7 @@ export default function OnboardingAssessment() {
     const { isAuthenticated, isLoading } = useAuth();
 
     const [step, setStep] = useState(0);           // 0–4 = questions, 5 = processing
+    const [loadingMessage, setLoadingMessage] = useState("Analyzing your responses...");
     const [planId, setPlanId] = useState<string | null>(null);
     const [planLabel, setPlanLabel] = useState("your wellness");
     const [answers, setAnswers] = useState<Answers>({
@@ -64,6 +68,27 @@ export default function OnboardingAssessment() {
         presenting_concern: "",
         duration: "",
     });
+
+    // Cycle through loading messages when at step 5
+    useEffect(() => {
+        if (step !== 5) return;
+
+        const messages = [
+            "Analyzing your responses...",
+            "Synthesizing wellness patterns...",
+            "Architecting your skill tree...",
+            "Personalizing daily activities...",
+            "Finalizing your progression map..."
+        ];
+
+        let i = 0;
+        const interval = setInterval(() => {
+            i = (i + 1) % messages.length;
+            setLoadingMessage(messages[i]);
+        }, 3000);
+
+        return () => clearInterval(interval);
+    }, [step]);
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) setLocation("/auth");
@@ -113,36 +138,44 @@ export default function OnboardingAssessment() {
         }
     };
 
-    const next = () => setStep(s => s + 1);
+    const next = () => setStep(s => Math.min(s + 1, 5));
+    const prev = () => setStep(s => Math.max(s - 1, 0));
 
     const set = <K extends keyof Answers>(key: K, val: Answers[K]) =>
         setAnswers(prev => ({ ...prev, [key]: val }));
 
+    const isStepValid = () => {
+        if (step === 0) return answers.primary_goal !== "";
+        if (step === 3) return answers.presenting_concern !== "";
+        if (step === 4) return answers.duration !== "";
+        return true;
+    };
+
     if (isLoading || !isAuthenticated) return null;
 
+    const progress = (step / 5) * 100;
+
     return (
-        <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
-            {/* Background glow */}
-            <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-indigo-600/10 rounded-full blur-[120px]" />
-            </div>
+        <div className="min-h-screen text-white flex flex-col items-center justify-center p-6 pb-32 relative overflow-hidden">
+            <MeshBackground variant="unified" />
+            {/* Background glow - simplified as MeshBackground handles it now */}
 
             {/* Logo */}
             <div className="absolute top-8 left-8">
                 <Logo size="sm" showText />
             </div>
 
-            {/* Progress dots */}
+            {/* Progress dots - hidden if using FlowControlBar progress line, but keeping for flair */}
             {step < 5 && (
                 <div className="absolute top-8 right-8 flex items-center gap-1.5">
                     {[0, 1, 2, 3, 4].map(i => (
                         <div
                             key={i}
                             className={`rounded-full transition-all duration-500 ${i === step
-                                    ? "w-5 h-1.5 bg-indigo-400"
-                                    : i < step
-                                        ? "w-1.5 h-1.5 bg-indigo-600"
-                                        : "w-1.5 h-1.5 bg-slate-800"
+                                ? "w-5 h-1.5 bg-indigo-400"
+                                : i < step
+                                    ? "w-1.5 h-1.5 bg-indigo-600"
+                                    : "w-1.5 h-1.5 bg-slate-800"
                                 }`}
                         />
                     ))}
@@ -157,14 +190,14 @@ export default function OnboardingAssessment() {
                         <motion.div key="s0" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -24 }}>
                             <h2 className="text-3xl font-light text-center mb-2">What brings you here?</h2>
                             <p className="text-slate-400 text-center text-sm mb-10">Choose what resonates most with you right now.</p>
-                            <div className="grid grid-cols-1 gap-3 mb-10">
+                            <div className="grid grid-cols-1 gap-3">
                                 {GOALS.map(g => (
                                     <button
                                         key={g.id}
                                         onClick={() => { set("primary_goal", g.id); next(); }}
                                         className={`flex items-center gap-4 px-5 py-4 rounded-2xl border transition-all duration-200 text-left hover:scale-[1.02] active:scale-100 ${answers.primary_goal === g.id
-                                                ? "border-indigo-500 bg-indigo-500/10"
-                                                : "border-slate-800 bg-slate-900/60 hover:border-slate-700"
+                                            ? "border-indigo-500 bg-indigo-500/10"
+                                            : "border-slate-800 bg-slate-900/60 hover:border-slate-700"
                                             }`}
                                     >
                                         <span className="text-2xl">{g.emoji}</span>
@@ -180,14 +213,14 @@ export default function OnboardingAssessment() {
                         <motion.div key="s1" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -24 }} className="text-center">
                             <h2 className="text-3xl font-light mb-2">How has your mood been?</h2>
                             <p className="text-slate-400 text-sm mb-12">Lately, overall — not just today.</p>
-                            <div className="flex justify-center gap-4 mb-12">
+                            <div className="flex justify-center flex-wrap gap-4">
                                 {MOODS.map(m => (
                                     <button
                                         key={m.score}
                                         onClick={() => { set("mood_score", m.score); next(); }}
                                         className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all duration-200 hover:scale-110 active:scale-95 ${answers.mood_score === m.score
-                                                ? "border-indigo-500 bg-indigo-500/10"
-                                                : "border-slate-800 bg-slate-900/60 hover:border-slate-700"
+                                            ? "border-indigo-500 bg-indigo-500/10"
+                                            : "border-slate-800 bg-slate-900/60 hover:border-slate-700"
                                             }`}
                                     >
                                         <span className="text-3xl">{m.emoji}</span>
@@ -203,7 +236,7 @@ export default function OnboardingAssessment() {
                         <motion.div key="s2" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -24 }} className="text-center">
                             <h2 className="text-3xl font-light mb-2">How rested do you feel?</h2>
                             <p className="text-slate-400 text-sm mb-12">In the mornings, on average lately.</p>
-                            <div className="px-4 mb-12">
+                            <div className="px-4">
                                 <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-slate-500 mb-6">
                                     <span>Exhausted</span>
                                     <span>Fully Restored</span>
@@ -218,12 +251,6 @@ export default function OnboardingAssessment() {
                                     {answers.sleep_quality}<span className="text-2xl text-slate-600">%</span>
                                 </div>
                             </div>
-                            <button
-                                onClick={next}
-                                className="w-full max-w-[200px] mx-auto py-4 rounded-full bg-white text-slate-950 font-black tracking-wide flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-white/10"
-                            >
-                                Continue <ArrowRight className="w-4 h-4" />
-                            </button>
                         </motion.div>
                     )}
 
@@ -232,14 +259,14 @@ export default function OnboardingAssessment() {
                         <motion.div key="s3" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -24 }}>
                             <h2 className="text-3xl font-light text-center mb-2">Which resonates most?</h2>
                             <p className="text-slate-400 text-center text-sm mb-10">Be honest — there is no wrong answer.</p>
-                            <div className="grid grid-cols-1 gap-3 mb-10">
+                            <div className="grid grid-cols-1 gap-3">
                                 {CONCERNS.map(c => (
                                     <button
                                         key={c.id}
                                         onClick={() => { set("presenting_concern", c.id); next(); }}
                                         className={`relative flex items-center px-5 py-4 rounded-2xl border transition-all duration-200 text-left overflow-hidden hover:scale-[1.02] active:scale-100 ${answers.presenting_concern === c.id
-                                                ? "border-white/30 bg-white/10"
-                                                : "border-slate-800 bg-slate-900/60 hover:border-slate-700"
+                                            ? "border-white/30 bg-white/10"
+                                            : "border-slate-800 bg-slate-900/60 hover:border-slate-700"
                                             }`}
                                     >
                                         <div className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${c.gradient} opacity-80`} />
@@ -255,14 +282,14 @@ export default function OnboardingAssessment() {
                         <motion.div key="s4" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -24 }} className="text-center">
                             <h2 className="text-3xl font-light mb-2">How long has this been going on?</h2>
                             <p className="text-slate-400 text-sm mb-12">A rough estimate is perfectly fine.</p>
-                            <div className="grid grid-cols-2 gap-3 mb-12">
+                            <div className="grid grid-cols-2 gap-3">
                                 {DURATIONS.map(d => (
                                     <button
                                         key={d.id}
                                         onClick={() => { set("duration", d.id); next(); }}
                                         className={`py-5 rounded-2xl border font-bold text-lg transition-all duration-200 hover:scale-105 active:scale-95 ${answers.duration === d.id
-                                                ? "border-indigo-500 bg-indigo-500/10 text-indigo-400"
-                                                : "border-slate-800 bg-slate-900/60 hover:border-slate-700 text-slate-300"
+                                            ? "border-indigo-500 bg-indigo-500/10 text-indigo-400"
+                                            : "border-slate-800 bg-slate-900/60 hover:border-slate-700 text-slate-300"
                                             }`}
                                     >
                                         {d.label}
@@ -306,9 +333,9 @@ export default function OnboardingAssessment() {
                                 initial={{ opacity: 0, y: 8 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.4 }}
-                                className="text-2xl font-light mb-3"
+                                className="text-2xl font-light mb-3 min-h-[40px]"
                             >
-                                Designing your plan
+                                {loadingMessage}
                             </motion.h2>
                             <motion.p
                                 initial={{ opacity: 0 }}
@@ -336,6 +363,18 @@ export default function OnboardingAssessment() {
 
                 </AnimatePresence>
             </div>
+
+            {step < 5 && (
+                <FlowControlBar
+                    onBack={prev}
+                    onNext={next}
+                    showBack={step > 0}
+                    isNextDisabled={!isStepValid()}
+                    isLastStep={step === 4}
+                    nextLabel={step === 4 ? "Generate Plan" : "Continue"}
+                    progress={progress}
+                />
+            )}
         </div>
     );
 }

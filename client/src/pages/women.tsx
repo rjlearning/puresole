@@ -9,11 +9,22 @@ import { Button } from "@/components/ui/button";
 import { WellnessHalo } from '@/components/voice/WellnessHalo';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePhase } from '@/context/PhaseContext';
+import { useQuery } from '@tanstack/react-query';
+import MeshBackground from "@/components/MeshBackground";
 
 export default function WomenPage() {
     const { phase, phaseInfo } = usePhase();
     const [cycleData, setCycleData] = useState({ day: 14, phase: 'ovulatory' });
     const [bodyData, setBodyData] = useState({ sleep: 6.5, energy: 3 });
+
+    const { data: analysis, isLoading: analysisLoading } = useQuery<any>({
+        queryKey: ["/api/postpartum/comprehensive-analysis"],
+        queryFn: async () => {
+            const res = await fetch("/api/postpartum/comprehensive-analysis");
+            if (!res.ok) return null;
+            return res.json();
+        }
+    });
 
     useEffect(() => {
         const cDay = localStorage.getItem('cycle_day');
@@ -45,20 +56,39 @@ export default function WomenPage() {
     };
 
     return (
-        <div className="min-h-screen pb-32 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-rose-50 via-white to-slate-50 overflow-x-hidden relative max-w-full">
+        <div className="min-h-screen pb-32 text-slate-900 relative max-w-full overflow-x-hidden" data-testid="women-hub">
+            <MeshBackground variant="rose" />
 
-            {/* ── Subtle Background Decoral ── */}
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-rose-200/20 blur-[120px] rounded-full -mr-64 -mt-32 pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-200/20 blur-[100px] rounded-full -ml-32 -mb-32 pointer-events-none" />
-
-            {/* ── Top Header ── */}
-            <header className="fixed top-0 inset-x-0 z-40 bg-white/80 backdrop-blur-xl border-b border-rose-100/30 h-16 sm:h-20 flex items-center px-4 sm:px-6">
-                <div className="max-w-6xl mx-auto w-full flex items-center justify-between">
-                    <div>
-                        <p className="text-[10px] font-black text-rose-500 uppercase tracking-[0.3em] leading-none mb-1">Biological Core</p>
-                        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Women's Wellness <span className="text-rose-500">Hub</span></h1>
+// ── Top Header ──
+            <header className="fixed top-0 inset-x-0 z-50 bg-white/40 backdrop-blur-xl border-b border-rose-100/50 h-16 sm:h-20 flex items-center px-4 sm:px-6">
+                <div className="max-w-6xl mx-auto w-full flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 min-w-0">
+                        <Link href="/dashboard">
+                            <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                                className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-rose-50 hover:text-rose-500 transition-colors shrink-0">
+                                <Activity className="w-5 h-5 rotate-180" />
+                            </motion.button>
+                        </Link>
+                        <div className="truncate">
+                            <p className="text-[10px] font-black text-rose-500 uppercase tracking-[0.3em] leading-none mb-1">Biological Core</p>
+                            <h1 className="text-xl font-black text-slate-900 tracking-tight truncate">Women's Wellness Hub</h1>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2 sm:gap-4">
+
+                    <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+                        {/* Global Navigation Links integrated into the hub header */}
+                        <div className="hidden md:flex items-center gap-6 mr-4 border-r border-slate-100 pr-6">
+                            <Link href="/community">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-rose-500 cursor-pointer transition-colors">World</span>
+                            </Link>
+                            <Link href="/sos">
+                                <span className="text-[10px] font-black text-rose-400 uppercase tracking-widest hover:text-rose-600 cursor-pointer transition-colors">SOS</span>
+                            </Link>
+                            <Link href="/settings">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-rose-500 cursor-pointer transition-colors">Settings</span>
+                            </Link>
+                        </div>
+
                         <Link href="/phase-select">
                             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                                 className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-900 text-white shadow-lg shadow-slate-900/10 text-[10px] font-black uppercase tracking-widest">
@@ -167,22 +197,28 @@ export default function WomenPage() {
 
                                     <div className="bg-white border border-rose-100 rounded-[2.5rem] p-7 sm:p-8 shadow-sm space-y-6">
                                         <p className="text-slate-800 leading-relaxed font-bold text-lg sm:text-xl">
-                                            Day {cycleData.day} metabolic transition.
+                                            {analysis?.currentPhaseName || `Day ${cycleData.day} metabolic transition.`}
                                         </p>
                                         <div className="space-y-5">
                                             <div className="flex gap-4 items-start">
                                                 <div className="w-2 h-2 rounded-full bg-rose-400 mt-2 shrink-0 shadow-[0_0_10px_rgba(251,113,133,0.3)]" />
-                                                <p className="text-sm sm:text-base text-slate-600 font-semibold">Increase complex carb intake (cortisol stability).</p>
+                                                <p className="text-sm sm:text-base text-slate-600 font-semibold">
+                                                    {analysis?.physiologicalBridge || "Increase complex carb intake (cortisol stability)."}
+                                                </p>
                                             </div>
-                                            <div className="flex gap-4 items-start">
-                                                <div className="w-2 h-2 rounded-full bg-indigo-400 mt-2 shrink-0 shadow-[0_0_10px_rgba(129,140,248,0.3)]" />
-                                                <p className="text-sm sm:text-base text-slate-600 font-semibold">15m Somatic movement for nervous support.</p>
-                                            </div>
+                                            {analysis?.milestones && analysis.milestones.length > 0 && (
+                                                <div className="flex gap-4 items-start">
+                                                    <div className="w-2 h-2 rounded-full bg-indigo-400 mt-2 shrink-0 shadow-[0_0_10px_rgba(129,140,248,0.3)]" />
+                                                    <p className="text-sm sm:text-base text-slate-600 font-semibold">
+                                                        Next Milestone: {analysis.milestones[0].label}
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
 
-                                <Link href="/dashboard">
+                                <Link href="/women/protocol">
                                     <button className="mt-10 flex items-center gap-3 text-indigo-600 font-black text-xs uppercase tracking-[0.25em] group-hover:text-indigo-900 transition-all">
                                         Clinical Protocol <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                     </button>

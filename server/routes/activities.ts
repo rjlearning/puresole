@@ -232,10 +232,21 @@ const sampleActivities: Activity[] = [
 router.get('/activities', async (req, res) => {
   try {
     const { category } = req.query;
-    const activities = await storage.getWellnessActivities(category as string);
+    let activities = await storage.getWellnessActivities(category as string);
+
+    // Add static activities
+    const { sampleActivities } = await import('../../shared/lib/activity-data');
+    let staticActivities = sampleActivities;
+    if (category && category !== 'all') {
+      staticActivities = sampleActivities.filter((a: any) => a.category === category);
+    }
+
+    // Combine and deduplicate by ID
+    const combined = [...activities, ...staticActivities];
+    const uniqueActivities = Array.from(new Map(combined.map(a => [a.id, a])).values());
 
     // Format activities for frontend (convert text to arrays)
-    const formattedActivities = activities.map(a => ({
+    const formattedActivities = uniqueActivities.map((a: any) => ({
       ...a,
       instructions: typeof a.instructions === 'string' ? a.instructions.split('\n').filter(Boolean) : a.instructions,
       benefits: typeof a.benefits === 'string' ? a.benefits.split('\n').filter(Boolean) : a.benefits
@@ -248,11 +259,67 @@ router.get('/activities', async (req, res) => {
   }
 });
 
+// GET today's activity completions for the current user
+router.get('/activities/completions/today', isAuthenticated, async (req: any, res) => {
+  try {
+    const userId = (req.user as any)?.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const completions = await storage.getActivityCompletionsByUser(userId, startOfDay, new Date());
+    // Return just the IDs for easy checking in the UI
+    res.json({ completedIds: completions.map(c => c.activityId) });
+  } catch (error) {
+    console.error('[Activities] Error fetching today\'s completions:', error);
+    res.status(500).json({ error: 'Failed to fetch today\'s completions' });
+  }
+});
+
 // GET single activity
 router.get('/activities/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const activity = await storage.getWellnessActivity(id);
+    let activity: any = await storage.getWellnessActivity(id);
+
+    if (!activity) {
+      // Fall back to static list
+      const { sampleActivities } = await import('../../shared/lib/activity-data');
+      activity = sampleActivities.find((a: any) => a.id === id);
+    }
+
+    if (!activity) {
+      const userId = (req.user as any)?.id;
+      if (userId) {
+        const plans = await storage.getTreatmentPlansByUser(userId);
+        for (const plan of plans) {
+          const modules = await storage.getTreatmentModulesByPlan(plan.id);
+          for (const mod of modules) {
+            const activities = (mod.content as any)?.activities || [];
+            const decodedId = decodeURIComponent(id);
+            const found = activities.find((a: any) => a.name === id || a.name === decodedId);
+            if (found) {
+              activity = {
+                id: found.name,
+                name: found.name,
+                description: found.description || found.instructions || '',
+                category: found.type || 'exercise',
+                difficulty: 'beginner',
+                duration: found.duration || 10,
+                icon_emoji: '✨',
+                gradient_class: 'from-indigo-500 to-rose-500',
+                benefits: ['Personalized for your specific emotional state'],
+                instructions: found.instructions || found.description || '',
+                animation_type: 'default'
+              };
+              break;
+            }
+          }
+          if (activity) break;
+        }
+      }
+    }
 
     if (!activity) {
       return res.status(404).json({ error: 'Activity not found' });
@@ -282,13 +349,46 @@ router.post('/activities/:id/complete', isAuthenticated, async (req: any, res) =
     }
     const { effectiveness_rating, notes, duration_actual } = req.body;
 
-    // Try to get activity from storage, fall back to static data
     let activity: any = null;
+    let foundPlanId: string | null = null;
+    let foundModuleId: string | null = null;
+
     try { activity = await storage.getWellnessActivity(id); } catch (_) { }
     if (!activity) {
       // Fall back to static list
-      const { sampleActivities } = await import('../../client/src/lib/activity-data');
+      const { sampleActivities } = await import('../../shared/lib/activity-data');
       activity = sampleActivities.find((a: any) => a.id === id);
+    }
+
+    if (!activity) {
+      const plans = await storage.getTreatmentPlansByUser(userId);
+      for (const plan of plans) {
+        const modules = await storage.getTreatmentModulesByPlan(plan.id);
+        for (const mod of modules) {
+          const activities = (mod.content as any)?.activities || [];
+          const decodedId = decodeURIComponent(id);
+          const found = activities.find((a: any) => a.name === id || a.name === decodedId);
+          if (found) {
+            activity = {
+              id: found.name,
+              name: found.name,
+              description: found.description || found.instructions || '',
+              category: found.type || 'exercise',
+              difficulty: 'beginner',
+              duration: found.duration || 10,
+              icon_emoji: '✨',
+              gradient_class: 'from-indigo-500 to-rose-500',
+              benefits: ['Personalized for your specific emotional state'],
+              instructions: found.instructions || found.description || '',
+              animation_type: 'default'
+            };
+            foundPlanId = plan.id;
+            foundModuleId = mod.id;
+            break;
+          }
+        }
+        if (activity) break;
+      }
     }
     if (!activity) {
       return res.status(404).json({ error: 'Activity not found' });
@@ -299,23 +399,38 @@ router.post('/activities/:id/complete', isAuthenticated, async (req: any, res) =
     const effectivenessBonus = Math.round(((effectiveness_rating || 5) / 10) * 20);
     const points_earned = 10 + durationBonus + effectivenessBonus;
 
-    // Save to activity_logs table
-    await pool.query(
-      `INSERT INTO activity_logs (
-        user_id, activity_id, activity_name, category,
-        duration_actual, effectiveness_rating, notes, points_earned, completed_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
-      [
+    // Save to user_activity_completions table
+    await storage.createActivityCompletion({
+      userId,
+      activityId: id,
+      durationActual: duration_actual || 0,
+      effectivenessRating: effectiveness_rating || 5,
+      notes: notes || null,
+      completedAt: new Date(),
+    });
+
+    if (foundPlanId && foundModuleId) {
+      await storage.createProgressEntry({
         userId,
-        id,
-        activity.name,
-        activity.category,
-        duration_actual || 0,
-        effectiveness_rating || 5,
-        notes || null,
-        points_earned
-      ]
-    );
+        planId: foundPlanId,
+        moduleId: foundModuleId,
+        activityName: activity.name,
+        activityType: activity.category,
+        completed: true,
+        date: new Date()
+      });
+    }
+
+    // Update active treatment plan progress
+    const plans = await storage.getTreatmentPlansByUser(userId);
+    const activePlan = plans[0];
+    if (activePlan) {
+      const currentPct = Number(activePlan.progressPercentage || 0);
+      const newPct = Math.min(100, currentPct + 5);
+      await storage.updateTreatmentPlan(activePlan.id, {
+        progressPercentage: newPct.toString()
+      });
+    }
 
     res.json({
       success: true,

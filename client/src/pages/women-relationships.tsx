@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Users, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { Link } from 'wouter';
+import MeshBackground from "@/components/MeshBackground";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 const TOPICS = [
@@ -132,12 +134,14 @@ export default function WomenRelationshipsPage() {
     const [tab, setTab] = useState<'resources' | 'reflect'>('resources');
 
     return (
-        <div className="min-h-screen pb-24" style={{ background: 'linear-gradient(160deg,#fffbeb,#fff7ed,#fefce8)' }}>
-            {/* Header */}
-            <div className="px-5 pt-10 pb-4 max-w-2xl mx-auto">
-                <a href="/women" className="flex items-center gap-1.5 text-sm text-amber-400 hover:text-amber-600 mb-5">
-                    <ChevronLeft className="w-4 h-4" /> Women's Section
-                </a>
+        <div className="min-h-screen pb-24 relative overflow-hidden text-slate-900">
+            <MeshBackground variant="rose" />
+            <div className="px-5 pt-10 pb-4 max-w-2xl mx-auto relative z-10">
+                <Link href="/women">
+                    <span className="flex items-center gap-1.5 text-sm text-amber-500 font-bold hover:text-amber-600 mb-5 cursor-pointer">
+                        <ChevronLeft className="w-4 h-4" /> Women's Hub
+                    </span>
+                </Link>
                 <div className="flex items-center gap-3 mb-4">
                     <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-xl shadow" style={{ background: 'linear-gradient(135deg,#f59e0b,#f97316)' }}>👩‍👧</div>
                     <div>
@@ -145,14 +149,14 @@ export default function WomenRelationshipsPage() {
                         <p className="text-xs text-amber-400">Invisible labor · communication · identity</p>
                     </div>
                 </div>
-                <div className="flex bg-white rounded-2xl p-1 border border-amber-100 shadow-sm gap-1">
-                    {([['resources', 'Topics & Resources'], ['reflect', 'Reflection Prompts']] as const).map(([id, label]) => (
-                        <button key={id} onClick={() => setTab(id as any)} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${tab === id ? 'bg-amber-500 text-white shadow' : 'text-amber-400 hover:bg-amber-50'}`}>{label}</button>
+                <div className="flex bg-white/40 backdrop-blur-xl rounded-[1.5rem] p-1 border border-amber-100/50 shadow-sm gap-1">
+                    {([['resources', 'Identity & Labor'], ['reflect', 'Biometric Reflection']] as const).map(([id, label]) => (
+                        <button key={id} onClick={() => setTab(id as any)} className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${tab === id ? 'bg-amber-500 text-white shadow-lg' : 'text-slate-500 hover:bg-amber-50'}`}>{label}</button>
                     ))}
                 </div>
             </div>
 
-            <div className="px-5 max-w-2xl mx-auto space-y-3">
+            <div className="px-5 max-w-2xl mx-auto space-y-3 relative z-10">
                 {tab === 'resources' && (
                     <>
                         <p className="text-xs text-slate-500 leading-relaxed pb-1">

@@ -1,5 +1,8 @@
 import OpenAI from 'openai';
-import { pool } from '../db';
+import { pool, db } from '../db';
+import { behaviorProfiles } from '@shared/schema';
+import { eq } from 'drizzle-orm';
+import { getBehavioralSystemPrompt } from '../ai/behaviorModeling';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -64,6 +67,13 @@ export async function getChatCompletion(
       systemPrompt += '\n\nUse a professional, clinical tone while remaining warm.';
     } else if (settings.personality === 'casual') {
       systemPrompt += '\n\nUse a friendly, casual tone like talking to a supportive friend.';
+    }
+
+    // [PHASE 12] Inject Behavioral Clinical Memory
+    const [profile] = await db.select().from(behaviorProfiles).where(eq(behaviorProfiles.userId, userId)).limit(1);
+    const behavioralContext = getBehavioralSystemPrompt(profile);
+    if (behavioralContext) {
+      systemPrompt += `\n\n${behavioralContext}`;
     }
 
     // Adjust max tokens based on response length

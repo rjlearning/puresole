@@ -26,18 +26,67 @@ import { useAuth } from '@/hooks/useAuth';
 import { Link } from 'wouter';
 import { restartOnboarding } from '@/components/OnboardingManager';
 import { FeedbackModal } from '@/components/FeedbackModal';
+import { useLocation } from 'wouter';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 export default function Settings() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [saved, setSaved] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
 
   const { data: subscription } = useQuery<any>({ queryKey: ['/api/subscription'] });
 
   const handleSave = () => {
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleResetProgress = async () => {
+    setIsResetting(true);
+    try {
+      await apiRequest('POST', '/api/user/reset');
+
+      // Clear localStorage (Gender, Phase, etc.)
+      localStorage.removeItem('user_gender');
+      localStorage.removeItem('phase_chosen');
+      localStorage.removeItem('user_phase');
+      localStorage.removeItem('puresoul_onboarding_completed');
+      localStorage.removeItem('cycle_day');
+      localStorage.removeItem('body_entries');
+
+      toast({
+        title: "Progress Reset",
+        description: "Your data has been cleared. Restarting onboarding...",
+      });
+      // Clear query cache
+      queryClient.clear();
+      // Redirect to onboarding
+      setLocation('/onboarding');
+    } catch (error: any) {
+      toast({
+        title: "Reset Failed",
+        description: error.message || "Failed to reset progress. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   return (
@@ -402,6 +451,35 @@ export default function Settings() {
                     <Trash2 className="w-4 h-4 mr-2" />
                     Delete Account
                   </Button>
+                </div>
+
+                <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                  <h3 className="font-semibold text-orange-900 mb-2 font-serif">Reset Progress</h3>
+                  <p className="text-sm text-orange-700 mb-4">
+                    Clear all your assessments, treatment plans, and wellness history. This allows you to start the onboarding flow from the beginning.
+                  </p>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" className="text-orange-600 border-orange-300 hover:bg-orange-100" disabled={isResetting}>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        {isResetting ? "Resetting..." : "Reset All Progress"}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action will permanently delete all your assessment history, treatment plans, and progress logs. You will be redirected to the onboarding flow to start fresh.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleResetProgress} className="bg-orange-600 hover:bg-orange-700">
+                          Confirm Reset
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             </Card>

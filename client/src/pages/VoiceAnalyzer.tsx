@@ -211,14 +211,29 @@ export default function VoiceAnalyzer() {
                                 <h3 className="text-xl font-bold text-white mb-2 mt-4">{insights.bonusUnlocked.title}</h3>
                                 <p className="text-indigo-200 text-sm leading-relaxed mb-6">{insights.bonusUnlocked.description}</p>
 
-                                <button className="w-full py-3 bg-white text-indigo-900 font-black text-sm rounded-xl hover:scale-105 active:scale-95 transition-all flex justify-center items-center gap-2">
+                                <button
+                                    onClick={() => setLocation('/activities/somatic-1')}
+                                    className="w-full py-3 bg-white text-indigo-900 font-black text-sm rounded-xl hover:scale-105 active:scale-95 transition-all flex justify-center items-center gap-2"
+                                >
                                     <Brain className="w-4 h-4" /> Start Protocol ({insights.bonusUnlocked.duration})
                                 </button>
                             </div>
 
-                            <button onClick={() => setAnalysisState('idle')} className="w-full py-3 text-slate-500 font-bold text-xs uppercase tracking-widest hover:text-white transition-colors">
-                                Analyze Again
-                            </button>
+                            <div className="space-y-3">
+                                <button
+                                    onClick={() => setLocation('/voice-insights')}
+                                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm rounded-xl hover:scale-105 active:scale-95 transition-all shadow-lg shadow-indigo-600/20 flex justify-center items-center gap-2"
+                                >
+                                    <Sparkles className="w-4 h-4" /> View Full Biomarker Dashboard
+                                </button>
+
+                                <button
+                                    onClick={() => setAnalysisState('idle')}
+                                    className="w-full py-3 text-slate-500 font-bold text-xs uppercase tracking-widest hover:text-white transition-colors"
+                                >
+                                    Analyze Again
+                                </button>
+                            </div>
                         </motion.div>
                     )}
 

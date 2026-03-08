@@ -43,7 +43,7 @@ import {
   type InsertSupportTicket,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, lte } from "drizzle-orm";
+import { eq, desc, and, gte, lte, sql, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -127,6 +127,7 @@ export interface IStorage {
   getWellnessActivity(id: string): Promise<any | undefined>;
   createActivityCompletion(completion: any): Promise<any>;
   getActivityCompletionsByUser(userId: string, startDate?: Date, endDate?: Date): Promise<any[]>;
+  resetUserProgress(userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -671,6 +672,88 @@ export class DatabaseStorage implements IStorage {
       .from(userActivityCompletions)
       .where(eq(userActivityCompletions.userId, userId))
       .orderBy(desc(userActivityCompletions.completedAt));
+  }
+
+  async resetUserProgress(userId: string): Promise<void> {
+    const {
+      dailySignals, behaviorProfiles, voiceEntries, voiceAnalyses,
+      wellnessPlans, planItems, userGoals, goalProgress,
+      wellnessInsights, recommendations, userActivityCompletions,
+      userAchievements, userStats, safetyPlans, wellnessReports,
+      reportAccessLogs, entries, customFields, flexibleInsights,
+      entryRelationships, entryTemplates, views, viewShares,
+      viewAccessLog, voiceRealtimeSessions, biomarkerResults,
+      wearableDataPoints, mealPlans, supplementProtocols
+    } = await import("@shared/schema");
+
+    await db.transaction(async (tx) => {
+      // 1. Delete data from related tables
+      await tx.delete(progressEntries).where(eq(progressEntries.userId, userId));
+
+      // Fix: Use inArray with a subquery to handle multiple plans
+      const userPlanIds = db.select({ id: treatmentPlans.id }).from(treatmentPlans).where(eq(treatmentPlans.userId, userId));
+      await tx.delete(treatmentModules).where(inArray(treatmentModules.planId, userPlanIds));
+
+      await tx.delete(treatmentPlans).where(eq(treatmentPlans.userId, userId));
+      await tx.delete(assessments).where(eq(assessments.userId, userId));
+      await tx.delete(conversationAssessments).where(eq(conversationAssessments.userId, userId));
+      await tx.delete(crisisAlerts).where(eq(crisisAlerts.userId, userId));
+
+      // Phase 12+ tables
+      await tx.delete(dailySignals).where(eq(dailySignals.userId, userId));
+      await tx.delete(behaviorProfiles).where(eq(behaviorProfiles.userId, userId));
+
+      // Other feature tables
+      await tx.delete(voiceAnalyses).where(eq(voiceAnalyses.userId, userId));
+      await tx.delete(voiceEntries).where(eq(voiceEntries.userId, userId));
+      await tx.delete(wellnessPlans).where(eq(wellnessPlans.userId, userId));
+      await tx.delete(userGoals).where(eq(userGoals.userId, userId));
+      await tx.delete(wellnessInsights).where(eq(wellnessInsights.userId, userId));
+      await tx.delete(recommendations).where(eq(recommendations.userId, userId));
+      await tx.delete(userActivityCompletions).where(eq(userActivityCompletions.userId, userId));
+      await tx.delete(userAchievements).where(eq(userAchievements.userId, userId));
+      await tx.delete(safetyPlans).where(eq(safetyPlans.userId, userId));
+      await tx.delete(wellnessReports).where(eq(wellnessReports.userId, userId));
+      await tx.delete(entries).where(eq(entries.userId, userId));
+      await tx.delete(customFields).where(eq(customFields.userId, userId));
+      await tx.delete(flexibleInsights).where(eq(flexibleInsights.userId, userId));
+      await tx.delete(viewAccessLog).where(eq(viewAccessLog.userId, userId));
+      await tx.delete(voiceRealtimeSessions).where(eq(voiceRealtimeSessions.userId, userId));
+      await tx.delete(biomarkerResults).where(eq(biomarkerResults.userId, userId));
+      await tx.delete(wearableDataPoints).where(eq(wearableDataPoints.userId, userId));
+      await tx.delete(mealPlans).where(eq(mealPlans.userId, userId));
+      await tx.delete(supplementProtocols).where(eq(supplementProtocols.userId, userId));
+
+      // 2. Reset user stats to defaults
+      await tx.update(userStats)
+        .set({
+          totalPoints: 0,
+          currentStreak: 0,
+          longestStreak: 0,
+          totalActivities: 0,
+          totalVoiceEntries: 0,
+          level: 1,
+          experiencePoints: 0,
+          lastActivityDate: null,
+          updatedAt: new Date()
+        })
+        .where(eq(userStats.userId, userId));
+
+      // 3. Reset profile fields in users table
+      await tx.update(users)
+        .set({
+          postpartumDeliveryDate: null,
+          postpartumDeliveryType: null,
+          isBreastfeeding: false,
+          weight: null,
+          height: null,
+          age: null,
+          activityLevel: null,
+          fitnessGoal: null,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, userId));
+    });
   }
 }
 

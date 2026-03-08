@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/Logo";
 import { Link } from "wouter";
-import { ArrowRight, Sparkles, MessageCircle, Moon, Activity, Zap, Star, Heart, FileText, Brain, ShieldCheck, Lock, Scale } from "lucide-react";
+import { ArrowRight, Sparkles, MessageCircle, Moon, Activity, Zap, Star, Heart, FileText, Brain, ShieldCheck, Lock, Scale, Mic } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -164,22 +164,66 @@ export default function Landing() {
           <h1 className="text-4xl md:text-7xl font-semibold tracking-tight mb-4 md:mb-6 leading-[1.1] text-slate-900 drop-shadow-sm transition-all duration-1000">
             {isCalm ? 'Transform your' : 'Identify your'} <br />
             <span className={`text-transparent bg-clip-text transition-all duration-1000 ${isCalm ? 'bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500' : 'bg-gradient-to-r from-rose-500 via-orange-500 to-red-500'}`}>
-              internal weather.
+              Clinical Memory.
             </span>
           </h1>
 
           <p className="text-lg md:text-xl text-slate-500 font-medium mb-10 max-w-xl mx-auto leading-relaxed">
-            PureSoul instantly turns overwhelming mental friction into actionable clinical calm.
+            The first mental health engine that remembers <strong>you</strong>. PureSoul fuses passive signals into actionable, longitudinal clarity.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
             <Link href="/auth">
               <Button size="lg" className="h-14 md:h-16 px-8 md:px-10 rounded-full text-lg md:text-xl font-medium bg-slate-900 text-white shadow-xl shadow-indigo-200 scale-100 hover:scale-105 transition-all duration-300">
-                Start Healing
+                Start Your Journey
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
           </div>
+
+          {/* NEW: Signal Fusion Visualization (Phase 13) */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            className="max-w-4xl mx-auto p-8 rounded-[3rem] bg-indigo-900/5 border border-indigo-500/10 relative overflow-hidden group"
+          >
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent" />
+            <div className="flex flex-wrap justify-center gap-4 md:gap-8 mb-8">
+              {[
+                { label: 'Mood', icon: Heart, color: 'text-rose-400' },
+                { label: 'Energy', icon: Zap, color: 'text-amber-400' },
+                { label: 'Voice', icon: Mic, color: 'text-cyan-400' },
+                { label: 'Sleep', icon: Moon, color: 'text-purple-400' },
+              ].map((s, i) => (
+                <div key={i} className="flex flex-col items-center gap-2">
+                  <div className={`w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center ${s.color}`}>
+                    <s.icon className="w-5 h-5" />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{s.label}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <div className="h-px flex-1 bg-slate-200" />
+              <div className="px-4 py-1 rounded-full bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.3em]">Neural Fusion</div>
+              <div className="h-px flex-1 bg-slate-200" />
+            </div>
+
+            <div className="flex flex-col items-center">
+              <div className="relative w-20 h-20 md:w-24 md:h-24 bg-white rounded-full shadow-2xl flex items-center justify-center overflow-hidden border-4 border-indigo-50">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+                  className="absolute inset-0 bg-[conic-gradient(from_0deg,#818cf8,#f472b6,#34d399,#818cf8)] opacity-20"
+                />
+                <Brain className="w-8 h-8 md:w-10 md:h-10 text-indigo-600 relative z-10" />
+              </div>
+              <p className="mt-6 text-sm md:text-base font-medium text-slate-600 max-w-lg italic">
+                "System intelligence determines your baseline with minimal data, using longitudinal behavioral fingerprinting to guide your recovery."
+              </p>
+            </div>
+          </motion.div>
         </motion.div>
       </section>
 
