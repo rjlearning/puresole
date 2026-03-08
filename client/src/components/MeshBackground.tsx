@@ -6,10 +6,10 @@ interface MeshBackgroundProps {
 
 export default function MeshBackground({ variant = "unified" }: MeshBackgroundProps) {
     const colors = {
-        indigo: ["#4f46e5", "#818cf8", "#312e81"],
-        rose: ["#f43f5e", "#fb7185", "#881337"],
-        emerald: ["#10b981", "#34d399", "#064e3b"],
-        unified: ["#4f46e5", "#f43f5e", "#10b981"]
+        indigo: ["#312e81", "#4338ca", "#1e1b4b"], // Deeper Indigo tones
+        rose: ["#9f1239", "#be123c", "#4c0519"],   // Deeper Rose/Crimson
+        emerald: ["#064e3b", "#065f46", "#022c22"], // Deeper Emerald
+        unified: ["#312e81", "#881337", "#064e3b"]  // Combined deep tones
     };
 
     const selectedColors = colors[variant];
@@ -28,7 +28,11 @@ export default function MeshBackground({ variant = "unified" }: MeshBackgroundPr
                     ease: "linear",
                 }}
                 className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full blur-[120px] opacity-[0.15]"
-                style={{ backgroundColor: selectedColors[0] }}
+                style={{
+                    backgroundColor: selectedColors[0],
+                    willChange: "transform",
+                    WebkitBackfaceVisibility: "hidden"
+                }}
             />
             <motion.div
                 animate={{
@@ -42,7 +46,11 @@ export default function MeshBackground({ variant = "unified" }: MeshBackgroundPr
                     ease: "linear",
                 }}
                 className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full blur-[120px] opacity-[0.12]"
-                style={{ backgroundColor: selectedColors[1] }}
+                style={{
+                    backgroundColor: selectedColors[1],
+                    willChange: "transform",
+                    WebkitBackfaceVisibility: "hidden"
+                }}
             />
             <motion.div
                 animate={{
@@ -56,7 +64,11 @@ export default function MeshBackground({ variant = "unified" }: MeshBackgroundPr
                     ease: "linear",
                 }}
                 className="absolute top-[20%] right-[10%] w-[40%] h-[40%] rounded-full blur-[100px] opacity-[0.08]"
-                style={{ backgroundColor: selectedColors[2] }}
+                style={{
+                    backgroundColor: selectedColors[2],
+                    willChange: "transform",
+                    WebkitBackfaceVisibility: "hidden"
+                }}
             />
         </div>
     );

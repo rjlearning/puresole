@@ -7,49 +7,49 @@
 
 @layer base {
   :root {
-    /* High Contrast / Supabase Inspired Palette */
+    /* Premium Dark / Depth-First Palette */
 
-    /* Backgrounds: Crisp & Deep */
-    --background: 210 40% 98%;
-    /* Light grey-white fallback */
-    --foreground: 222 47% 11%;
+    /* Backgrounds: Deep Slate & Black */
+    --background: 222 47% 4%;
+    /* #030712 - Very dark slate */
+    --foreground: 210 40% 98%;
+    /* White/slate contrast */
 
-    /* Pure White for Cards in Light Mode */
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    /* Glassmorphic Cards */
+    --card: 222 47% 6%;
+    /* Slightly lighter than background */
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 222 47% 4%;
+    --popover-foreground: 210 40% 98%;
 
-    /* Primary: Vibrant Supabase Green */
-    --primary: 153 60% 53%;
-    /* #3ecf8e */
-    --primary-foreground: 153 60% 5%;
+    /* Primary: Vibrant Indigo/Cyan Gradient base */
+    --primary: 250 84% 67%;
+    /* Brand Indigo */
+    --primary-foreground: 210 40% 98%;
 
-    /* Secondary: Slate for contrast */
-    --secondary: 215 25% 27%;
+    /* Secondary: Muted Sapphire */
+    --secondary: 222 47% 12%;
     --secondary-foreground: 210 40% 98%;
 
-    /* Accent: Indigo for brand depth */
-    --accent: 250 84% 67%;
-    --accent-foreground: 250 84% 15%;
+    /* Accent: Hypnotic Rose/Cyan depending on context */
+    --accent: 339 90% 66%;
+    /* Rose */
+    --accent-foreground: 210 40% 98%;
 
-    /* Muted: Professional Grays */
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 40%;
-    /* Slightly darker for contrast */
+    /* Muted: Deep Grays */
+    --muted: 222 47% 12%;
+    --muted-foreground: 215.4 16.3% 56.9%;
 
-    /* Destructive: Error Red */
+    /* Destructive: Deep Crimson */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 85%;
-    /* Sharper borders */
-    --input: 214.3 31.8% 85%;
-    --ring: 153 60% 53%;
+    --border: 222 47% 12%;
+    --input: 222 47% 12%;
+    --ring: 250 84% 67%;
 
-    --radius: 0.75rem;
-    /* Modern sharp-rounded corners, not super-round */
+    --radius: 1rem;
   }
 }
 
@@ -59,12 +59,17 @@
   }
 
   html {
-    overscroll-behavior-y: auto;
+    overscroll-behavior-y: none;
+    height: 100%;
+    -webkit-overflow-scrolling: touch;
   }
 
   body {
     @apply bg-background text-foreground;
-    overscroll-behavior-y: auto;
+    overscroll-behavior-y: none;
+    height: 100%;
+    min-height: 100%;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
@@ -78,12 +83,12 @@
 
 /* Glass Card - Tighter and Cleaner */
 .glass-card {
-  @apply bg-white border border-slate-200 shadow-sm rounded-xl transition-all duration-300 hover:shadow-md hover:border-slate-300;
+  @apply bg-slate-900/40 backdrop-blur-xl border border-white/5 shadow-2xl rounded-2xl transition-all duration-300 hover:shadow-indigo-500/10 hover:border-white/10;
 }
 
 /* Glass Panel - More Opaque and Define */
 .glass-panel {
-  @apply bg-white border border-slate-200 shadow-lg rounded-2xl;
+  @apply bg-slate-900/60 backdrop-blur-2xl border border-white/5 shadow-2xl rounded-3xl;
 }
 
 /* Ethereal Button */
@@ -106,7 +111,7 @@ h3,
 h4,
 h5,
 h6 {
-  @apply font-semibold tracking-tight text-slate-800;
+  @apply font-black tracking-tight text-white;
 }
 
 .text-gradient-soft {
@@ -115,16 +120,16 @@ h6 {
 
 /* Aurora Background */
 .aurora-bg {
-  background-color: #F3F6FA;
+  background-color: #020617;
   background-image:
-    radial-gradient(at 0% 0%, hsla(253, 16%, 90%, 1) 0, transparent 50%),
-    radial-gradient(at 50% 0%, hsla(225, 39%, 90%, 1) 0, transparent 50%),
-    radial-gradient(at 100% 0%, hsla(339, 49%, 90%, 1) 0, transparent 50%);
+    radial-gradient(at 0% 0%, hsla(253, 16%, 15%, 1) 0, transparent 50%),
+    radial-gradient(at 50% 0%, hsla(225, 39%, 20%, 1) 0, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(339, 49%, 15%, 1) 0, transparent 50%);
 }
 
 .mesh-bg {
   position: relative;
-  background-color: #ffffff;
+  background-color: transparent;
 }
 
 .mesh-bg::before {
