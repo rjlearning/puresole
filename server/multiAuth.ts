@@ -21,77 +21,84 @@ interface OAuthProfile {
 
 // Configure Google OAuth Strategy
 function configureGoogleAuth() {
-  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+  const clientID = (process.env.GOOGLE_CLIENT_ID || '').trim();
+  const clientSecret = (process.env.GOOGLE_CLIENT_SECRET || '').trim();
+
+  if (!clientID || !clientSecret) {
     console.warn("Google OAuth not configured - missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET");
     return;
   }
 
-  // We now use dynamic callback URLs in the route handler to be more robust
-  // but we still need a default for the strategy initialization
-  const defaultCallbackURL = "/api/auth/google/callback";
-
   // Defensive check for placeholders
-  const isPlaceholder = process.env.GOOGLE_CLIENT_ID === 'your_google_client_id' ||
-    process.env.GOOGLE_CLIENT_SECRET === 'your_google_client_secret';
+  const isPlaceholder = clientID === 'your_google_client_id' ||
+    clientSecret === 'your_google_client_secret';
 
   if (isPlaceholder) {
     console.error("CRITICAL: Google OAuth is using placeholder values from .env template. Please set REAL values in production environment variables.");
   }
 
+  // Safely log start of credentials to help user verify they are using the right keys
+  console.log(`[GoogleAuth] INIT: ID=${clientID.substring(0, 10)}... SECRET=${clientSecret.substring(0, 4)}...`);
+
+  // We now use dynamic callback URLs in the route handler to be more robust
+  // but we still need a default for the strategy initialization
+  const defaultCallbackURL = "/api/auth/google/callback";
+
   passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID!,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    clientID: clientID,
+    clientSecret: clientSecret,
     callbackURL: defaultCallbackURL,
     proxy: true
-  }, async (accessToken, refreshToken, profile, done) => {
-    try {
-      // Check if this Google account is already linked
-      const existingProvider = await storage.getAuthProvider('google', profile.id);
+  },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        // Check if this Google account is already linked
+        const existingProvider = await storage.getAuthProvider('google', profile.id);
 
-      if (existingProvider) {
-        // Update tokens
-        await storage.updateAuthProvider(existingProvider.id, {
-          accessToken,
-          refreshToken,
-          tokenExpiresAt: new Date(Date.now() + 3600000) // 1 hour
-        });
+        if (existingProvider) {
+          // Update tokens
+          await storage.updateAuthProvider(existingProvider.id, {
+            accessToken,
+            refreshToken,
+            tokenExpiresAt: new Date(Date.now() + 3600000) // 1 hour
+          });
 
-        const user = await storage.getUser(existingProvider.userId);
+          const user = await storage.getUser(existingProvider.userId);
+          return done(null, user || false);
+        }
+
+        // Check if user exists by email
+        const email = profile.emails?.[0]?.value;
+        let user = email ? await storage.getUserByEmail(email) : null;
+
+        if (!user && email) {
+          // Create new user
+          user = await storage.createUser({
+            email,
+            firstName: profile.name?.givenName,
+            lastName: profile.name?.familyName,
+            profileImageUrl: profile.photos?.[0]?.value
+          });
+        }
+
+        if (user) {
+          // Link OAuth provider to user
+          await storage.createAuthProvider({
+            userId: user.id,
+            provider: 'google',
+            providerId: profile.id,
+            providerEmail: email,
+            accessToken,
+            refreshToken,
+            tokenExpiresAt: new Date(Date.now() + 3600000)
+          });
+        }
+
         return done(null, user || false);
+      } catch (error) {
+        return done(error);
       }
-
-      // Check if user exists by email
-      const email = profile.emails?.[0]?.value;
-      let user = email ? await storage.getUserByEmail(email) : null;
-
-      if (!user && email) {
-        // Create new user
-        user = await storage.createUser({
-          email,
-          firstName: profile.name?.givenName,
-          lastName: profile.name?.familyName,
-          profileImageUrl: profile.photos?.[0]?.value
-        });
-      }
-
-      if (user) {
-        // Link OAuth provider to user
-        await storage.createAuthProvider({
-          userId: user.id,
-          provider: 'google',
-          providerId: profile.id,
-          providerEmail: email,
-          accessToken,
-          refreshToken,
-          tokenExpiresAt: new Date(Date.now() + 3600000)
-        });
-      }
-
-      return done(null, user || false);
-    } catch (error) {
-      return done(error);
-    }
-  }));
+    }));
 }
 
 // Configure Twitter OAuth Strategy
