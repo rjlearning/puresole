@@ -75,16 +75,7 @@ export default function WomenCompanionPage() {
 
     // Set initial greeting after stage loads
     useEffect(() => {
-        const context = localStorage.getItem('companion_context');
-        if (context === 'overwhelmed') {
-            setMessages([{
-                role: 'assistant',
-                content: "I'm so glad you reached out. I know things feel heavy and loud right now. Let's talk through what's happening — I'm right here with you. What's feeling most overwhelming in this moment?"
-            }]);
-            localStorage.removeItem('companion_context');
-        } else {
-            setMessages([{ role: 'assistant', content: STAGE_INTROS[stage] }]);
-        }
+        setMessages([{ role: 'assistant', content: STAGE_INTROS[stage] }]);
     }, [stage]);
 
     const send = async () => {

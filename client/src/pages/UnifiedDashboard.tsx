@@ -26,7 +26,6 @@ import { useQuery } from "@tanstack/react-query";
 import type { Assessment, TreatmentPlan } from "@shared/schema";
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiRequest } from '@/lib/queryClient';
-import DeEscalationSupport from '@/components/dashboard/DeEscalationSupport';
 
 // ── Emotion definitions ──
 const EMOTIONS = [
@@ -137,21 +136,12 @@ export default function UnifiedDashboard() {
     });
 
     // ── Workflow state ──
-    type Step = 'idle' | 'selected' | 'synthesizing' | 'ready' | 'overwhelmed_flow';
+    type Step = 'idle' | 'selected' | 'synthesizing' | 'ready';
     const [step, setStep] = useState<Step>('idle');
     const [selectedEmotion, setSelectedEmotion] = useState<string | null>(null);
     const [generatedProtocol, setGeneratedProtocol] = useState<any>(null);
     const [newPlanId, setNewPlanId] = useState<string | null>(null);
     const [synthStep, setSynthStep] = useState(0);
-
-    // ── Check for pending recovery re-rating on mount ──
-    useEffect(() => {
-        const pending = localStorage.getItem('recovery_pending');
-        if (pending) {
-            setStep('overwhelmed_flow');
-        }
-    }, []);
-
     const synthTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const { data: assessments = [] } = useQuery<Assessment[]>({ queryKey: ["/api/assessments"] });
@@ -183,12 +173,6 @@ export default function UnifiedDashboard() {
 
     const handleEmotionSelect = async (emotion: string) => {
         setSelectedEmotion(emotion);
-
-        if (emotion === 'Overwhelmed') {
-            setStep('overwhelmed_flow');
-            return;
-        }
-
         setStep('synthesizing');
         setSynthStep(0);
         setGeneratedProtocol(FAST_ACTIONS[emotion] || null);
@@ -629,17 +613,6 @@ export default function UnifiedDashboard() {
                     </div>
                 </motion.div>
             )}
-
-            {/* ── Overwhelmed Flow Modal ── */}
-            <AnimatePresence>
-                {step === 'overwhelmed_flow' && (
-                    <DeEscalationSupport
-                        initialEmotion="Overwhelmed"
-                        onClose={resetFlow}
-                    />
-                )}
-            </AnimatePresence>
-
             {/* Spacer for mobile bottom nav overlap */}
             <div className="h-24 lg:hidden pointer-events-none" />
         </AnimatePresence>
