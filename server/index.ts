@@ -125,6 +125,10 @@ app.use((req, res, next) => {
   runVoiceCleanupJob().catch(console.error);
   setInterval(() => runVoiceCleanupJob().catch(console.error), 24 * 60 * 60 * 1000);
 
+  // New: Verify and fix database schema before starting
+  const { verifySchema } = await import('./db-verify');
+  await verifySchema();
+
   // IMPORTANT: registerRoutes sets up session & passport middleware FIRST
   const server = await registerRoutes(app);
 
