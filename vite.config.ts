@@ -19,22 +19,9 @@ export default defineConfig({
   build: {
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
+    chunkSizeWarningLimit: 2000,
     rollupOptions: {
-      output: {
-        manualChunks: (id) => {
-          if (id.includes("node_modules")) {
-            // Keep React ecosystem together in the main vendor chunk for stability
-            if (id.includes("react") || id.includes("react-dom") || id.includes("scheduler") || id.includes("wouter")) {
-              return "vendor-core";
-            }
-            // Only split truly heavy, isolated libraries
-            if (id.includes("recharts")) return "vendor-recharts";
-            if (id.includes("framer-motion")) return "vendor-framer";
-            if (id.includes("@stripe")) return "vendor-stripe";
-            return "vendor";
-          }
-        },
-      },
+      output: {},
     },
   },
 });
