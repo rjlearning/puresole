@@ -30,6 +30,14 @@ function configureGoogleAuth() {
   // but we still need a default for the strategy initialization
   const defaultCallbackURL = "/api/auth/google/callback";
 
+  // Defensive check for placeholders
+  const isPlaceholder = process.env.GOOGLE_CLIENT_ID === 'your_google_client_id' ||
+    process.env.GOOGLE_CLIENT_SECRET === 'your_google_client_secret';
+
+  if (isPlaceholder) {
+    console.error("CRITICAL: Google OAuth is using placeholder values from .env template. Please set REAL values in production environment variables.");
+  }
+
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID!,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
@@ -210,10 +218,11 @@ export function registerMultiAuthRoutes(app: Express) {
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     app.get('/api/auth/google', (req, res, next) => {
       // ULTIMATE ROBUST CALLBACK DETECTION
-      // 1. Prioritize x-forwarded-host (proxy), then fallback to host header
-      const host = req.get('x-forwarded-host') || req.get('host');
+      // 1. Prioritize x-forwarded-host (proxy), handle potential list and strip ports
+      const hostHeader = req.get('x-forwarded-host') || req.get('host') || '';
+      const host = hostHeader.split(',')[0].trim().split(':')[0];
 
-      // 2. Force 'https' in production regardless of headers, as Google requires it
+      // 2. Force 'https' in production regardless of headers
       const protocol = (process.env.NODE_ENV === 'production') ? 'https' : (req.get('x-forwarded-proto') || req.protocol);
 
       // 3. Build the absolute callback URL
@@ -231,7 +240,8 @@ export function registerMultiAuthRoutes(app: Express) {
 
     app.get('/api/auth/google/callback', (req, res, next) => {
       // Must use the EXACT same dynamic callbackURL logic as the start route
-      const host = req.get('x-forwarded-host') || req.get('host');
+      const hostHeader = req.get('x-forwarded-host') || req.get('host') || '';
+      const host = hostHeader.split(',')[0].trim().split(':')[0];
       const protocol = (process.env.NODE_ENV === 'production') ? 'https' : (req.get('x-forwarded-proto') || req.protocol);
       const callbackURL = `${protocol}://${host}/api/auth/google/callback`;
 
