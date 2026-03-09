@@ -258,7 +258,29 @@ export function registerMultiAuthRoutes(app: Express) {
       passport.authenticate('google', {
         failureRedirect: '/login',
         callbackURL: callbackURL
-      } as any)(req, res, next);
+      } as any, (err: any, user: any, info: any) => {
+        if (err) {
+          console.error("[GoogleAuth] CALLBACK_ERROR:", err);
+          if (err.name === 'TokenError') {
+            console.error("[GoogleAuth] TOKEN_ERROR_DETAIL:", {
+              message: err.message,
+              code: err.code,
+              uri: err.uri,
+              status: err.status,
+              raw: err.rawResponse // OAuth2 error often has raw response
+            });
+          }
+          return next(err);
+        }
+        if (!user) {
+          console.warn("[GoogleAuth] NO_USER_RETURNED", info);
+          return res.redirect('/login?error=no_user');
+        }
+        req.login(user, (loginErr) => {
+          if (loginErr) return next(loginErr);
+          res.redirect('/dashboard');
+        });
+      })(req, res, next);
     }, (req, res) => {
       // Support mobile deep linking if requested via state or session
       const isMobile = (req.session as any)?.isMobile || req.query.state === 'mobile';
@@ -268,7 +290,7 @@ export function registerMultiAuthRoutes(app: Express) {
       res.redirect('/dashboard');
     });
 
-    // Temporary Debug Route for Auth Config
+    // Debug Route for Auth Config
     app.get('/api/auth/debug', (req, res) => {
       res.json({
         nodeEnv: process.env.NODE_ENV,
@@ -277,8 +299,23 @@ export function registerMultiAuthRoutes(app: Express) {
         detectedHost: req.get('x-forwarded-host') || req.get('host'),
         detectedProto: req.get('x-forwarded-proto') || req.protocol,
         trustProxy: app.get('trust proxy'),
-        callbackUrlGuess: `${req.get('x-forwarded-proto') || req.protocol}://${req.get('x-forwarded-host') || req.get('host')}/api/auth/google/callback`,
-        headers: req.headers // DEBUG: See all headers to identify proxy behavior
+        callbackUrlGuess: `${process.env.NODE_ENV === 'production' ? 'https' : (req.get('x-forwarded-proto') || req.protocol)}://${(req.get('x-forwarded-host') || req.get('host') || '').split(',')[0].trim().split(':')[0]}/api/auth/google/callback`,
+        headers: req.headers,
+        sessionID: req.sessionID,
+        hasSession: !!req.session
+      });
+    });
+
+    // New Session Test Route
+    app.get('/api/auth/session-test', (req: any, res) => {
+      if (!req.session.views) {
+        req.session.views = 0;
+      }
+      req.session.views++;
+      res.json({
+        views: req.session.views,
+        expires: req.session.cookie.maxAge / 1000 / 60 + " minutes",
+        id: req.sessionID
       });
     });
   } else {
