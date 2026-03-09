@@ -49,7 +49,7 @@ RUN apk add --no-cache dumb-init
 
 # Create app user
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
+  adduser -S nodejs -u 1001
 
 WORKDIR /app
 
@@ -74,9 +74,6 @@ COPY --chown=nodejs:nodejs shared ./shared
 COPY --chown=nodejs:nodejs tsconfig.json ./tsconfig.json
 COPY --chown=nodejs:nodejs vite.config.ts ./vite.config.ts
 COPY --chown=nodejs:nodejs drizzle.config.ts ./drizzle.config.ts
-
-# Copy database migrations
-COPY --chown=nodejs:nodejs migrations ./migrations
 
 # Copy any other necessary files
 COPY --chown=nodejs:nodejs server/exports ./server/exports
