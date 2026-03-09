@@ -291,15 +291,33 @@ export function registerMultiAuthRoutes(app: Express) {
     });
 
     // Debug Route for Auth Config
-    app.get('/api/auth/debug', (req, res) => {
+    app.get('/api/auth/debug', async (req, res) => {
+      let dbInfo = {};
+      try {
+        const { sql } = await import('drizzle-orm');
+        const { db } = await import('./db');
+        const columns = await db.execute(sql`
+          SELECT column_name, data_type 
+          FROM information_schema.columns 
+          WHERE table_name = 'users'
+        `);
+        dbInfo = {
+          usersTableColumns: columns.rows.map((r: any) => r.column_name),
+          genderColumnExists: columns.rows.some((r: any) => r.column_name === 'gender')
+        };
+      } catch (e: any) {
+        dbInfo = { error: e.message };
+      }
+
       res.json({
         nodeEnv: process.env.NODE_ENV,
         appUrl: process.env.APP_URL,
         railwayDomain: process.env.RAILWAY_PUBLIC_DOMAIN,
         detectedHost: req.get('x-forwarded-host') || req.get('host'),
+        hostSimplified: (req.get('x-forwarded-host') || req.get('host') || '').split(',')[0].trim().split(':')[0],
         detectedProto: req.get('x-forwarded-proto') || req.protocol,
         trustProxy: app.get('trust proxy'),
-        callbackUrlGuess: `${process.env.NODE_ENV === 'production' ? 'https' : (req.get('x-forwarded-proto') || req.protocol)}://${(req.get('x-forwarded-host') || req.get('host') || '').split(',')[0].trim().split(':')[0]}/api/auth/google/callback`,
+        dbInfo,
         headers: req.headers,
         sessionID: req.sessionID,
         hasSession: !!req.session
