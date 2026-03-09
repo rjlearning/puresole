@@ -76,7 +76,7 @@ COPY --chown=nodejs:nodejs vite.config.ts ./vite.config.ts
 COPY --chown=nodejs:nodejs drizzle.config.ts ./drizzle.config.ts
 
 # Copy database migrations
-COPY --chown=nodejs:nodejs server/db/migrations ./server/db/migrations
+COPY --chown=nodejs:nodejs migrations ./migrations
 
 # Copy any other necessary files
 COPY --chown=nodejs:nodejs server/exports ./server/exports
@@ -104,5 +104,5 @@ ENV PORT=4000
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start the application (run TypeScript directly with tsx)
-CMD ["npx", "tsx", "server/index.ts"]
+# Start the application (uses npm start to run migrations then serve)
+CMD ["npm", "start"]
