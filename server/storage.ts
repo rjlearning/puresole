@@ -57,6 +57,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(userData: Omit<UpsertUser, 'id'>): Promise<User>;
   updateUser(id: string, updates: Partial<UpsertUser>): Promise<User>;
+  getUserByResetToken(token: string): Promise<User | undefined>;
 
   // Auth provider operations  
   createAuthProvider(provider: InsertUserAuthProvider): Promise<UserAuthProvider>;
@@ -179,6 +180,11 @@ export class DatabaseStorage implements IStorage {
       .set({ ...updates, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
+    return user;
+  }
+
+  async getUserByResetToken(token: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.passwordResetToken, token)).limit(1);
     return user;
   }
 

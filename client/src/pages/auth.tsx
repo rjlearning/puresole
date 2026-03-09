@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { Eye, EyeOff, Brain } from "lucide-react";
 import { FaGoogle } from "react-icons/fa";
 import Logo from "@/components/Logo";
+import { forgotPasswordSchema, resetPasswordSchema } from "@shared/schema";
 
 // Form schemas
 const loginSchema = z.object({
@@ -37,8 +38,13 @@ type RegisterForm = z.infer<typeof registerSchema>;
 
 export default function AuthPage() {
   const [, setLocation] = useLocation();
+  const search = window.location.search;
+  const queryParams = new URLSearchParams(search);
+  const initialMode = queryParams.get("mode") as "login" | "register" | "forgot" | "reset" || "login";
+  const resetToken = queryParams.get("token") || "";
+
   const { toast } = useToast();
-  const [isLogin, setIsLogin] = useState(true);
+  const [authMode, setAuthMode] = useState<"login" | "register" | "forgot" | "reset">(initialMode);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -63,6 +69,22 @@ export default function AuthPage() {
     },
   });
 
+  // Forgot password form
+  const forgotPasswordForm = useForm<z.infer<typeof forgotPasswordSchema>>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: { email: "" },
+  });
+
+  // Reset password form
+  const resetPasswordForm = useForm<z.infer<typeof resetPasswordSchema>>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      token: resetToken,
+      password: "",
+      confirmPassword: "",
+    },
+  });
+
   // OAuth handler
   const handleOAuthLogin = (provider: string) => {
     window.location.href = `/api/auth/${provider}`;
@@ -70,10 +92,13 @@ export default function AuthPage() {
 
   // Toggle between login and register with form reset
   const toggleMode = () => {
-    setIsLogin(!isLogin);
-    // Reset both forms when toggling
+    const nextMode = authMode === "login" ? "register" : "login";
+    setAuthMode(nextMode);
+    // Reset forms when toggling
     loginForm.reset();
     registerForm.reset();
+    forgotPasswordForm.reset();
+    resetPasswordForm.reset();
     // Reset password visibility
     setShowPassword(false);
     setShowConfirmPassword(false);
@@ -127,12 +152,64 @@ export default function AuthPage() {
     },
   });
 
+  // Forgot password mutation
+  const forgotPasswordMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof forgotPasswordSchema>) => {
+      const response = await apiRequest("POST", "/api/auth/forgot-password", data);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Check your email",
+        description: data.message,
+      });
+      setAuthMode("login");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send reset link",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Reset password mutation
+  const resetPasswordMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof resetPasswordSchema>) => {
+      const response = await apiRequest("POST", "/api/auth/reset-password", data);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Success",
+        description: data.message,
+      });
+      setAuthMode("login");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Reset Failed",
+        description: error.message || "Invalid or expired token",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleLogin = (data: LoginForm) => {
     loginMutation.mutate(data);
   };
 
   const handleRegister = (data: RegisterForm) => {
     registerMutation.mutate(data);
+  };
+
+  const handleForgotPassword = (data: z.infer<typeof forgotPasswordSchema>) => {
+    forgotPasswordMutation.mutate(data);
+  };
+
+  const handleResetPassword = (data: z.infer<typeof resetPasswordSchema>) => {
+    resetPasswordMutation.mutate(data);
   };
 
   return (
@@ -149,33 +226,39 @@ export default function AuthPage() {
             </div>
           </a>
           <p className="text-muted-foreground">
-            {isLogin ? "Welcome back" : "Create your account"}
+            {authMode === "login" && "Welcome back"}
+            {authMode === "register" && "Create your account"}
+            {authMode === "forgot" && "Reset your password"}
+            {authMode === "reset" && "Choose a new password"}
           </p>
         </div>
 
         {/* Auth Card */}
         <Card className="p-8 shadow-xl border-0">
-          {/* Google OAuth Button - Prominent */}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => handleOAuthLogin("google")}
-            className="w-full h-12 text-base font-medium hover:bg-gray-50 border-2 transition-all"
-          >
-            <FaGoogle className="w-5 h-5 mr-3 text-blue-600" />
-            {isLogin ? "Continue with Google" : "Sign up with Google"}
-          </Button>
+          {/* OAuth only for login/register */}
+          {(authMode === "login" || authMode === "register") && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleOAuthLogin("google")}
+                className="w-full h-12 text-base font-medium hover:bg-gray-50 border-2 transition-all"
+              >
+                <FaGoogle className="w-5 h-5 mr-3 text-blue-600" />
+                {authMode === "login" ? "Continue with Google" : "Sign up with Google"}
+              </Button>
 
-          {/* Divider */}
-          <div className="flex items-center gap-4 my-6">
-            <Separator className="flex-1" />
-            <span className="text-sm text-muted-foreground">or</span>
-            <Separator className="flex-1" />
-          </div>
+              <div className="flex items-center gap-4 my-6">
+                <Separator className="flex-1" />
+                <span className="text-sm text-muted-foreground">or</span>
+                <Separator className="flex-1" />
+              </div>
+            </>
+          )}
 
           {/* Email/Password Form */}
-          {isLogin ? (
-            <Form {...loginForm} key="login-form">
+          {authMode === "login" && (
+            <Form {...loginForm}>
               <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
                 <FormField
                   control={loginForm.control}
@@ -202,7 +285,16 @@ export default function AuthPage() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <div className="flex items-center justify-between">
+                        <FormLabel>Password</FormLabel>
+                        <button
+                          type="button"
+                          onClick={() => setAuthMode("forgot")}
+                          className="text-xs font-medium text-primary hover:underline"
+                        >
+                          Forgot password?
+                        </button>
+                      </div>
                       <FormControl>
                         <div className="relative">
                           <Input
@@ -241,8 +333,10 @@ export default function AuthPage() {
                 </Button>
               </form>
             </Form>
-          ) : (
-            <Form {...registerForm} key="register-form">
+          )}
+
+          {authMode === "register" && (
+            <Form {...registerForm}>
               <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-4" autoComplete="off">
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
@@ -383,18 +477,112 @@ export default function AuthPage() {
             </Form>
           )}
 
+          {authMode === "forgot" && (
+            <Form {...forgotPasswordForm}>
+              <form onSubmit={forgotPasswordForm.handleSubmit(handleForgotPassword)} className="space-y-4">
+                <FormField
+                  control={forgotPasswordForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          placeholder="name@email.com"
+                          className="h-11"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="submit"
+                  className="w-full h-11 bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+                  disabled={forgotPasswordMutation.isPending}
+                >
+                  {forgotPasswordMutation.isPending ? "Sending..." : "Send Reset Link"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => setAuthMode("login")}
+                >
+                  Back to Login
+                </Button>
+              </form>
+            </Form>
+          )}
+
+          {authMode === "reset" && (
+            <Form {...resetPasswordForm}>
+              <form onSubmit={resetPasswordForm.handleSubmit(handleResetPassword)} className="space-y-4">
+                <FormField
+                  control={resetPasswordForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>New Password</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="password"
+                          placeholder="At least 8 characters"
+                          className="h-11"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={resetPasswordForm.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirm New Password</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="password"
+                          placeholder="Confirm your password"
+                          className="h-11"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="submit"
+                  className="w-full h-11 bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+                  disabled={resetPasswordMutation.isPending}
+                >
+                  {resetPasswordMutation.isPending ? "Resetting..." : "Update Password"}
+                </Button>
+              </form>
+            </Form>
+          )}
+
           {/* Toggle Login/Register */}
           <div className="mt-8 text-center bg-slate-50 -mx-8 -mb-8 p-6 border-t border-slate-100 rounded-b-xl">
             <button
-              onClick={toggleMode}
+              onClick={() => setAuthMode(authMode === "login" ? "register" : "login")}
               className="text-sm text-slate-500 hover:text-slate-900 transition-colors py-2 px-4 hover:bg-slate-100 rounded-lg"
             >
-              {isLogin
+              {authMode === "login"
                 ? "Don't have an account? "
-                : "Already have an account? "}
-              <span className="font-bold text-primary ml-1">
-                {isLogin ? "Sign up" : "Sign in"}
-              </span>
+                : authMode === "register"
+                  ? "Already have an account? "
+                  : ""}
+              {(authMode === "login" || authMode === "register") && (
+                <span className="font-bold text-primary ml-1">
+                  {authMode === "login" ? "Sign up" : "Sign in"}
+                </span>
+              )}
             </button>
           </div>
         </Card>

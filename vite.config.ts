@@ -27,6 +27,10 @@ export default defineConfig({
             if (id.includes("lucide-react")) return "vendor-lucide";
             if (id.includes("@radix-ui")) return "vendor-radix";
             if (id.includes("recharts")) return "vendor-recharts";
+            if (id.includes("react-icons")) return "vendor-icons";
+            if (id.includes("@stripe")) return "vendor-stripe";
+            if (id.includes("zod")) return "vendor-validation";
+            if (id.includes("react-dom")) return "vendor-react-dom";
             return "vendor";
           }
         },

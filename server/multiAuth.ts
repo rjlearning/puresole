@@ -4,8 +4,11 @@ import { Strategy as TwitterStrategy } from "passport-twitter";
 import { Strategy as LocalStrategy } from "passport-local";
 import bcrypt from "bcryptjs";
 import type { Express, RequestHandler } from "express";
+import crypto from "crypto";
 import { storage } from "./storage";
 import { sanitizeUser } from "./routes";
+import { forgotPasswordSchema, resetPasswordSchema } from "@shared/schema";
+import { sendPasswordResetEmail } from "./email";
 
 // OAuth configuration interfaces
 interface OAuthProfile {
@@ -390,6 +393,68 @@ export function registerMultiAuthRoutes(app: Express) {
       });
     } else {
       res.status(401).json({ message: 'Not authenticated' });
+    }
+  });
+
+  // Forgot Password route
+  app.post('/api/auth/forgot-password', async (req, res) => {
+    try {
+      const { email } = forgotPasswordSchema.parse(req.body);
+      const user = await storage.getUserByEmail(email);
+
+      // SECURITY: Don't reveal if user exists - always return success to prevent user enumeration
+      if (!user) {
+        return res.json({ message: "If an account exists with that email, a reset link has been sent." });
+      }
+
+      // Generate secure 32-byte token
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 3600000); // 1 hour from now
+
+      await storage.updateUser(user.id, {
+        passwordResetToken: token,
+        passwordResetExpiresAt: expiresAt
+      });
+
+      await sendPasswordResetEmail(email, token);
+
+      res.json({ message: "If an account exists with that email, a reset link has been sent." });
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid email address" });
+      }
+      console.error("[Auth] Forgot Password Error:", error);
+      res.status(500).json({ message: "An unexpected error occurred" });
+    }
+  });
+
+  // Reset Password route
+  app.post('/api/auth/reset-password', async (req, res) => {
+    try {
+      const { token, password } = resetPasswordSchema.parse(req.body);
+      const user = await storage.getUserByResetToken(token);
+
+      if (!user || !user.passwordResetExpiresAt || new Date() > user.passwordResetExpiresAt) {
+        return res.status(400).json({ message: "Invalid or expired reset token" });
+      }
+
+      // Hash new password
+      const passwordHash = await bcrypt.hash(password, 12);
+
+      // Update user and CLEAR reset fields
+      await storage.updateUser(user.id, {
+        passwordHash,
+        passwordResetToken: null,
+        passwordResetExpiresAt: null
+      });
+
+      res.json({ message: "Password reset successful. You can now log in with your new password." });
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+      }
+      console.error("[Auth] Reset Password Error:", error);
+      res.status(500).json({ message: "An unexpected error occurred" });
     }
   });
 }
