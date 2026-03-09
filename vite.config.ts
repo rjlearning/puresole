@@ -23,17 +23,14 @@ export default defineConfig({
       output: {
         manualChunks: (id) => {
           if (id.includes("node_modules")) {
-            // Group React and React-DOM together to avoid initialization issues
-            if (id.includes("react") || id.includes("react-dom") || id.includes("scheduler")) {
-              return "vendor-react";
+            // Keep React ecosystem together in the main vendor chunk for stability
+            if (id.includes("react") || id.includes("react-dom") || id.includes("scheduler") || id.includes("wouter")) {
+              return "vendor-core";
             }
-            if (id.includes("framer-motion")) return "vendor-framer";
-            if (id.includes("lucide-react")) return "vendor-lucide";
-            if (id.includes("@radix-ui")) return "vendor-radix";
+            // Only split truly heavy, isolated libraries
             if (id.includes("recharts")) return "vendor-recharts";
-            if (id.includes("react-icons")) return "vendor-icons";
+            if (id.includes("framer-motion")) return "vendor-framer";
             if (id.includes("@stripe")) return "vendor-stripe";
-            if (id.includes("zod")) return "vendor-validation";
             return "vendor";
           }
         },
