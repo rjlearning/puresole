@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupSession, isAuthenticated } from "./standardAuth";
+import { getLatestNudge } from "./services/nudgeService";
 import { setupMultiAuth, registerMultiAuthRoutes, requireAuth } from "./multiAuth";
 import type { User } from "@shared/schema";
 import { initializeRealtimeVoiceSocket } from "./socket/realtimeVoiceSocket";
@@ -183,14 +184,31 @@ import {
   insertUserSubscriptionSchema,
   insertPaymentSchema,
   insertAuditLogSchema,
+  wellnessActivities,
+  dailySignals,
+  insertDailySignalSchema,
+  voiceAnalyses,
   wellnessInsights,
-  progressEntries,
   userActivityCompletions,
-  wellnessActivities
+  behaviorProfiles
 } from "@shared/schema";
 import { eq, and, gte, desc, sql } from "drizzle-orm";
 import { db } from "./db";
-import { analyzeAssessment, generateTreatmentPlan, analyzeProgress, generateTTS, generateDailyInsight, generateUserSeason, generateSleepStory } from "./openai";
+import {
+  analyzeAssessment,
+  generateTreatmentPlan,
+  generateFullOnboardingPlan,
+  analyzeProgress,
+  generateTTS,
+  generateUserSeason,
+  generateSleepStory
+} from "./openai";
+import {
+  fuseSignals,
+  generateDailyInsight as generateFusedDailyInsight,
+  computePlanAdjustment
+} from "./ai/mentalHealthFusion";
+import { analyzeJournalText } from "./ai/journalNLP";
 import Stripe from "stripe";
 import advancedAnalyticsRouter from './routes/advancedAnalytics';
 import aiCompanionRouter from './routes/aiCompanion';
@@ -267,6 +285,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       // SECURITY: Don't log full error (could contain sensitive data)
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  app.post('/api/user/reset', isAuthenticatedUnified, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      await storage.resetUserProgress(userId);
+      res.json({ message: "Profile reset successfully" });
+    } catch (error: any) {
+      console.error("Error resetting profile:", error);
+      res.status(500).json({ message: "Failed to reset profile", error: error.message });
     }
   });
 
@@ -398,55 +427,234 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Daily Personalized Insight for Dashboard
+  // ── Multi-Signal Fusion Endpoints ──────────────────────────────────────────
+
+  // POST today's signal (orb drag, mood tap, etc.)
+  app.post('/api/signals/daily', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const todayStr = new Date().toISOString().split('T')[0];
+      const {
+        energyLevel,
+        moodScore,
+        sleepQuality,
+        voiceWellnessScore,
+        activityCompletionRate,
+        journalText,
+        pulseVelocityMs,
+        dwellTimeSeconds
+      } = req.body;
+
+      // 1. If journal text provided, run NLP
+      let journalSentimentScore = undefined;
+      if (journalText) {
+        const nlp = analyzeJournalText(journalText);
+        journalSentimentScore = nlp.sentimentScore;
+      }
+
+      // 2. Fetch existing signals for today to merge
+      const [existing] = await db.select().from(dailySignals).where(
+        and(eq(dailySignals.userId, userId), eq(dailySignals.signalDate, todayStr))
+      ).limit(1);
+
+      const signalsToFuse = {
+        energyLevel: energyLevel ?? existing?.energyLevel,
+        moodScore: moodScore ?? existing?.moodScore,
+        sleepQuality: sleepQuality ?? existing?.sleepQuality,
+        voiceWellnessScore: voiceWellnessScore ?? existing?.voiceWellnessScore,
+        activityCompletionRate: activityCompletionRate !== undefined ? activityCompletionRate : existing?.activityCompletionRate ? Number(existing.activityCompletionRate) : undefined,
+        journalSentimentScore: journalSentimentScore ?? (existing?.journalSentimentScore ? Number(existing.journalSentimentScore) : undefined),
+      };
+
+      // 3. Compute Fusion
+      const { compositeScore, severityLabel, confidence } = fuseSignals(signalsToFuse);
+
+      const insertValues = {
+        userId,
+        signalDate: todayStr,
+        ...signalsToFuse,
+        journalSentimentScore: signalsToFuse.journalSentimentScore?.toString(),
+        activityCompletionRate: signalsToFuse.activityCompletionRate?.toString(),
+        pulseVelocityMs: pulseVelocityMs ?? existing?.pulseVelocityMs,
+        dwellTimeSeconds: dwellTimeSeconds ?? existing?.dwellTimeSeconds,
+        compositeScore,
+        severityLabel,
+        confidence: confidence.toString(),
+        updatedAt: new Date(),
+      };
+
+      // 4. Save/Upsert today's signals
+      const [updated] = await db.insert(dailySignals).values(insertValues as any).onConflictDoUpdate({
+        target: [dailySignals.userId, dailySignals.signalDate],
+        set: insertValues as any
+      }).returning();
+
+      // [PHASE 12] Trigger Behavioral Profiling Refinement
+      if (pulseVelocityMs || dwellTimeSeconds) {
+        try {
+          const history = await db.select().from(dailySignals)
+            .where(eq(dailySignals.userId, userId))
+            .orderBy(desc(dailySignals.signalDate))
+            .limit(30);
+
+          const [currentProfile] = await db.select().from(behaviorProfiles).where(eq(behaviorProfiles.userId, userId)).limit(1);
+
+          const { determineArchetype, generateClinicalSummary } = await import('./ai/behaviorModeling');
+          const archetype = determineArchetype(history as any);
+          const summary = await generateClinicalSummary(history as any, currentProfile as any);
+
+          if (currentProfile) {
+            await db.update(behaviorProfiles)
+              .set({ archetype, clinicalSummary: summary, updatedAt: new Date(), lastProcessedAt: new Date() })
+              .where(eq(behaviorProfiles.id, currentProfile.id));
+          } else {
+            await db.insert(behaviorProfiles).values({
+              userId,
+              archetype,
+              clinicalSummary: summary,
+              lastProcessedAt: new Date()
+            });
+          }
+        } catch (err) {
+          console.error("Behavioral profiling failed:", err);
+        }
+      }
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Failed to post daily signal:", error);
+      res.status(500).json({ message: "Failed to process signals" });
+    }
+  });
+
+  // GET signal trends for sparklines/charts
+  app.get('/api/signals/trends', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const days = parseInt(req.query.days as string) || 7;
+
+      const trends = await db.select({
+        date: dailySignals.signalDate,
+        compositeScore: dailySignals.compositeScore,
+        severity: dailySignals.severityLabel
+      })
+        .from(dailySignals)
+        .where(eq(dailySignals.userId, userId))
+        .orderBy(desc(dailySignals.signalDate))
+        .limit(days);
+
+      res.json(trends.reverse()); // Chronological order
+    } catch (error) {
+      console.error("Failed to fetch signal trends:", error);
+      res.status(500).json({ message: "Failed to fetch trends" });
+    }
+  });
+
+  // GET user behavior profile (Phase 13)
+  app.get('/api/behavior-profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const [profile] = await db.select().from(behaviorProfiles)
+        .where(eq(behaviorProfiles.userId, userId))
+        .limit(1);
+
+      if (!profile) {
+        return res.json({ archetype: 'Establishing Baseline', clinicalSummary: 'System is gathering longitudinal data.' });
+      }
+
+      res.json(profile);
+    } catch (error) {
+      console.error("Failed to fetch behavior profile:", error);
+      res.status(500).json({ message: "Failed to fetch profile" });
+    }
+  });
+
+  // Daily Personalized Insight — REPLACED with Fusion Engine
   app.get('/api/dashboard/insights', isAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.user as any).id;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const todayStr = new Date().toISOString().split('T')[0];
 
-      // Check for an existing insight generated today
-      const existingInsights = await db.select().from(wellnessInsights).where(
-        and(
-          eq(wellnessInsights.userId, userId),
-          eq(wellnessInsights.insightType, 'daily_quote'),
-          gte(wellnessInsights.createdAt, today)
-        )
+      // 1. Check for today's signal row
+      const [todaySignals] = await db.select().from(dailySignals).where(
+        and(eq(dailySignals.userId, userId), eq(dailySignals.signalDate, todayStr))
       ).limit(1);
 
-      if (existingInsights.length > 0) {
-        return res.json(existingInsights[0]);
+      // If we already have a freshly generated insight, return it
+      if (todaySignals?.aiInsightText) {
+        return res.json({
+          description: todaySignals.aiInsightText,
+          compositeScore: todaySignals.compositeScore,
+          severity: todaySignals.severityLabel,
+          confidence: todaySignals.confidence
+        });
       }
 
-      // No insight for today, let's generate a new one
-      const recentAssessments = await storage.getAssessmentsByUser(userId);
-      const latestAssessments = recentAssessments.slice(0, 3); // Take last 3 check-ins
+      // 2. No insight yet, let's generate one using the fusion engine
+      const sevenDayHistory = await db.select({
+        date: dailySignals.signalDate,
+        compositeScore: dailySignals.compositeScore
+      })
+        .from(dailySignals)
+        .where(eq(dailySignals.userId, userId))
+        .orderBy(desc(dailySignals.signalDate))
+        .limit(7);
 
-      // Fetch recent conversation insights via raw SQL
-      const recentConversations = await db.execute(sql`
-        SELECT * FROM conversation_insights
-        WHERE conversation_id IN (SELECT id FROM chat_conversations WHERE user_id = ${userId})
-        ORDER BY created_at DESC LIMIT 5
-      `);
+      const insightSignals = {
+        energyLevel: todaySignals?.energyLevel ?? undefined,
+        moodScore: todaySignals?.moodScore ?? undefined,
+        sleepQuality: todaySignals?.sleepQuality ?? undefined,
+        voiceWellnessScore: todaySignals?.voiceWellnessScore ?? undefined,
+        activityCompletionRate: todaySignals?.activityCompletionRate ? Number(todaySignals.activityCompletionRate) : undefined,
+        journalSentimentScore: todaySignals?.journalSentimentScore ? Number(todaySignals.journalSentimentScore) : undefined,
+      };
 
-      // Generate via OpenAI
-      const quoteContent = await generateDailyInsight(latestAssessments, recentConversations.rows);
+      const insight = await generateFusedDailyInsight(
+        insightSignals,
+        sevenDayHistory.reverse().map(h => ({ ...h, compositeScore: h.compositeScore ?? 50 })),
+        (req.user as any).firstName
+      );
 
-      // Save to database
-      const [newInsight] = await db.insert(wellnessInsights).values({
+      // 3. Save the insight back to the daily signal row
+      // Create the row if it doesn't exist (with neutral defaults)
+      const { compositeScore, severityLabel, confidence } = fuseSignals(insightSignals);
+
+      await db.insert(dailySignals).values({
         userId,
-        insightType: 'daily_quote',
-        title: 'Your Daily Vibe',
-        description: quoteContent,
-        confidenceScore: "0.95",
-      }).returning();
+        signalDate: todayStr,
+        aiInsightText: insight,
+        compositeScore,
+        severityLabel,
+        confidence: confidence.toString(),
+      }).onConflictDoUpdate({
+        target: [dailySignals.userId, dailySignals.signalDate],
+        set: { aiInsightText: insight }
+      });
 
-      return res.json(newInsight);
+      return res.json({
+        description: insight,
+        compositeScore,
+        severity: severityLabel,
+        confidence
+      });
     } catch (error) {
-      console.error("Failed to fetch or generate daily insight:", error);
-      res.status(500).json({ message: "Failed to generate daily insight" });
+      console.error("Failed to generate fused insight:", error);
+      res.status(500).json({ message: "Failed to generate health insight" });
     }
   });
+
+  // Behavioral Nudges (Proactive Guidance)
+  app.get('/api/nudges', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const nudge = await getLatestNudge(userId);
+      res.json({ nudge });
+    } catch (error) {
+      console.error("Failed to fetch nudges:", error);
+      res.status(500).json({ message: "Failed to fetch nudges" });
+    }
+  });
+
 
   // User Season (Compassionate Progress Tracking)
   app.get('/api/dashboard/season', isAuthenticated, async (req: any, res) => {
@@ -586,6 +794,183 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ─── Composite Onboarding Endpoint ─────────────────────────────────────────
+  // Creates assessment + AI analysis + treatment plan in one atomic call
+  app.post('/api/onboarding/complete', isAuthenticated, async (req: any, res) => {
+    const userId = (req.user as any).id;
+    try {
+      const { responses, userGoals } = req.body as {
+        responses: Record<string, any>;
+        userGoals?: string[];
+      };
+
+      if (!responses || typeof responses !== 'object') {
+        return res.status(400).json({ message: 'responses object is required' });
+      }
+
+      // 1. Persist the assessment
+      const assessment = await storage.createAssessment({
+        userId,
+        type: 'baseline_onboarding',
+        responses,
+        score: 0,
+        severity: null,
+        aiAnalysis: null,
+        recommendations: null,
+        riskFactors: null
+      } as any);
+
+      try {
+        // 2 & 3. Analyse and Generate Plan in one go for speed
+        const { analysis, plan: aiPlan } = await generateFullOnboardingPlan(
+          'baseline_onboarding',
+          responses,
+          userGoals
+        );
+
+        // 4. Persist plan
+        const plan = await storage.createTreatmentPlan({
+          userId,
+          assessmentId: assessment.id,
+          title: aiPlan.title,
+          description: aiPlan.description,
+          totalWeeks: aiPlan.totalWeeks,
+          modules: aiPlan.modules,
+          goals: aiPlan.goals
+        });
+
+        // 5. Persist modules
+        for (const mod of aiPlan.modules) {
+          await storage.createTreatmentModule({
+            planId: plan.id,
+            title: mod.title,
+            description: mod.description,
+            week: mod.week,
+            order: mod.week,
+            content: {
+              activities: mod.activities,
+              learningObjectives: mod.learningObjectives
+            }
+          });
+        }
+
+        res.json({ planId: plan.id, analysisSnapshot: analysis });
+      } catch (aiError) {
+        console.error('AI generation failed during onboarding, creating fallback plan:', aiError);
+
+        // Fallback: Create a robust static plan so the user isn't stuck
+        const fallbackPlan = await storage.createTreatmentPlan({
+          userId,
+          assessmentId: assessment.id,
+          title: "Foundational Wellness Pathway",
+          description: "A comprehensive baseline protocol designed to stabilize and strengthen your mental resilience through proven grounding and mindfulness techniques.",
+          totalWeeks: 4,
+          modules: [], // Will be populated below
+          goals: userGoals && userGoals.length > 0 ? userGoals : ["Build emotional resilience", "Improve daily stability"]
+        });
+
+        const fallbackModules = [
+          {
+            week: 1,
+            title: "Week 1: Foundations of Presence",
+            description: "Establishing stability and learning to notice your internal state without judgment.",
+            activities: [
+              {
+                type: 'exercise',
+                name: '5-4-3-2-1 Grounding',
+                description: 'A sensory practice to bring you back to the present moment.',
+                duration: 5,
+                instructions: 'Acknowledge 5 things you see, 4 things you can touch, 3 things you hear, 2 things you can smell, and 1 thing you can taste.'
+              },
+              {
+                type: 'lesson',
+                name: 'Understanding Resilience',
+                description: 'Introduction to the science of emotional regulation.',
+                duration: 10,
+                instructions: 'Read through the introduction module on how the nervous system responds to stress.'
+              }
+            ],
+            learningObjectives: ["Identify current stress triggers", "Apply one grounding technique"]
+          },
+          {
+            week: 2,
+            title: "Week 2: Emotional Awareness",
+            description: "Developing a deeper understanding of the connection between thoughts and feelings.",
+            activities: [
+              {
+                type: 'journal',
+                name: 'Thought Observation',
+                description: 'Record patterns in your thinking throughout the day.',
+                duration: 10,
+                instructions: 'Write down three significant thoughts you had today and how they made your body feel.'
+              }
+            ],
+            learningObjectives: ["Notice thought-feeling connections"]
+          },
+          {
+            week: 3,
+            title: "Week 3: Stress Management",
+            description: "Practical tools for navigating challenging moments.",
+            activities: [
+              {
+                type: 'meditation',
+                name: 'Box Breathing',
+                description: 'A rhythmic breathing technique to calm the nervous system.',
+                duration: 4,
+                instructions: 'Inhale for 4, hold for 4, exhale for 4, hold for 4. Repeat 4 times.'
+              }
+            ],
+            learningObjectives: ["Apply box breathing under pressure"]
+          },
+          {
+            week: 4,
+            title: "Week 4: Integration & Growth",
+            description: "Refining your core wellness practices for long-term sustainability.",
+            activities: [
+              {
+                type: 'reading',
+                name: 'Sustainable Habits',
+                description: 'How to maintain your progress long-term.',
+                duration: 15,
+                instructions: 'Review the strategies for building consistent wellness routines.'
+              }
+            ],
+            learningObjectives: ["Create a personalized daily wellness check-in"]
+          }
+        ];
+
+        // 5. Persist the fallback modules
+        for (const mod of fallbackModules) {
+          await storage.createTreatmentModule({
+            planId: fallbackPlan.id,
+            title: mod.title,
+            description: mod.description,
+            week: mod.week,
+            order: mod.week,
+            content: {
+              activities: mod.activities,
+              learningObjectives: mod.learningObjectives
+            }
+          });
+        }
+
+        res.json({
+          planId: fallbackPlan.id,
+          analysisSnapshot: {
+            summary: "I've architected a Foundational Wellness Pathway for you while the AI engines are calibrating. This protocol focuses on immediate stability and emotional regulation.",
+            recommendations: ["Practice daily grounding", "Use the 5-4-3-2-1 technique when overwhelmed"],
+            riskFactors: ["Initial baseline establishing phase"],
+            severity: "mild"
+          }
+        });
+      }
+    } catch (err) {
+      console.error('Onboarding complete failed:', err);
+      // Ensure we always return a 200 so the frontend at least drops them to the dashboard if everything completely crashes, but we've handled the DB/AI split above.
+      res.status(500).json({ message: 'Failed to complete onboarding' });
+    }
+  });
+
   // Treatment plan routes
   app.post('/api/treatment-plans', isAuthenticated, async (req: any, res) => {
     try {
@@ -697,8 +1082,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }));
 
-      res.json({ ...plan, modules });
+      // Logic for Multi-Signal Auto-Adjustment (Phase 11)
+      const last7Days = await db.select({
+        compositeScore: dailySignals.compositeScore
+      })
+        .from(dailySignals)
+        .where(eq(dailySignals.userId, userId))
+        .orderBy(desc(dailySignals.signalDate))
+        .limit(7);
+
+      let planAdjustment = null;
+      if (last7Days.length >= 3) {
+        const history = last7Days.reverse().filter(s => s.compositeScore !== null) as { compositeScore: number }[];
+        if (history.length >= 3) {
+          const adjustment = computePlanAdjustment(history, plan.currentWeek || 1, plan.totalWeeks);
+          if (adjustment.action !== 'none') {
+            planAdjustment = adjustment;
+          }
+        }
+      }
+
+      res.json({
+        ...plan,
+        modules,
+        planAdjustment
+      });
     } catch (error) {
+      console.error("Failed to fetch treatment plan detail:", error);
       res.status(500).json({ message: "Failed to fetch treatment plan" });
     }
   });

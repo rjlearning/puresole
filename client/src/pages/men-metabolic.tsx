@@ -8,6 +8,7 @@ import { Link } from "wouter";
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
+import MeshBackground from "@/components/MeshBackground";
 
 const RECOMMENDATIONS: Record<string, string> = {
     testosterone: "Resistance training + optimized sleep protocol (aim for 7.5h+).",
@@ -46,14 +47,13 @@ export default function MenMetabolicPanel() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-200 pb-24 overflow-hidden">
-            {/* Background Gradient */}
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-500/5 blur-[120px] rounded-full -mr-64 -mt-32 pointer-events-none" />
+        <div className="min-h-screen pb-24 relative overflow-hidden text-slate-200">
+            <MeshBackground variant="indigo" />
 
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 relative z-10">
                 <Link href="/men">
-                    <Button variant="ghost" size="sm" className="mb-8 rounded-full text-slate-400 hover:text-white hover:bg-white/5">
-                        <ChevronLeft className="w-4 h-4 mr-1" /> Back to Evolution Hub
+                    <Button variant="ghost" size="sm" className="mb-8 rounded-full text-slate-400 hover:text-white hover:bg-white/5 font-black uppercase tracking-widest text-[10px]">
+                        <ChevronLeft className="w-4 h-4 mr-2" /> Back to Evolution Hub
                     </Button>
                 </Link>
 

@@ -277,7 +277,7 @@ export default function AICompanion() {
           <div className="p-5 border-b border-white/50 bg-white/40">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <button onClick={() => setLocation('/dashboard')} className="p-2 -ml-2 rounded-full text-slate-400 hover:bg-white hover:text-slate-800 transition-colors shadow-sm" title="Back to Dashboard">
+                <button onClick={() => setLocation('/dashboard')} className="p-2 -ml-2 rounded-full text-slate-500 hover:bg-white hover:text-slate-800 transition-colors shadow-sm" title="Back to Dashboard">
                   <ArrowLeft className="w-5 h-5" />
                 </button>
                 <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
@@ -290,7 +290,7 @@ export default function AICompanion() {
             </div>
             <div className="mb-4 pr-8 md:pr-0">
               <h1 className="text-xl font-black text-slate-800 tracking-tight">AI Companion</h1>
-              <p className="text-xs font-semibold text-indigo-500/80 uppercase tracking-wider mt-1">Mental Health Core</p>
+              <p className="text-[10px] font-black text-indigo-700 uppercase tracking-widest mt-1">Mental Health Core</p>
             </div>
             <button
               onClick={() => {
@@ -317,15 +317,15 @@ export default function AICompanion() {
               >
                 {pendingDelete === conv.id ? (
                   <div className="flex items-center justify-between gap-2" onClick={e => e.stopPropagation()}>
-                    <p className="text-xs text-slate-600 font-bold flex-1">Delete?</p>
-                    <button onClick={() => setPendingDelete(null)} className="text-[10px] font-bold uppercase px-2 py-1 rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200">Cancel</button>
+                    <p className="text-xs text-slate-700 font-bold flex-1">Delete?</p>
+                    <button onClick={() => setPendingDelete(null)} className="text-[10px] font-bold uppercase px-2 py-1 rounded-md bg-slate-200 text-slate-700 hover:bg-slate-300">Cancel</button>
                     <button onClick={() => confirmDelete(conv.id)} className="text-[10px] font-bold uppercase px-2 py-1 rounded-md bg-rose-500 text-white hover:bg-rose-600">Delete</button>
                   </div>
                 ) : (
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0 pr-2">
                       <h3 className={`text-sm font-semibold truncate ${currentConversation === conv.id ? 'text-indigo-900' : 'text-slate-700'}`}>{conv.title}</h3>
-                      <p className="text-[10px] font-medium text-slate-400 mt-1 uppercase tracking-wider">{conv.message_count} messages</p>
+                      <p className="text-[10px] font-black text-slate-600 mt-1 uppercase tracking-widest">{conv.message_count} messages</p>
                     </div>
                     <button
                       onClick={e => { e.stopPropagation(); setPendingDelete(conv.id); }}
@@ -351,7 +351,7 @@ export default function AICompanion() {
             </button>
             <button
               onClick={() => setShowSettings(true)}
-              className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all"
+              className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all"
             >
               <Settings className="w-4 h-4" />
               <span className="uppercase tracking-widest">Settings</span>
@@ -364,7 +364,7 @@ export default function AICompanion() {
       <div className="flex-1 flex flex-col relative z-20 w-full max-w-full">
         {/* Mobile Header Toggle */}
         <div className="md:hidden absolute top-4 left-4 z-30 flex items-center gap-2">
-          <button onClick={() => setLocation('/dashboard')} className="p-2.5 bg-white/80 backdrop-blur-md border border-white rounded-full shadow-sm text-slate-600 hover:text-slate-900 transition-colors">
+          <button onClick={() => setLocation('/dashboard')} className="p-2.5 bg-white/80 backdrop-blur-md border border-white rounded-full shadow-sm text-slate-700 hover:text-slate-900 transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <button onClick={() => setIsSidebarOpen(true)} className="p-2.5 bg-white/80 backdrop-blur-md border border-white rounded-full shadow-sm text-indigo-600 hover:text-indigo-900 transition-colors">
@@ -393,7 +393,7 @@ export default function AICompanion() {
                       }`}
                   >
                     {message.role === 'assistant' && message.emotion_detected && (
-                      <div className="inline-flex items-center gap-1.5 mb-3 px-2 py-1 rounded-md bg-white border border-slate-100 shadow-sm text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                      <div className="inline-flex items-center gap-1.5 mb-3 px-2 py-1 rounded-md bg-white border border-slate-100 shadow-sm text-[10px] font-black uppercase tracking-widest text-slate-700">
                         <span>{getEmotionEmoji(message.emotion_detected)}</span>
                         <span>{message.emotion_detected}</span>
                       </div>
@@ -425,7 +425,7 @@ export default function AICompanion() {
                   </div>
                   <div className="bg-white/80 backdrop-blur-md border border-white rounded-3xl rounded-tl-sm px-6 py-4 flex items-center gap-3 shadow-[0_4px_24px_rgb(0_0_0/0.02)]">
                     <Loader2 className="w-5 h-5 animate-spin text-indigo-500" />
-                    <span className="text-sm font-semibold text-slate-500 tracking-wide uppercase">Processing...</span>
+                    <span className="text-sm font-black text-slate-700 tracking-widest uppercase">Processing...</span>
                   </div>
                 </div>
               )}
@@ -448,7 +448,7 @@ export default function AICompanion() {
                       }
                     }}
                     placeholder="Type your message..."
-                    className="flex-1 px-4 md:px-6 py-3 md:py-4 bg-transparent text-[14px] md:text-[15px] text-slate-800 placeholder:text-slate-400 focus:outline-none resize-none min-h-[48px] md:min-h-[56px] font-medium"
+                    className="flex-1 px-4 md:px-6 py-3 md:py-4 bg-transparent text-[14px] md:text-[15px] text-slate-800 placeholder:text-slate-500 focus:outline-none resize-none min-h-[48px] md:min-h-[56px] font-medium"
                     rows={1}
                     disabled={isLoading}
                   />
@@ -460,7 +460,7 @@ export default function AICompanion() {
                     <Send className="w-5 h-5 ml-1" />
                   </button>
                 </div>
-                <p className="hidden md:block text-[10px] font-semibold text-slate-400 mt-3 text-center uppercase tracking-widest">
+                <p className="hidden md:block text-[10px] font-black text-slate-600 mt-3 text-center uppercase tracking-widest">
                   Press Enter to send, Shift+Enter for new line
                 </p>
               </div>
@@ -479,7 +479,7 @@ export default function AICompanion() {
               <h2 className="text-3xl md:text-6xl font-black text-slate-800 mb-4 md:mb-6 tracking-tight leading-tight px-4">
                 What's on your mind?
               </h2>
-              <p className="text-base md:text-xl text-slate-500 mb-8 md:mb-12 font-medium max-w-2xl mx-auto leading-relaxed px-4">
+              <p className="text-base md:text-xl text-slate-700 mb-8 md:mb-12 font-bold max-w-2xl mx-auto leading-relaxed px-4">
                 No judgment, no pressure. Type whatever you're feeling right now and your AI companion will be here to listen.
               </p>
 
@@ -499,7 +499,7 @@ export default function AICompanion() {
                       }
                     }}
                     placeholder="I'm feeling a bit overwhelmed today..."
-                    className="w-full px-4 md:px-6 py-3 md:py-4 text-base md:text-xl text-slate-700 placeholder:text-slate-300 bg-transparent border-none focus:outline-none focus:ring-0 resize-none min-h-[60px] md:min-h-[80px]"
+                    className="w-full px-4 md:px-6 py-3 md:py-4 text-base md:text-xl text-slate-700 placeholder:text-slate-500 bg-transparent border-none focus:outline-none focus:ring-0 resize-none min-h-[60px] md:min-h-[80px]"
                     rows={2}
                     disabled={isLoading}
                   />

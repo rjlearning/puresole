@@ -15,37 +15,17 @@ export default function SmartBackButton() {
         '/login',
         '/register',
         '/auth',
-        '/onboarding',
-        '/ai-companion',
-        '/women',
-        '/community',
-        '/settings',
-        '/men',
-        '/assessment',
-        '/check-in',
-        '/sos',
-        '/crisis-support'
     ];
 
     useEffect(() => {
-        // Check if the current exact path is in the hidden paths list
-        // or if we're on a root level path that acts as a dashboard
-        const shouldHide =
-            hiddenPaths.includes(location) ||
-            location.startsWith('/auth') ||
-            location.startsWith('/treatment-plan') ||
-            location.startsWith('/reports/') ||
-            (location.startsWith('/activities/') && location !== '/activities') ||
-            (location.startsWith('/women/') && location !== '/women');
+        const shouldHide = hiddenPaths.includes(location);
         setIsVisible(!shouldHide);
     }, [location]);
 
     const handleBack = () => {
-        // Check if the history API has somewhere to go back to within the app
         if (window.history.length > 2) {
             window.history.back();
         } else {
-            // Fallback: routing directly to dashboard
             setLocation('/dashboard');
         }
     };
@@ -54,24 +34,21 @@ export default function SmartBackButton() {
         <AnimatePresence>
             {isVisible && (
                 <motion.button
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.2 }}
                     onClick={handleBack}
                     className={cn(
-                        "fixed top-4 left-4 z-[60]", // Mobile positioning
-                        "flex items-center gap-2 px-3 py-2 rounded-full",
-                        "bg-white/90 backdrop-blur-md border border-slate-200 shadow-md",
-                        "text-slate-700 font-semibold text-sm transition-all duration-300",
-                        "hover:bg-indigo-50 hover:text-indigo-600 hover:shadow-lg hover:border-indigo-200",
-                        "group lg:top-8 lg:left-[20rem]" // Desktop sidebar spacing
+                        "fixed top-5 left-5 z-[60]",
+                        "flex items-center justify-center w-10 h-10 rounded-full",
+                        "bg-slate-900/80 backdrop-blur-xl border border-white/10 shadow-2xl",
+                        "text-white transition-all duration-300",
+                        "hover:bg-slate-800 hover:scale-110 active:scale-95",
+                        "group"
                     )}
                 >
-                    <div className="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-indigo-100 flex items-center justify-center transition-colors">
-                        <ArrowLeft className="w-4 h-4" />
-                    </div>
-                    <span>Back</span>
+                    <ArrowLeft className="w-5 h-5" />
                 </motion.button>
             )}
         </AnimatePresence>

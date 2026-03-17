@@ -91,17 +91,6 @@ interface PrepareScreenProps {
 // ─── Component ────────────────────────────────────────────────────────────────
 export function PrepareScreen({ category, activityName, duration, onReady }: PrepareScreenProps) {
     const config = PREPARE_CONFIG[category] ?? DEFAULT_CONFIG;
-    const [checked, setChecked] = useState<Set<number>>(new Set());
-
-    const toggleCheck = (i: number) => {
-        setChecked(prev => {
-            const next = new Set(prev);
-            next.has(i) ? next.delete(i) : next.add(i);
-            return next;
-        });
-    };
-
-    const allChecked = checked.size === config.steps.length;
 
     const handleBegin = () => {
         playDoubleChime();
@@ -109,64 +98,51 @@ export function PrepareScreen({ category, activityName, duration, onReady }: Pre
     };
 
     return (
-        <div className="mb-8 rounded-3xl overflow-hidden shadow-xl border border-white/50">
+        <div className="mb-24 sm:mb-8 rounded-3xl overflow-hidden shadow-xl border border-border bg-card relative">
             {/* Hero bar */}
-            <div className={`bg-gradient-to-r ${config.gradient} px-8 py-6 text-white`}>
-                <div className="flex items-center gap-4">
-                    <span className="text-5xl">{config.emoji}</span>
-                    <div>
-                        <h2 className="text-2xl font-black tracking-tight">{config.title}</h2>
-                        <div className="flex items-center gap-3 mt-1 text-white/80 text-sm font-medium">
-                            <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{duration} min</span>
-                            <span>·</span>
-                            <span>{activityName}</span>
+            <div className={`bg-gradient-to-r ${config.gradient} px-6 sm:px-8 py-8 text-white`}>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div className="flex items-center gap-4">
+                        <span className="text-5xl">{config.emoji}</span>
+                        <div>
+                            <h2 className="text-2xl sm:text-3xl font-black tracking-tight">{config.title}</h2>
+                            <div className="flex items-center gap-3 mt-1 text-white/80 text-sm font-medium">
+                                <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{duration} min</span>
+                                <span>·</span>
+                                <span>{activityName}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <p className="mt-3 text-white/90 text-sm leading-relaxed max-w-xl">{config.tagline}</p>
+                <p className="mt-4 text-white/90 text-sm sm:text-base leading-relaxed max-w-xl font-medium">{config.tagline}</p>
             </div>
 
-            {/* Checklist */}
-            <div className="bg-white/70 backdrop-blur-sm px-8 py-6">
-                <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Before you begin</p>
-                <div className="space-y-3 mb-8">
+            {/* Simple Instructions */}
+            <div className="px-6 py-6 sm:px-8 sm:py-8">
+                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">Before you begin</p>
+                <ul className="space-y-4 mb-4">
                     {config.steps.map((step, i) => (
-                        <button
-                            key={i}
-                            onClick={() => toggleCheck(i)}
-                            className={`w-full flex items-start gap-3 p-3.5 rounded-2xl border text-left transition-all ${checked.has(i)
-                                    ? 'bg-green-50 border-green-200'
-                                    : 'bg-white border-slate-100 hover:border-slate-200 hover:bg-slate-50'
-                                }`}
-                        >
-                            <div className={`w-5 h-5 rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center border-2 transition-all ${checked.has(i) ? 'bg-green-500 border-green-500' : 'border-slate-300'
-                                }`}>
-                                {checked.has(i) && <CheckCircle2 className="w-3 h-3 text-white fill-white" />}
+                        <li key={i} className="flex gap-4 p-4 rounded-2xl bg-secondary/30 border border-secondary/50 text-foreground">
+                            <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center font-bold text-xs text-secondary-foreground shrink-0 mt-0.5">
+                                {i + 1}
                             </div>
-                            <p className={`text-sm leading-relaxed transition-colors ${checked.has(i) ? 'text-green-700 line-through decoration-green-300' : 'text-slate-700'}`}>
+                            <p className="text-sm sm:text-base leading-relaxed font-medium">
                                 {step}
                             </p>
-                        </button>
+                        </li>
                     ))}
-                </div>
+                </ul>
+            </div>
 
-                {/* CTA */}
-                <div className="flex flex-col items-center gap-2">
-                    <button
-                        onClick={handleBegin}
-                        disabled={false} // Allow starting even if not all checked — just nudge them
-                        className={`flex items-center gap-2.5 px-10 py-4 rounded-2xl font-black text-lg text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all ${config.btnColor} ${!allChecked ? 'opacity-80' : ''
-                            }`}
-                    >
-                        <Play className="w-5 h-5 fill-white" />
-                        {allChecked ? "I'm Ready — Begin" : 'Begin'}
-                    </button>
-                    {!allChecked && (
-                        <p className="text-xs text-slate-400">
-                            Tick each step above when ready — or jump straight in.
-                        </p>
-                    )}
-                </div>
+            {/* Fixed Bottom CTA for Mobile / Inline for Desktop */}
+            <div className="fixed bottom-0 left-0 right-0 p-4 sm:p-0 sm:static sm:px-8 sm:pb-8 bg-gradient-to-t from-background via-background to-transparent sm:bg-none z-50">
+                <button
+                    onClick={handleBegin}
+                    className={`w-full flex items-center justify-center gap-3 py-4 sm:py-5 rounded-[2rem] font-black text-lg text-white shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all active:scale-95 ${config.btnColor}`}
+                >
+                    <Play className="w-6 h-6 fill-white" />
+                    Begin Session Now
+                </button>
             </div>
         </div>
     );

@@ -1,356 +1,500 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import ProgressChart from "@/components/dashboard/progress-chart";
+import { useLocation, Link } from "wouter";
+import { usePhase } from "@/context/PhaseContext";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  Activity, Crown, CheckCircle, Heart, Compass, HeartHandshake, Leaf,
-  Sparkles, MessageSquare, TrendingUp, ChevronRight, ArrowUpRight,
-  BarChart2, Target, Calendar, Star
+  Sparkles, Brain, Wind, ArrowRight,
+  MessageSquare, Zap, Mic, BarChart2, LogOut, Heart, Settings
 } from "lucide-react";
-import { Link } from "wouter";
 import { FeedbackModal } from "@/components/FeedbackModal";
-import { motion } from "framer-motion";
+import { DailyStreakBanner } from "@/components/DailyStreakBanner";
+import { TodaysProtocol } from "@/components/TodaysProtocol";
+import { recordCheckIn } from "@/lib/streakEngine";
+import { TrendSparkline } from "@/components/TrendSparkline";
+import { BehavioralNudge } from "@/components/BehavioralNudge";
+import MeshBackground from "@/components/MeshBackground";
 
-const TAB_IDS = ["overview", "progress", "history", "goals"] as const;
-type TabId = typeof TAB_IDS[number];
+// ── Helpers ────────────────────────────────────────────────────────────────────
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 5) return "Still up?";
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  if (h < 21) return "Good evening";
+  return "Night owl";
+}
 
-const TAB_LABELS: Record<TabId, string> = {
-  overview: "Overview",
-  progress: "Progress",
-  history: "History",
-  goals: "Goals",
-};
+function getOrbGradient(v: number) {
+  if (v > 70) return "from-amber-400 to-rose-500";
+  if (v < 30) return "from-blue-500 to-indigo-600";
+  return "from-emerald-400 to-teal-500";
+}
 
-export default function Dashboard() {
-  const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useAuth();
-  const [tab, setTab] = useState<TabId>("overview");
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
+function getAIInsight(v: number): string {
+  if (v > 80) return "Peak energy detected. Channel this into meaningful action — your window for deep work is now.";
+  if (v > 60) return "Good momentum. A focused breathing cycle will sharpen your edge even further.";
+  if (v > 40) return "Balanced state. Perfect for a reflective session — clarity tends to arise in the quiet middle.";
+  if (v > 20) return "Low reserves. Your body is sending a signal. A somatic release will reset your nervous system.";
+  return "Running on empty. Let the AI guide you through a 3-minute nervous system reset.";
+}
 
-  const { data: assessments = [] } = useQuery<any[]>({ queryKey: ["/api/assessments"], retry: false });
-  const { data: treatmentPlans = [] } = useQuery<any[]>({ queryKey: ["/api/treatment-plans"], retry: false });
-  const { data: progressData = [] } = useQuery<any[]>({ queryKey: ["/api/progress/user"], retry: false });
-  const { data: subscription } = useQuery<any>({ queryKey: ["/api/subscription"], enabled: isAuthenticated, retry: false });
-  const { data: sparksData } = useQuery<{ sparks: string[] }>({
-    queryKey: ["/api/community/sparks"],
-    enabled: isAuthenticated,
-    refetchInterval: 60000,
+// ── Sign Out ───────────────────────────────────────────────────────────────────
+async function signOut() {
+  try {
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+  } finally {
+    window.location.href = "/auth";
+  }
+}
+
+// ── Sub-components ─────────────────────────────────────────────────────────────
+function AIInsightCard() {
+  const { data: insightRaw, isLoading } = useQuery<any>({
+    queryKey: ["/api/dashboard/insights"],
+    retry: false,
+    staleTime: 60 * 1000, // 1 minute fresh
   });
 
+  const { data: profile } = useQuery<any>({
+    queryKey: ["/api/behavior-profile"],
+    retry: false
+  });
+
+  const text = insightRaw?.description || "Every check-in is a small act of profound self-respect. You showed up. That's everything.";
+  const composite = insightRaw?.compositeScore;
+  const severity = insightRaw?.severity;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1 }}
+      className="relative rounded-[2rem] overflow-hidden border border-white/5 shadow-2xl"
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/40 via-slate-900 to-rose-900/10" />
+      <div className="relative z-10 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-xl bg-indigo-500/20 border border-indigo-500/20 flex items-center justify-center">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400">Fused Insight</span>
+          </div>
+          {composite && (
+            <div className="flex items-center gap-2 bg-slate-950/40 px-3 py-1 rounded-full border border-white/5">
+              <span className={`text-[9px] font-black uppercase tracking-wider ${severity === 'minimal' ? 'text-emerald-400' :
+                severity === 'mild' ? 'text-blue-400' :
+                  severity === 'moderate' ? 'text-amber-400' : 'text-rose-400'
+                }`}>{severity}</span>
+              <div className="w-px h-2 bg-white/10" />
+              <span className="text-[10px] font-bold text-white">{composite}%</span>
+            </div>
+          )}
+        </div>
+        {isLoading
+          ? <div className="space-y-2">
+            <div className="h-4 bg-slate-800/80 rounded-full animate-pulse w-full" />
+            <div className="h-4 bg-slate-800/80 rounded-full animate-pulse w-3/4" />
+          </div>
+          : (
+            <div className="space-y-4">
+              <p className="text-sm font-light text-slate-100 leading-relaxed italic opacity-90">"{text}"</p>
+
+              {/* [PHASE 13] Clinical Memory Recall Section */}
+              {profile?.clinicalSummary && profile.clinicalSummary !== 'System is gathering longitudinal data.' && (
+                <div className="mt-4 pt-4 border-t border-white/5 flex gap-3 items-start">
+                  <div className="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <Brain className="w-3 h-3 text-cyan-400" />
+                  </div>
+                  <div className="flex-1 mt-1 pr-4">
+                    <p className="font-bold text-white text-base leading-tight">Current Protocol</p>
+                    <p className="text-[11px] text-slate-300 leading-relaxed font-medium mt-1">
+                      Daily somatic reset. Recommended based on your recent activity footprint.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        }
+      </div>
+    </motion.div>
+  );
+}
+
+function PlanProgressTicker() {
+  const [, setLocation] = useLocation();
+  const { data: plansRaw } = useQuery<any[]>({ queryKey: ["/api/treatment-plans"], retry: false });
+  const plan = plansRaw?.[0];
+  if (!plan) return null;
+  const pct = plan.progressPercentage ? Number(plan.progressPercentage) : 0;
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
+      className="bg-slate-900/50 border border-slate-800/60 rounded-[2rem] p-5 cursor-pointer hover:border-slate-700 transition-all group"
+    >
+      {/* Header Area */}
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 mb-0.5">Active Protocol</p>
+          <p className="text-sm font-bold text-white truncate max-w-[200px]">{plan.title || "Wellness Journey"}</p>
+        </div>
+        <button onClick={() => setLocation('/treatment-plan')} className="text-white relative group cursor-pointer flex items-center gap-1">
+          <span className="text-xs font-bold mr-1 tracking-wide relative">
+            View Plan
+            <span className="absolute left-0 bottom-0 top-auto h-[2px] w-0 bg-white group-hover:w-full transition-all duration-300"></span>
+          </span>
+          <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-200 transition-colors" />
+        </button>
+      </div>
+      <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }} animate={{ width: `${Math.max(pct, 3)}%` }}
+          transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
+          className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-rose-500"
+        />
+      </div>
+      <p className="text-[10px] text-slate-300 mt-1.5 font-medium">{pct}% complete</p>
+    </motion.div>
+  );
+}
+
+function PatternCard() {
+  const { data: trends = [] } = useQuery<any[]>({
+    queryKey: ["/api/signals/trends"],
+    retry: false
+  });
+
+  const { data: insightRaw } = useQuery<any>({
+    queryKey: ["/api/dashboard/insights"],
+    retry: false
+  });
+
+  const text = insightRaw?.description || "Your wellness baseline is being established. Continue checking in daily to unlock deeper pattern analysis.";
+
+  return (
+    <div className="bg-slate-900/60 border border-indigo-500/10 rounded-[2rem] p-5 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-28 h-28 bg-gradient-to-br from-indigo-500/10 to-transparent blur-2xl" />
+      <div className="flex items-start gap-4 relative z-10">
+        <div className="w-9 h-9 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0 mt-0.5 shadow-lg">
+          <BarChart2 className="w-4 h-4 text-indigo-400" />
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-indigo-400">AI Pattern Analysis</p>
+            {trends.length >= 2 && <TrendSparkline data={trends} />}
+          </div>
+          <p className="text-[13px] text-slate-300 leading-relaxed font-light">{text}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Dashboard ─────────────────────────────────────────────────────────────
+export default function AIOrchestratedDashboard() {
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const { gender, hasChosen } = usePhase();
+  const [, setLocation] = useLocation();
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [sliderValue, setSliderValue] = useState(50);
+  const [interactionState, setInteractionState] = useState<'prompt' | 'processing' | 'reward'>('prompt');
+  const [insightText, setInsightText] = useState("");
+  const [streak, setStreak] = useState(0);
+  const [sessionStart] = useState(Date.now());
+
+  // [PHASE 13] Behavioral Profile Query
+  const { data: profile } = useQuery<any>({
+    queryKey: ["/api/behavior-profile"],
+    retry: false
+  });
+
+  const { data: assessments = [], isLoading: assessLoading } = useQuery<any[]>({
+    queryKey: ["/api/assessments"], retry: false
+  });
+  const recentAssessment = (assessments as any[])[0];
+
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({ title: "Unauthorized", description: "Redirecting to login...", variant: "destructive" });
+    if (!isLoading && isAuthenticated && hasChosen) {
+      if (gender === "male") {
+        setLocation("/men");
+      } else if (gender === "female") {
+        setLocation("/women");
+      }
+    }
+  }, [isLoading, isAuthenticated, hasChosen, gender, setLocation]);
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && !hasChosen) {
+      setLocation('/phase-select');
+    } else if (!isLoading && !isAuthenticated) {
       setTimeout(() => { window.location.href = "/api/login"; }, 500);
     }
-  }, [isAuthenticated, isLoading, toast]);
+  }, [isAuthenticated, isLoading, hasChosen, setLocation]);
 
-  if (isLoading) return (
+  const handleOrbRelease = useCallback(async () => {
+    if (interactionState !== 'prompt') return;
+    setInteractionState('processing');
+
+    try {
+      const now = Date.now();
+      const pulseVelocityMs = now - sessionStart;
+      const dwellTimeSeconds = Math.floor(pulseVelocityMs / 1000);
+
+      // 1. POST pulse signal with behavioral fingerprinting
+      const res = await fetch('/api/signals/daily', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          energyLevel: sliderValue,
+          pulseVelocityMs,
+          dwellTimeSeconds
+        })
+      });
+
+      // 2. Refresh insights after updating signal
+      const insightRes = await fetch('/api/dashboard/insights');
+      const insightData = await insightRes.json();
+
+      setInsightText(insightData.description);
+      setInteractionState('reward');
+      const n = recordCheckIn();
+      setStreak(n);
+    } catch (error) {
+      console.error("Failed to record pulse signal:", error);
+      // Fallback
+      setInsightText(getAIInsight(sliderValue));
+      setInteractionState('reward');
+    }
+  }, [interactionState, sliderValue]);
+
+  if (isLoading || !isAuthenticated) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-400" />
+      <div className="w-10 h-10 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin" />
     </div>
   );
 
-  if (!isAuthenticated) return null;
-
-  const activePlan = treatmentPlans?.find((p: any) => p.status === "active");
-  const recentAssessments = assessments?.slice(0, 5) || [];
-
-  // ── Metric Tiles ─────────────────────────────────────────────────────────────
-  const metrics = [
-    { label: "Reflections", value: assessments?.length || 0, icon: Heart, color: "from-rose-500 to-pink-600", light: "bg-rose-500/10 text-rose-400", delta: "+2 this week" },
-    { label: "Active Journey", value: treatmentPlans?.filter((p: any) => p.status === "active").length || 0, icon: Compass, color: "from-indigo-500 to-blue-600", light: "bg-indigo-500/10 text-indigo-400", delta: "In progress" },
-    { label: "Days Guided", value: progressData?.length || 0, icon: Calendar, color: "from-violet-500 to-purple-600", light: "bg-violet-500/10 text-violet-400", delta: "All time" },
-    { label: "Current Focus", value: activePlan?.title || "None", icon: Target, color: "from-amber-500 to-orange-500", light: "bg-amber-500/10 text-amber-400", delta: activePlan ? "Active" : "Start one" },
-  ];
+  const orbGradient = getOrbGradient(sliderValue);
+  const glowPx = 20 + Math.abs(sliderValue - 50);
+  const firstName = (user as any)?.firstName || "there";
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white pb-24" data-testid="dashboard-page">
+    <div className="min-h-screen text-white pb-28 relative overflow-x-hidden" data-testid="ai-dashboard">
+      <MeshBackground variant="unified" />
 
-      {/* ── Header ── */}
-      <div className="bg-slate-950 border-b border-slate-800/60 px-4 py-4 sticky top-0 z-30">
-        <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold">PureSoul</p>
-            <h1 className="text-lg font-black text-white leading-tight">My Journey</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            {subscription && (
-              <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-full">
-                <Crown className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-[10px] font-black text-amber-400 uppercase tracking-wide">
-                  {subscription.plan?.name || "Pro"}
-                </span>
+      {/* ── Sticky Header ── */}
+      <div className="bg-slate-950/20 backdrop-blur-xl border-b border-white/5 px-4 py-3 sticky top-0 z-50">
+        <div className="max-w-xl mx-auto flex items-center justify-between">
+
+          {/* Logo + greeting */}
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-indigo-500 to-rose-500 p-[2px] shrink-0">
+              <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
+                <span className="font-black text-white text-sm">P</span>
               </div>
-            )}
-            <button onClick={() => setFeedbackOpen(true)}
-              className="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-all border border-slate-700">
-              <MessageSquare className="w-4 h-4 text-slate-400" />
-            </button>
+            </div>
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <p className="text-[9px] text-slate-300 font-bold uppercase tracking-widest leading-none mb-0.5">{getGreeting()}</p>
+                <h1 className="text-3xl font-black text-white leading-none tracking-tight">
+                  {user?.firstName || 'Friend'}
+                </h1>
+                {profile?.archetype && profile.archetype !== 'Establishing Baseline' && (
+                  <div className="px-1.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center gap-1 shadow-[0_0_10px_rgba(99,102,241,0.1)]">
+                    <div className="w-1 h-1 rounded-full bg-indigo-400 animate-pulse" />
+                    <span className="text-[7px] font-black uppercase tracking-widest text-indigo-400">{profile.archetype}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right side controls */}
+          <div className="flex items-center gap-2">
+            <DailyStreakBanner onStreakCheck={setStreak} />
+
+            {/* Menu toggle */}
+            <div className="relative">
+              {/* <DropdownMenu>
+              <DropdownMenuTrigger asChild> */}
+              <button
+                onClick={() => setShowMenu(m => !m)}
+                className="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center hover:bg-slate-800 transition-all border border-slate-700"
+              >
+                <Settings className="w-4 h-4 text-slate-300" />
+              </button>
+              {/* </DropdownMenuTrigger> */}
+              {/* Dropdown menu */}
+              <AnimatePresence>
+                {showMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.92, y: -4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.92, y: -4 }}
+                    className="absolute right-0 top-11 w-44 bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl z-50"
+                  >
+                    {/* <DropdownMenuItem asChild> */}
+                    <button
+                      onClick={() => { setShowMenu(false); setFeedbackOpen(true); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-200 hover:bg-slate-800 transition-colors text-left"
+                    >
+                      <MessageSquare className="w-4 h-4 text-slate-300" />
+                      Feedback
+                    </button>
+                    {/* </DropdownMenuItem> */}
+                    <div className="h-px bg-slate-800" />
+                    <button
+                      onClick={() => { setShowMenu(false); signOut(); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-rose-400 hover:bg-rose-500/10 transition-colors text-left"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-3 sm:px-4 pt-5">
+      {/* ── Feed ── */}
+      <div className="max-w-xl mx-auto px-4 pt-5 space-y-5">
 
-        {/* ── Community Spark ── */}
-        {sparksData && sparksData.sparks.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-            className="mb-5 bg-gradient-to-r from-rose-950/80 to-orange-950/80 border border-rose-800/40 rounded-2xl px-4 py-3 flex items-start gap-3">
-            <Sparkles className="w-4 h-4 text-rose-400 mt-0.5 flex-shrink-0 animate-pulse" />
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-rose-500 mb-0.5">Community Spark</p>
-              <p className="text-sm text-rose-200 italic leading-snug">"{sparksData.sparks[0]}"</p>
-            </div>
-          </motion.div>
-        )}
+        {/* 1. Stories — Today's Protocol */}
+        <TodaysProtocol onAllComplete={() => { const n = recordCheckIn(); setStreak(n); }} />
 
-        {/* ── Metric Grid ── */}
-        <div className="grid grid-cols-2 gap-3 mb-5">
-          {metrics.map((m, i) => (
-            <motion.div key={m.label}
-              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.07 }}
-              className="bg-slate-900 border border-slate-800 rounded-2xl p-4 relative overflow-hidden">
-              <div className={`absolute top-0 right-0 w-16 h-16 rounded-full blur-2xl opacity-20 bg-gradient-to-br ${m.color}`} />
-              <div className={`w-8 h-8 rounded-xl ${m.light} flex items-center justify-center mb-3`}>
-                <m.icon className="w-4 h-4" />
-              </div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-0.5">{m.label}</p>
-              <p className={`font-black text-white ${typeof m.value === 'string' ? 'text-base leading-tight' : 'text-2xl'} truncate`}>
-                {m.value}
-              </p>
-              <p className="text-[11px] text-slate-600 mt-1 font-medium">{m.delta}</p>
-            </motion.div>
-          ))}
-        </div>
+        {/* 2. Daily Pulse Orb */}
+        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[3rem] relative overflow-hidden flex flex-col items-center justify-center min-h-[360px] px-6 py-8 shadow-2xl shadow-indigo-500/5">
+          <AnimatePresence mode="wait">
 
-        {/* ── Tab Nav ── */}
-        <div className="flex bg-slate-900 rounded-2xl p-1 border border-slate-800 mb-5 gap-1">
-          {TAB_IDS.map(t => (
-            <button key={t} onClick={() => setTab(t)}
-              className={`flex-1 py-2 rounded-xl text-xs font-black transition-all ${tab === t
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
-                : 'text-slate-500 hover:text-slate-300'}`}>
-              {TAB_LABELS[t]}
-            </button>
-          ))}
-        </div>
-
-        {/* ── Tab: Overview ── */}
-        {tab === "overview" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-
-            {/* Active Plan Card */}
-            {activePlan ? (
-              <div className="bg-gradient-to-br from-indigo-900/60 to-slate-900 border border-indigo-700/30 rounded-2xl p-5">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-indigo-400 font-black mb-1">Current Journey</p>
-                    <h2 className="text-base font-black text-white leading-tight">{activePlan.title}</h2>
-                    <p className="text-xs text-slate-400 mt-1 line-clamp-2">{activePlan.description}</p>
-                  </div>
-                  <Link href={`/treatment-plan/${activePlan.id}`}>
-                    <button className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center flex-shrink-0 hover:bg-indigo-500 transition-all">
-                      <ArrowUpRight className="w-4 h-4 text-white" />
-                    </button>
-                  </Link>
-                </div>
-                <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
-                  <span>Week {activePlan.currentWeek} of {activePlan.totalWeeks}</span>
-                  <span className="font-bold text-white">{activePlan.progressPercentage}%</span>
-                </div>
-                <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <motion.div className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full"
-                    initial={{ width: 0 }} animate={{ width: `${activePlan.progressPercentage}%` }}
-                    transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }} />
-                </div>
-                <div className="grid grid-cols-3 gap-2 mt-4">
-                  {[
-                    { label: "Week", value: `${activePlan.currentWeek}/${activePlan.totalWeeks}` },
-                    { label: "Progress", value: `${activePlan.progressPercentage}%` },
-                    { label: "Status", value: activePlan.status },
-                  ].map(stat => (
-                    <div key={stat.label} className="bg-slate-800/50 rounded-xl p-2.5 text-center">
-                      <p className="text-[10px] text-slate-500 uppercase font-bold">{stat.label}</p>
-                      <p className="text-sm font-black text-white capitalize mt-0.5">{stat.value}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center" data-testid="card-no-plan">
-                <Compass className="h-12 w-12 text-slate-600 mx-auto mb-3" />
-                <h3 className="text-base font-black text-white mb-1">Ready to Start a Journey?</h3>
-                <p className="text-sm text-slate-500 mb-4">Complete a reflection check-in to generate your path.</p>
-                <Link href="/assessment">
-                  <Button className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold w-full" data-testid="button-start-assessment">
-                    Begin Reflection
-                  </Button>
-                </Link>
-              </div>
-            )}
-
-            {/* Recent Activity */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden" data-testid="card-recent-activity">
-              <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-slate-800">
-                <div className="flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-slate-400" />
-                  <span className="text-sm font-black text-white">Recent Activity</span>
-                </div>
-                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wide">Last 5</span>
-              </div>
-              {progressData && progressData.length > 0 ? (
-                <div className="divide-y divide-slate-800/60">
-                  {progressData.slice(0, 5).map((entry: any, i: number) => (
-                    <div key={i} className="flex items-center justify-between px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-2 h-2 rounded-full ${entry.completed ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-                        <div>
-                          <p className="text-sm font-bold text-white leading-tight">{entry.activityName}</p>
-                          <p className="text-[11px] text-slate-500 capitalize">{entry.activityType}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[11px] text-slate-600">{new Date(entry.date).toLocaleDateString()}</p>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${entry.completed ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-500/15 text-amber-400'}`}>
-                          {entry.completed ? "Done" : "In progress"}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Activity className="h-10 w-10 text-slate-700 mx-auto mb-2" />
-                  <p className="text-sm text-slate-500">No activity yet — start a session!</p>
-                </div>
-              )}
-            </div>
-
-            {/* Feedback CTA */}
-            <button onClick={() => setFeedbackOpen(true)}
-              className="w-full bg-slate-900 border border-slate-800 hover:border-indigo-700/50 rounded-2xl p-4 flex items-center gap-3 transition-all group text-left">
-              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-500/20 transition-all">
-                <MessageSquare className="w-5 h-5 text-indigo-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-black text-white">Have feedback or found a bug?</p>
-                <p className="text-xs text-slate-500">Help us improve PureSoul</p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-slate-600 flex-shrink-0" />
-            </button>
-          </motion.div>
-        )}
-
-        {/* ── Tab: Progress ── */}
-        {tab === "progress" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden" data-testid="card-progress-chart">
-            <div className="flex items-center gap-2 px-4 pt-4 pb-3 border-b border-slate-800">
-              <BarChart2 className="w-4 h-4 text-slate-400" />
-              <span className="text-sm font-black text-white">Progress Over Time</span>
-            </div>
-            {progressData && progressData.length > 0 ? (
-              <div className="p-4">
-                <ProgressChart data={progressData} />
-              </div>
-            ) : (
-              <div className="text-center py-12 px-4">
-                <TrendingUp className="h-12 w-12 text-slate-700 mx-auto mb-3" />
-                <p className="text-sm text-slate-500 mb-4">No progress data yet</p>
-                <Link href="/activities">
-                  <Button className="bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-sm">
-                    Browse Activities
-                  </Button>
-                </Link>
-              </div>
-            )}
-          </motion.div>
-        )}
-
-        {/* ── Tab: History ── */}
-        {tab === "history" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3" data-testid="card-assessment-history">
-            {recentAssessments.length > 0 ? recentAssessments.map((a: any, i: number) => {
-              const sevColor = a.severity === 'severe' || a.severity === 'moderately_severe'
-                ? 'bg-rose-500/15 text-rose-400 border-rose-500/20'
-                : a.severity === 'moderate'
-                  ? 'bg-amber-500/15 text-amber-400 border-amber-500/20'
-                  : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20';
-              return (
-                <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                  className="bg-slate-900 border border-slate-800 rounded-2xl flex items-center gap-3 px-4 py-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Heart className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-black text-white capitalize leading-tight">
-                      {a.type.replace('_', ' ')} Assessment
-                    </p>
-                    <p className="text-[11px] text-slate-500">
-                      Score {a.score} · {new Date(a.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border capitalize flex-shrink-0 ${sevColor}`}>
-                    {a.severity.replace('_', ' ')}
-                  </span>
-                </motion.div>
-              );
-            }) : (
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl text-center py-12 px-4">
-                <Heart className="h-12 w-12 text-slate-700 mx-auto mb-3" />
-                <p className="text-sm text-slate-500 mb-4">No reflections yet</p>
-                <Link href="/assessment">
-                  <Button className="bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-sm" data-testid="button-first-assessment">
-                    Take Your First Assessment
-                  </Button>
-                </Link>
-              </div>
-            )}
-            {assessments.length > 3 && (
-              <Link href="/assessment">
-                <button className="w-full py-3 text-sm font-bold text-slate-400 hover:text-white transition-all flex items-center justify-center gap-1" data-testid="button-view-all-assessments">
-                  View All Assessments <ChevronRight className="w-4 h-4" />
-                </button>
-              </Link>
-            )}
-          </motion.div>
-        )}
-
-        {/* ── Tab: Goals ── */}
-        {tab === "goals" && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} data-testid="card-treatment-goals">
-            {activePlan?.goals ? (
-              <div className="space-y-3">
-                {activePlan.goals.map((goal: string, i: number) => (
-                  <motion.div key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06 }}
-                    className="bg-slate-900 border border-slate-800 rounded-2xl flex items-start gap-3 p-4">
-                    <div className="w-7 h-7 rounded-xl bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-xs font-black text-indigo-400">{i + 1}</span>
-                    </div>
-                    <p className="text-sm font-medium text-slate-300 leading-relaxed">{goal}</p>
+            {/* PROMPT */}
+            {interactionState === 'prompt' && (
+              <motion.div key="prompt" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, y: -20 }} className="flex flex-col items-center w-full">
+                <span className="text-[10px] uppercase font-black tracking-[0.2em] text-indigo-400 mb-5 flex items-center gap-2">
+                  <Sparkles className="w-3 h-3" /> Daily Pulse
+                </span>
+                <h2 className="text-xl font-light text-center leading-tight mb-10 px-2">
+                  How is your <span className="font-semibold text-white">energy</span> right now?
+                </h2>
+                <div className="relative w-full px-10 py-8 flex flex-col items-center">
+                  <div className="absolute left-1/2 -translate-x-1/2 w-[2px] h-full bg-slate-800 rounded-full top-0" />
+                  <input
+                    type="range" min="0" max="100" value={100 - sliderValue}
+                    onChange={e => setSliderValue(100 - parseInt(e.target.value))}
+                    onMouseUp={handleOrbRelease}
+                    onTouchEnd={handleOrbRelease}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-grab active:cursor-grabbing z-20"
+                    style={{ writingMode: 'vertical-rl' } as any}
+                  />
+                  <motion.div
+                    animate={{ y: -((sliderValue - 50) * 1.4), scale: 1 + (Math.abs(sliderValue - 50) / 100) * 0.2 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    className={`relative z-10 w-24 h-24 rounded-full bg-gradient-to-tr ${orbGradient} flex items-center justify-center`}
+                    style={{
+                      boxShadow: `0 0 ${glowPx}px ${glowPx / 2}px rgba(99,102,241,0.4), 0 0 ${glowPx * 2}px rgba(79,70,229,0.2)`
+                    }}
+                  >
+                    <motion.div
+                      animate={{ scale: [1, 1.06, 1] }}
+                      transition={{ duration: 2.5, repeat: Infinity }}
+                      className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm border border-white/40 flex items-center justify-center"
+                    >
+                      <Zap className="w-6 h-6 text-white" />
+                    </motion.div>
                   </motion.div>
-                ))}
-              </div>
-            ) : (
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl text-center py-12 px-4">
-                <Target className="h-12 w-12 text-slate-700 mx-auto mb-3" />
-                <p className="text-sm text-slate-500 mb-4">No goals set yet</p>
-                <Link href="/assessment">
-                  <Button className="bg-indigo-600 hover:bg-indigo-500 rounded-xl font-bold text-sm">
-                    Create a Plan
-                  </Button>
-                </Link>
-              </div>
+                </div>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-5">Drag to respond</p>
+              </motion.div>
             )}
-          </motion.div>
-        )}
+
+            {/* PROCESSING */}
+            {interactionState === 'processing' && (
+              <motion.div key="processing" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                  className={`w-24 h-24 rounded-full bg-gradient-to-tr ${orbGradient} blur-xl opacity-60 absolute`}
+                />
+                <Brain className="w-10 h-10 text-white relative z-10 animate-pulse" />
+                <p className="mt-6 text-sm font-medium text-slate-300 tracking-wide uppercase">Analyzing patterns...</p>
+              </motion.div>
+            )}
+
+            {/* REWARD */}
+            {interactionState === 'reward' && (
+              <motion.div key="reward" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center w-full px-4">
+                <div className={`w-14 h-14 rounded-full bg-gradient-to-tr ${orbGradient} flex items-center justify-center mb-4 shadow-xl`}>
+                  <Sparkles className="w-7 h-7 text-white" />
+                </div>
+
+                {streak > 0 && (
+                  <motion.div
+                    initial={{ scale: 0 }} animate={{ scale: 1 }}
+                    transition={{ delay: 0.3, type: "spring" }}
+                    className="mb-4 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center gap-2"
+                  >
+                    <span>🔥</span>
+                    <span className="text-xs font-black text-amber-400">{streak} day streak!</span>
+                  </motion.div>
+                )}
+
+                <p className="text-base font-light text-white leading-relaxed mb-6 italic">"{insightText}"</p>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setLocation('/activities/somatic-1')}
+                    className="py-3 px-6 rounded-full bg-white text-slate-950 font-black text-sm tracking-wide hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center gap-2"
+                  >
+                    <Zap className="w-4 h-4" /> Neural Reset
+                  </button>
+                  <button
+                    onClick={() => { setInteractionState('prompt'); setSliderValue(50); }}
+                    className="py-3 px-4 rounded-full bg-slate-800/80 text-slate-400 font-bold text-sm hover:bg-slate-800 transition-all border border-slate-700"
+                  >
+                    Reset
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* 3. AI Insight */}
+        <AIInsightCard />
+
+        {/* 4. Plan Progress */}
+        <PlanProgressTicker />
+
+        {/* 5. Pattern Analysis */}
+        {recentAssessment && <PatternCard />}
+
+        {/* 6. Quick Links Grid */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }} className="grid grid-cols-3 gap-3">
+          {[
+            { label: "Assessment", emoji: "❤️", route: "/assessment", sub: recentAssessment ? (recentAssessment.severity || 'check').replace('_', ' ') : "Take one" },
+            { label: "Vocal Scan", emoji: "🎙️", route: "/voice-analyzer", sub: "Bonus tool" },
+            { label: "Community", emoji: "🌐", route: "/community", sub: "Connect" },
+          ].map(item => (
+            <div
+              key={item.route}
+              onClick={() => setLocation(item.route)}
+              className="bg-slate-900/40 border border-slate-800/60 p-4 rounded-[1.5rem] flex flex-col gap-1.5 cursor-pointer hover:border-slate-700 hover:bg-slate-900/60 transition-all active:scale-95"
+            >
+              <div className="text-xl">{item.emoji}</div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{item.sub}</p>
+              <p className="text-xs font-bold text-white capitalize">{item.label}</p>
+            </div>
+          ))}
+        </motion.div>
 
       </div>
 
       <FeedbackModal open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+      <BehavioralNudge />
     </div>
   );
 }

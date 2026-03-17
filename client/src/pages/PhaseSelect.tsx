@@ -43,6 +43,54 @@ const QUESTIONS = [
     },
 ];
 
+const MEN_BIOMARKER_QUESTIONS = [
+    {
+        id: "activity",
+        question: "What is your primary training focus?",
+        subtitle: "This helps us calibrate your metabolic protocol.",
+        options: [
+            { label: "⚡ Hypertrophy & Strength", value: "strength" },
+            { label: "🏃 Endurance & VO2 Max", value: "endurance" },
+            { label: "🧘 Mobility & Recovery", value: "mobility" },
+            { label: "🧠 Cognitive Performance", value: "cognitive" },
+        ],
+    },
+    {
+        id: "sleep_consistency",
+        question: "How consistent is your sleep schedule?",
+        subtitle: "Sleep is the foundation of androgenic health.",
+        options: [
+            { label: "📈 Very consistent (7-9h)", value: "high" },
+            { label: "📉 Irregular (Varies by >2h)", value: "low" },
+            { label: "🔋 I prioritize recovery", value: "priority" },
+        ],
+    }
+];
+
+const WOMEN_BIOMARKER_QUESTIONS = [
+    {
+        id: "cycle_regularity",
+        question: "How regular is your cycle?",
+        subtitle: "We use this to sync your nutrition and movement.",
+        options: [
+            { label: "📅 Like clockwork (28-32 days)", value: "regular" },
+            { label: "🌪️ Irregular or unpredictable", value: "irregular" },
+            { label: "💊 Using hormonal birth control", value: "birth_control" },
+            { label: "🤱 Postpartum / Nursing", value: "postpartum" },
+        ],
+    },
+    {
+        id: "energy_ebbs",
+        question: "When do you feel your energy peaks?",
+        subtitle: "Syncing with your biological rhythm.",
+        options: [
+            { label: "🌅 Morning surge", value: "morning" },
+            { label: "🌇 Evening clarity", value: "evening" },
+            { label: "📉 Mid-day crashes frequent", value: "crashes" },
+        ],
+    }
+];
+
 function suggestPhase(answers: (LifePhase | null)[]): LifePhase {
     const counts: Partial<Record<string, number>> = {};
     answers.forEach(a => { if (a) counts[a] = (counts[a] || 0) + 1; });
@@ -54,18 +102,23 @@ function suggestPhase(answers: (LifePhase | null)[]): LifePhase {
 export default function PhaseSelect() {
     const { setPhase, setGender } = usePhase();
     const [, setLocation] = useLocation();
-    const [step, setStep] = useState<"gender" | "quiz" | "confirm">("gender");
+    const [step, setStep] = useState<"gender" | "quiz" | "biomarkers" | "confirm">("gender");
     const [qIndex, setQIndex] = useState(0);
     const [answers, setAnswers] = useState<(LifePhase | null)[]>([null, null]);
+    const [biomarkerAnswers, setBiomarkerAnswers] = useState<Record<string, string>>({});
     const [suggested, setSuggested] = useState<LifePhase>(null);
     const [chosen, setChosen] = useState<LifePhase>(null);
+    const { gender } = usePhase();
 
-    const handleGender = (gender: Gender) => {
-        setGender(gender);
-        if (gender === "male") {
-            // Men bypass the phase quiz completely
+    const handleGender = (g: Gender) => {
+        setGender(g);
+        if (g === "male") {
+            // Men proceed to biomarker questions immediately
             setPhase(null);
-            setLocation("/dashboard");
+            setTimeout(() => {
+                setStep("biomarkers");
+                setQIndex(0);
+            }, 250);
         } else {
             // Women and Non-binary proceed to phase quiz
             setTimeout(() => setStep("quiz"), 250);
@@ -83,17 +136,37 @@ export default function PhaseSelect() {
             const best = suggestPhase(newAnswers);
             setSuggested(best);
             setChosen(best);
+            // After phase quiz, go to women's biomarkers
+            setTimeout(() => {
+                setStep("biomarkers");
+                setQIndex(0);
+            }, 300);
+        }
+    };
+
+    const handleBiomarker = (qId: string, value: string) => {
+        setBiomarkerAnswers(prev => ({ ...prev, [qId]: value }));
+
+        const currentQuestions = gender === "male" ? MEN_BIOMARKER_QUESTIONS : WOMEN_BIOMARKER_QUESTIONS;
+
+        if (qIndex < currentQuestions.length - 1) {
+            setTimeout(() => setQIndex(i => i + 1), 250);
+        } else {
             setTimeout(() => setStep("confirm"), 300);
         }
     };
 
     const handleConfirm = () => {
-        if (!chosen) return;
-        setPhase(chosen);
+        // In a real app, we'd persist biomarkerAnswers to the DB here
+        console.log("Saving biomarkers:", biomarkerAnswers);
+        if (gender !== "male" && chosen) {
+            setPhase(chosen);
+        }
         setLocation("/dashboard");
     };
 
-    const q = QUESTIONS[qIndex];
+    const q = step === "quiz" ? QUESTIONS[qIndex] : null;
+    const bq = step === "biomarkers" ? (gender === "male" ? MEN_BIOMARKER_QUESTIONS[qIndex] : WOMEN_BIOMARKER_QUESTIONS[qIndex]) : null;
     const chosenPhase = PHASES.find(p => p.id === chosen);
 
     return (
@@ -132,7 +205,7 @@ export default function PhaseSelect() {
                     )}
 
                     {/* ── QUIZ ── */}
-                    {step === "quiz" && (
+                    {step === "quiz" && q && (
                         <motion.div key={`q-${qIndex}`} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.3 }}>
 
                             {/* Progress */}
@@ -159,6 +232,36 @@ export default function PhaseSelect() {
                                 ))}
                             </div>
 
+                        </motion.div>
+                    )}
+
+                    {/* ── BIOMARKERS ── */}
+                    {step === "biomarkers" && bq && (
+                        <motion.div key={`bq-${qIndex}`} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} transition={{ duration: 0.3 }}>
+
+                            {/* Progress */}
+                            <div className="flex gap-1.5 mb-8">
+                                {(gender === "male" ? MEN_BIOMARKER_QUESTIONS : WOMEN_BIOMARKER_QUESTIONS).map((_, i) => (
+                                    <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-500 ${i <= qIndex ? "bg-indigo-400" : "bg-slate-200"}`} />
+                                ))}
+                            </div>
+
+                            <div className="text-center mb-8">
+                                <div className="text-xs font-black uppercase tracking-widest text-indigo-400 mb-2">Biomarker Calibration</div>
+                                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2">{bq.question}</h2>
+                                <p className="text-slate-500 font-medium">{bq.subtitle}</p>
+                            </div>
+
+                            <div className="space-y-3">
+                                {bq.options.map((opt, i) => (
+                                    <motion.button key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06 }}
+                                        onClick={() => handleBiomarker(bq.id, opt.value)}
+                                        className="w-full text-left px-5 py-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-indigo-300 hover:bg-slate-50 hover:shadow-md transition-all group font-bold text-slate-700 flex items-center justify-between">
+                                        {opt.label}
+                                        <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-indigo-400 transition-colors" />
+                                    </motion.button>
+                                ))}
+                            </div>
                         </motion.div>
                     )}
 

@@ -21,6 +21,8 @@ const Landing = lazy(() => import("@/pages/landing"));
 const Home = lazy(() => import("@/pages/home"));
 const Assessment = lazy(() => import("@/pages/assessment"));
 const Dashboard = lazy(() => import("@/pages/dashboard"));
+const OnboardingAssessment = lazy(() => import("@/pages/OnboardingAssessment"));
+const VoiceAnalyzer = lazy(() => import("@/pages/VoiceAnalyzer"));
 const TreatmentPlan = lazy(() => import("@/pages/treatment-plan"));
 const Admin = lazy(() => import("@/pages/admin"));
 const Subscribe = lazy(() => import("@/pages/subscribe"));
@@ -41,6 +43,7 @@ const Community = lazy(() => import('./pages/Community'));
 const SafetyPlan = lazy(() => import('./pages/SafetyPlan'));
 const FeaturesHome = lazy(() => import('./pages/FeaturesHome'));
 const Settings = lazy(() => import('./pages/Settings'));
+const AccountProfile = lazy(() => import('./pages/AccountProfile'));
 const Goals = lazy(() => import('./pages/Goals'));
 const UnifiedDashboard = lazy(() => import('./pages/UnifiedDashboard'));
 const Timeline = lazy(() => import('./pages/timeline'));
@@ -76,6 +79,7 @@ const NoticePrivacyPracticesPage = lazy(() => import('./pages/legal/notice-of-pr
 const ContactUsPage = lazy(() => import('./pages/contact'));
 
 import Footer from './components/layout/footer';
+import { BottomNav } from './components/BottomNav';
 
 import './styles/airtable.css';
 
@@ -120,20 +124,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// Phase-aware dashboard: redirects to /phase-select if no gender/phase chosen
-function PhaseDashboard() {
-  const { gender, phase, hasChosen } = usePhase();
-  const [, setLocation] = useLocation();
-
-  useEffect(() => {
-    if (!hasChosen) setLocation('/phase-select');
-  }, [hasChosen, setLocation]);
-
-  if (!hasChosen) return null;
-  if (gender === 'male') return <UnifiedDashboard />;
-  if (phase === 'flowering') return <FloweringDashboard />;
-  return <UnifiedDashboard />;
-}
+// Phase-aware dashboard logic removed - all users now go to unified Feed dashboard
 
 // Auth route wrapper - redirects to /dashboard if already logged in
 function AuthRoute({ children }: { children: React.ReactNode }) {
@@ -163,10 +154,26 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [location, setLocation] = useLocation();
+  const { gender, hasChosen } = usePhase();
+
+  // Handle gender-based redirection for the root and dashboard paths
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && hasChosen) {
+      if (location === "/" || location === "/dashboard") {
+        if (gender === "male") {
+          setLocation("/men");
+        } else if (gender === "female") {
+          setLocation("/women");
+        }
+      }
+    }
+  }, [isLoading, isAuthenticated, hasChosen, gender, location, setLocation]);
+
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+        <div className="w-10 h-10 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -174,11 +181,12 @@ function Router() {
   return (
     <>
       <ScrollToTop />
-      {isAuthenticated && <SmartBackButton />}
-      {isAuthenticated && <MainNavigation />}
-      {isAuthenticated && <SoulCoreHub />}
-      {isAuthenticated && <OnboardingManager />}
-      <div className={`min-h-screen mesh-bg ${isAuthenticated ? "lg:ml-80 lg:pl-8 pb-28 lg:pb-0" : ""}`}>
+      {isAuthenticated && location !== '/dashboard' && !location.startsWith('/women') && !location.startsWith('/men') && <SmartBackButton />}
+      {isAuthenticated && location !== '/dashboard' && !location.startsWith('/women') && !location.startsWith('/men') && <MainNavigation />}
+      {isAuthenticated && location !== '/dashboard' && !location.startsWith('/women') && !location.startsWith('/men') && <SoulCoreHub />}
+      {isAuthenticated && location !== '/dashboard' && !location.startsWith('/women') && !location.startsWith('/men') && <OnboardingManager />}
+      {isAuthenticated && <BottomNav />}
+      <div className={`min-h-screen mesh-bg ${isAuthenticated && !location.startsWith('/women') && !location.startsWith('/men') ? "lg:ml-80 lg:pl-8 pb-28 lg:pb-0" : ""}`}>
         <Suspense fallback={
           <div className="min-h-screen flex items-center justify-center bg-slate-50/50">
             <div className="flex flex-col items-center gap-4">
@@ -206,6 +214,9 @@ function Router() {
             <Route path="/voice-journal">
               <ProtectedRoute><VoiceJournal /></ProtectedRoute>
             </Route>
+            <Route path="/voice-analyzer">
+              <ProtectedRoute><VoiceAnalyzer /></ProtectedRoute>
+            </Route>
             <Route path="/assessment">
               <ProtectedRoute><Assessment /></ProtectedRoute>
             </Route>
@@ -230,8 +241,11 @@ function Router() {
             <Route path="/support">
               <ProtectedRoute><Support /></ProtectedRoute>
             </Route>
+            <Route path="/onboarding">
+              <ProtectedRoute><OnboardingAssessment /></ProtectedRoute>
+            </Route>
             <Route path="/dashboard">
-              <ProtectedRoute><PhaseDashboard /></ProtectedRoute>
+              <ProtectedRoute><Dashboard /></ProtectedRoute>
             </Route>
             <Route path="/activities">
               <ProtectedRoute><ActivitiesPage /></ProtectedRoute>
@@ -332,8 +346,8 @@ function Router() {
             <Route path="/settings">
               <ProtectedRoute><Settings /></ProtectedRoute>
             </Route>
-            <Route path="/voice-insights">
-              <ProtectedRoute><VoiceAnalysisDashboard /></ProtectedRoute>
+            <Route path="/profile">
+              <ProtectedRoute><AccountProfile /></ProtectedRoute>
             </Route>
             <Route path="/voice-insights">
               <ProtectedRoute><VoiceAnalysisDashboard /></ProtectedRoute>
@@ -346,7 +360,7 @@ function Router() {
               <ProtectedRoute><FloweringDashboard /></ProtectedRoute>
             </Route>
             <Route path="/">
-              {isAuthenticated ? <PhaseDashboard /> : <Landing />}
+              {isAuthenticated ? <Dashboard /> : <Landing />}
             </Route>
             {/* ── Legal & Compliance routes (public) ── */}
             <Route path="/legal/privacy"><PrivacyNoticePage /></Route>

@@ -5,8 +5,9 @@ import { UnifiedVoiceRecorder } from "@/components/voice/UnifiedVoiceRecorder";
 import { VoiceHistoryList } from "@/components/voice/VoiceHistoryList";
 import { useToast } from "@/hooks/use-toast";
 
+import { Button } from "@/components/ui/button";
 import {
-  Loader2, Mic, Clock, Zap, Activity, Play, Pause, Sparkles
+  Loader2, Mic, Clock, Zap, Activity, Play, Pause, Sparkles, CheckCircle2, ArrowLeft
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -162,11 +163,66 @@ export default function VoiceJournal() {
       setSessionSnapshot({ emotion: topEmotion, savedEntry });
 
       toast({ title: "Vocal Snapshot saved!", description: `Dominant state detected: ${topEmotion}` });
+
+      // Look at URL to determine which journaling ritual to complete (morning vs evening)
+      // or default to journaling-2 (evening reflection)
+      const urlParams = new URLSearchParams(window.location.search);
+      const ritualId = urlParams.get('ritual') || 'journaling-2';
+
+      try {
+        await fetch(`/api/activities/${ritualId}/complete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            duration_actual: Math.round(data.duration / 60),
+            effectiveness_rating: 8,
+            notes: `Voice journal: ${topEmotion}`
+          })
+        });
+      } catch (e) {
+        console.error("Failed to mark journaling ritual complete:", e);
+      }
+
       queryClient.invalidateQueries({ queryKey: ["/api/voice-entries"] });
+      // Invalidate dashboard completions cache so rituals unlock instantly
+      queryClient.invalidateQueries({ queryKey: ["/api/activities/completions/today"] });
+
       setResetKey(prev => prev + 1);
     } catch (err) {
       console.error("Error saving voice entry:", err);
       toast({ title: "Error saving entry", variant: "destructive" });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleForceComplete = async () => {
+    setIsSaving(true);
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const ritualId = urlParams.get('ritual') || 'journaling-2';
+
+      await fetch(`/api/activities/${ritualId}/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          duration_actual: 0,
+          effectiveness_rating: 10,
+          notes: 'Force completed session'
+        })
+      });
+
+      toast({ title: "Ritual Completed!", description: "Skip successful." });
+      queryClient.invalidateQueries({ queryKey: ["/api/activities/completions/today"] });
+
+      setTimeout(() => {
+        setLocation('/dashboard');
+      }, 1000);
+    } catch (err) {
+      console.error("Error force completing:", err);
+      toast({ title: "Error completing ritual", variant: "destructive" });
     } finally {
       setIsSaving(false);
     }
@@ -240,10 +296,18 @@ export default function VoiceJournal() {
     <div className="aurora-bg pb-32 flex flex-col relative">
       <div className="absolute inset-0 z-0 opacity-30 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 60%)' }} />
 
-      <nav className="relative z-40 h-20 flex items-center justify-center mb-4">
-        <div className="font-black tracking-widest uppercase text-slate-800 text-xs flex items-center gap-2 bg-white/40 backdrop-blur-3xl px-6 py-2.5 rounded-full border border-white/50 shadow-sm">
+      <nav className="relative z-40 h-20 flex items-center justify-between mb-4 px-6 md:px-10">
+        {/* Back button removed to avoid duplication with SmartBackButton */}
+        <div className="font-black tracking-widest uppercase text-slate-800 text-xs flex items-center gap-2 bg-white/40 backdrop-blur-3xl px-6 py-2.5 rounded-full border border-white/50 shadow-sm hidden sm:flex">
           <Mic className="h-4 w-4 text-indigo-600" /> Neural Resonance
         </div>
+        <Button
+          variant="outline"
+          className="border-indigo-500/30 text-indigo-700 bg-white/50 hover:bg-indigo-50 tracking-tight font-semibold rounded-full px-4 shadow-sm backdrop-blur-md"
+          onClick={handleForceComplete}
+        >
+          <CheckCircle2 className="mr-2 h-4 w-4" /> Skip & Complete
+        </Button>
       </nav>
 
       <div className="container max-w-4xl mx-auto px-4 sm:px-6 flex-1 flex flex-col relative z-10">

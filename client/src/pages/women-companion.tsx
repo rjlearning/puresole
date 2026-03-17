@@ -111,7 +111,7 @@ export default function WomenCompanionPage() {
             <div className="flex items-center gap-3 px-4 pt-4 pb-3 border-b border-rose-100 bg-white/80 backdrop-blur-sm flex-shrink-0">
                 <Link href="/women">
                     <button className="w-9 h-9 rounded-xl border border-rose-100 flex items-center justify-center hover:bg-rose-50">
-                        <ArrowLeft className="w-4 h-4 text-rose-400" />
+                        <ArrowLeft className="w-4 h-4 text-rose-500" />
                     </button>
                 </Link>
                 <div className="flex items-center gap-2 flex-1">
@@ -119,7 +119,7 @@ export default function WomenCompanionPage() {
                         style={{ background: 'linear-gradient(135deg, #f9a8d4, #c084fc)' }}>♡</div>
                     <div>
                         <p className="text-sm font-bold text-rose-900">Emotional Support</p>
-                        <p className="text-xs text-rose-400">Women's wellness companion</p>
+                        <p className="text-xs text-rose-600">Women's wellness companion</p>
                     </div>
                 </div>
                 <Link href="/women">
@@ -138,7 +138,7 @@ export default function WomenCompanionPage() {
 
             {/* Crisis ribbon */}
             <div className="mx-4 mb-2 py-2 px-4 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-between">
-                <p className="text-xs text-rose-400">Need immediate support?</p>
+                <p className="text-xs text-rose-600">Need immediate support?</p>
                 <a href="tel:18339435746" className="text-xs font-bold text-rose-600">PSI: 1-833-943-5746</a>
             </div>
 
@@ -149,7 +149,7 @@ export default function WomenCompanionPage() {
                         value={input} onChange={e => setInput(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
                         placeholder="Share what's on your mind…" rows={1}
-                        className="flex-1 resize-none outline-none text-sm text-rose-900 placeholder:text-rose-300 bg-transparent"
+                        className="flex-1 resize-none outline-none text-sm text-rose-900 placeholder:text-rose-500 bg-transparent"
                         style={{ maxHeight: 100 }}
                     />
                     <button onClick={send} disabled={!input.trim() || loading}
@@ -157,7 +157,7 @@ export default function WomenCompanionPage() {
                         <Send className="w-4 h-4" />
                     </button>
                 </div>
-                <p className="text-center text-xs text-rose-300 mt-2">Support tool only — not a therapist or medical service.</p>
+                <p className="text-center text-xs text-rose-600 mt-2">Support tool only — not a therapist or medical service.</p>
             </div>
         </div>
     );

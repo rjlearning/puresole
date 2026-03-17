@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { HeartPulse, ChevronLeft, Plus, Check, Moon, Zap, Droplets } from 'lucide-react';
+import { Link } from 'wouter';
+import MeshBackground from "@/components/MeshBackground";
 
 type BodyEntry = {
     date: string;
@@ -90,22 +92,25 @@ export default function WomenBodyPage() {
     const tabs = [{ id: 'log' as const, label: 'Today' }, { id: 'trends' as const, label: 'This Week' }, { id: 'tips' as const, label: 'Recovery Tips' }];
 
     return (
-        <div className="min-h-screen pb-24" style={{ background: 'linear-gradient(160deg,#f0fdf9,#ecfdf5)' }}>
-            <div className="px-5 pt-10 pb-4 max-w-2xl mx-auto">
-                <a href="/women" className="flex items-center gap-1.5 text-sm text-teal-400 hover:text-teal-600 mb-5">← Women's Section</a>
+        <div className="min-h-screen pb-24 relative overflow-hidden text-slate-900">
+            <MeshBackground variant="rose" />
+            <div className="px-5 pt-10 pb-4 max-w-2xl mx-auto relative z-10">
+                <Link href="/women">
+                    <span className="flex items-center gap-1.5 text-sm text-teal-500 font-bold hover:text-teal-600 mb-5 cursor-pointer">← Women's Hub</span>
+                </Link>
                 <div className="flex items-center gap-3 mb-4">
                     <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-xl shadow text-white font-bold" style={{ background: 'linear-gradient(135deg,#2dd4bf,#34d399)' }}>💓</div>
-                    <div><h1 className="text-xl font-black text-teal-900">Body & Recovery</h1><p className="text-xs text-teal-400">Sleep · HRV · energy · feeding</p></div>
+                    <div><h1 className="text-xl font-black text-slate-900">Body & Recovery</h1><p className="text-xs text-teal-500">Sleep · HRV · energy · feeding</p></div>
                 </div>
-                <div className="flex bg-white rounded-2xl p-1 border border-teal-100 shadow-sm gap-1">
-                    {tabs.map(t => <button key={t.id} onClick={() => setTab(t.id)} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${tab === t.id ? 'bg-teal-500 text-white shadow' : 'text-teal-400 hover:bg-teal-50'}`}>{t.label}</button>)}
+                <div className="flex bg-white/40 backdrop-blur-xl rounded-2xl p-1 border border-teal-100 shadow-sm gap-1">
+                    {tabs.map(t => <button key={t.id} onClick={() => setTab(t.id)} className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${tab === t.id ? 'bg-teal-500 text-white shadow-lg' : 'text-slate-500 hover:bg-teal-50'}`}>{t.label}</button>)}
                 </div>
             </div>
 
-            <div className="px-5 max-w-2xl mx-auto space-y-4">
+            <div className="px-5 max-w-2xl mx-auto space-y-4 relative z-10">
                 {tab === 'log' && <>
-                    <div className="bg-white rounded-2xl border border-teal-100 p-4 shadow-sm">
-                        <div className="flex items-center gap-2 mb-3"><Moon className="w-4 h-4 text-teal-400" /><p className="text-xs font-bold text-teal-500 uppercase tracking-widest">Hours of sleep</p></div>
+                    <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-teal-100 p-6 shadow-sm">
+                        <div className="flex items-center gap-2 mb-3"><Moon className="w-4 h-4 text-teal-400" /><p className="text-[10px] font-black text-teal-500 uppercase tracking-widest">Hours of sleep</p></div>
                         <NumInput value={form.sleepHours} onChange={v => upd('sleepHours', v)} min={0} max={12} step={0.5} unit="hrs" />
                     </div>
                     <div className="bg-white rounded-2xl border border-teal-100 p-4 shadow-sm">

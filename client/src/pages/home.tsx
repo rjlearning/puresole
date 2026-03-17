@@ -9,7 +9,9 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { WellnessHalo } from "@/components/voice/WellnessHalo";
+import { SoulLoader } from "@/components/SoulLoader";
 import type { Assessment, TreatmentPlan } from "@shared/schema";
+
 
 export default function Home() {
   const { toast } = useToast();
@@ -39,14 +41,8 @@ export default function Home() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  if (isLoading) return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="relative w-12 h-12">
-        <div className="absolute inset-0 border-4 border-indigo-50 rounded-full" />
-        <div className="absolute inset-0 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    </div>
-  );
+  if (isLoading) return <SoulLoader />;
+
 
   if (!isAuthenticated) return null;
 
@@ -168,7 +164,7 @@ export default function Home() {
                     <div className="flex items-center justify-between border-t border-slate-100 pt-6 mt-2">
                       <div className="flex gap-2">
                         <div className="px-3 py-1 bg-rose-50 rounded-full text-[9px] font-black text-rose-500 uppercase tracking-widest">
-                          {recentAssessment.severity.replace('_', ' ')}
+                          {(recentAssessment.severity ?? 'unknown').replace('_', ' ')}
                         </div>
                       </div>
                       <Link href="/dashboard">

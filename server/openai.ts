@@ -6,7 +6,7 @@ const openai = new OpenAI({
 });
 
 interface AssessmentAnalysis {
-  severity: 'minimal' | 'mild' | 'moderate' | 'moderately_severe' | 'severe';
+  severity: 'minimal' | 'mild' | 'moderate' | 'moderately_severe' | 'severe' | null;
   riskFactors: string[];
   recommendations: string[];
   treatmentPriorities: string[];
@@ -82,7 +82,7 @@ Pay special attention to the Vagus Nerve connection if anxiety is high and physi
 `;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
@@ -163,7 +163,7 @@ ${userContext ? `User Nutrition Context:
 `;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
@@ -181,6 +181,83 @@ ${userContext ? `User Nutrition Context:
     return treatmentPlan as TreatmentPlan;
   } catch (error) {
     throw new Error("Failed to generate treatment plan: " + (error as Error).message);
+  }
+}
+
+export async function generateFullOnboardingPlan(
+  assessmentType: string,
+  responses: Record<string, any>,
+  userGoals?: string[]
+): Promise<{ analysis: AssessmentAnalysis; plan: TreatmentPlan }> {
+  try {
+    const prompt = `
+You are a clinical AI assistant. Analyze the following mental health assessment and generate a comprehensive treatment plan in one step.
+
+Assessment Type: ${assessmentType}
+Responses: ${JSON.stringify(responses)}
+User Goals: ${userGoals ? JSON.stringify(userGoals) : 'Not specified'}
+
+Provide your response in JSON format with the following structure:
+{
+  "analysis": {
+    "severity": "minimal|mild|moderate|moderately_severe|severe",
+    "riskFactors": ["list of identified risk factors"],
+    "recommendations": ["list of recommendations"],
+    "treatmentPriorities": ["list of priorities"],
+    "crisisRisk": boolean,
+    "summary": "comprehensive summary"
+  },
+  "plan": {
+    "title": "Plan title",
+    "description": "Plan description",
+    "totalWeeks": number,
+    "modules": [
+      {
+        "week": number,
+        "title": "Module title",
+        "description": "Module description",
+        "activities": [
+          {
+            "type": "exercise|lesson|journal|meditation|reading",
+            "name": "Activity name",
+            "description": "Activity description",
+            "duration": number,
+            "instructions": "Detailed instructions"
+          }
+        ],
+        "learningObjectives": ["objectives"]
+      }
+    ],
+    "goals": ["treatment goals"]
+  }
+}
+
+Guidelines:
+1. Base analysis on clinical guidelines. 
+2. Treatment plan should be evidence-based, 4-8 weeks for this initial map.
+3. Incorporate CBT, mindfulness, etc.
+4. Ensure modules are progressive.
+`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are a clinical AI assistant specialized in mental health. Generate both a detailed analysis and a matching treatment plan in a single JSON response."
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const result = JSON.parse(response.choices[0].message.content || '{}');
+    return result as { analysis: AssessmentAnalysis; plan: TreatmentPlan };
+  } catch (error) {
+    throw new Error("Failed to generate full onboarding plan: " + (error as Error).message);
   }
 }
 
@@ -342,7 +419,7 @@ Base your analysis on:
 `;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",

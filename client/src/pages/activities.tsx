@@ -6,7 +6,8 @@ import { ActivityAnimation } from '@/components/ui/ActivityAnimations';
 import {
   Clock,
   Heart,
-  ArrowRight
+  ArrowRight,
+  Sparkles
 } from 'lucide-react';
 
 import { Activity, sampleActivities } from '@/lib/activity-data';
@@ -14,12 +15,14 @@ import { Activity, sampleActivities } from '@/lib/activity-data';
 export default function ActivitiesPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+  const searchParams = new URLSearchParams(window.location.search);
+  const isRecommended = searchParams.get('recommended') === 'true';
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchActivities();
-  }, [selectedCategory]);
+  }, [selectedCategory, isRecommended]);
 
   const fetchActivities = async () => {
     setLoading(true);
@@ -69,9 +72,18 @@ export default function ActivitiesPage() {
 
   // We don't filter again here since we filter in fetch/catch for fallback
   // But for the state where api returns ALL and we filter client side:
-  const displayActivities = selectedCategory === 'all'
-    ? activities
-    : activities.filter(a => a.category === selectedCategory);
+  // If AI recommended, force a curated subset (e.g., first 3 activities)
+  let displayActivities = activities;
+
+  if (isRecommended && activities.length > 0) {
+    // Mock algorithm: Pick a breathing, a grounding, and one random
+    const breathing = activities.find(a => a.category === 'breathing');
+    const grounding = activities.find(a => a.category === 'grounding');
+    const somatic = activities.find(a => a.category === 'somatic') || activities[0];
+    displayActivities = [breathing, grounding, somatic].filter(Boolean) as Activity[];
+  } else if (selectedCategory !== 'all') {
+    displayActivities = activities.filter(a => a.category === selectedCategory);
+  }
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -91,40 +103,56 @@ export default function ActivitiesPage() {
       <div className="container mx-auto px-3 sm:px-4 pt-4 sm:pt-12">
         {/* Header */}
         <div className="mb-5 sm:mb-12">
-          <Badge variant="outline" className="mb-4 px-4 py-2 rounded-full bg-secondary/50 border-0 text-secondary-foreground font-medium tracking-wide">
-            <Heart className="w-3 h-3 mr-2 text-primary" />
-            Wellness Library
-          </Badge>
+          {isRecommended ? (
+            <Badge variant="outline" className="mb-4 px-4 py-2 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold tracking-widest uppercase text-xs flex items-center w-max gap-2 shadow-sm">
+              <Sparkles className="w-3.5 h-3.5" />
+              AI Curated Plan
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="mb-4 px-4 py-2 rounded-full bg-secondary/50 border-0 text-secondary-foreground font-medium tracking-wide">
+              <Heart className="w-3 h-3 mr-2 text-primary" />
+              Wellness Library
+            </Badge>
+          )}
+
           <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-foreground mb-2 sm:mb-4 tracking-tight">
-            Explore <span className="text-primary">Activities</span>
+            {isRecommended ? (
+              <>Your <span className="text-indigo-600">Prescription</span></>
+            ) : (
+              <>Explore <span className="text-primary">Activities</span></>
+            )}
           </h1>
           <p className="text-sm sm:text-xl text-muted-foreground font-medium max-w-2xl">
-            Discover guided sessions to help you breathe, focus, and find your center today.
+            {isRecommended
+              ? "Based on your recent assessment, these specific exercises will provide the highest impact."
+              : "Discover guided sessions to help you breathe, focus, and find your center today."}
           </p>
         </div>
 
 
-        {/* Category Filter */}
-        <div className="flex gap-2 mb-5 sm:mb-12 overflow-x-auto pb-2 sm:pb-4 no-scrollbar filter-strip">
-          {categories.map(cat => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`px-4 py-2 sm:px-6 sm:py-3 rounded-full whitespace-nowrap transition-all border font-bold text-sm sm:text-md ${selectedCategory === cat.id
-                ? 'bg-primary text-primary-foreground border-primary shadow-xl shadow-primary/10'
-                : 'bg-card text-muted-foreground hover:bg-secondary/50 border-border hover:border-secondary'
-                }`}
-            >
-              <span className="mr-2">{cat.emoji}</span>
-              <span>{cat.name}</span>
-              {cat.count > 0 && (
-                <span className={`ml-2 text-xs py-0.5 px-2 rounded-full ${selectedCategory === cat.id ? 'bg-white/20 text-white' : 'bg-secondary text-secondary-foreground'}`}>
-                  {cat.count}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
+        {/* Category Filter - Hidden if in recommended mode */}
+        {!isRecommended && (
+          <div className="flex gap-2 mb-5 sm:mb-12 overflow-x-auto pb-2 sm:pb-4 no-scrollbar filter-strip">
+            {categories.map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-4 py-2 sm:px-6 sm:py-3 rounded-full whitespace-nowrap transition-all border font-bold text-sm sm:text-md ${selectedCategory === cat.id
+                  ? 'bg-primary text-primary-foreground border-primary shadow-xl shadow-primary/10'
+                  : 'bg-card text-muted-foreground hover:bg-secondary/50 border-border hover:border-secondary'
+                  }`}
+              >
+                <span className="mr-2">{cat.emoji}</span>
+                <span>{cat.name}</span>
+                {cat.count > 0 && (
+                  <span className={`ml-2 text-xs py-0.5 px-2 rounded-full ${selectedCategory === cat.id ? 'bg-white/20 text-white' : 'bg-secondary text-secondary-foreground'}`}>
+                    {cat.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Loading State */}
         {loading && (
@@ -147,8 +175,8 @@ export default function ActivitiesPage() {
 
         {!loading && displayActivities.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
-            {/* Hardcoded Voice Journal Activity */}
-            {(selectedCategory === 'all' || selectedCategory === 'journaling') && (
+            {/* Hardcoded Voice Journal Activity - ONLY SHOW IF NOT RECOMMENDED MODE */}
+            {!isRecommended && (selectedCategory === 'all' || selectedCategory === 'journaling') && (
               <CleanCard
                 variant="featured"
                 className="p-4 sm:p-6 flex flex-col h-full"
@@ -182,8 +210,8 @@ export default function ActivitiesPage() {
                     <span>Any dur.</span>
                   </div>
 
-                  <button className="w-10 h-10 rounded-full bg-secondary/50 flex items-center justify-center text-secondary-foreground group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
-                    <ArrowRight className="w-5 h-5" />
+                  <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-secondary-foreground font-bold text-sm group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm active:scale-95">
+                    Start Session <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
               </CleanCard>
@@ -228,8 +256,8 @@ export default function ActivitiesPage() {
                     <span>{activity.duration} min</span>
                   </div>
 
-                  <button className="w-10 h-10 rounded-full bg-secondary/50 flex items-center justify-center text-secondary-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-all shadow-sm">
-                    <ArrowRight className="w-5 h-5" />
+                  <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-secondary-foreground font-bold text-sm group-hover:bg-primary group-hover:text-primary-foreground transition-all shadow-sm active:scale-95">
+                    Start Session <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
               </CleanCard>

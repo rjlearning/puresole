@@ -1,20 +1,29 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
 import OnboardingTour from './OnboardingTour';
+
+import { usePhase } from '@/context/PhaseContext';
 
 const ONBOARDING_STORAGE_KEY = 'puresoul_onboarding_completed';
 
 export default function OnboardingManager() {
   const { isAuthenticated, isLoading } = useAuth();
+  const { hasChosen } = usePhase();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [shouldCheckOnboarding, setShouldCheckOnboarding] = useState(false);
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
     // Only check onboarding status when user is authenticated and not loading
     if (!isLoading && isAuthenticated) {
+      if (!hasChosen) {
+        setLocation('/phase-select');
+        return;
+      }
       setShouldCheckOnboarding(true);
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, isLoading, hasChosen]);
 
   useEffect(() => {
     if (shouldCheckOnboarding) {

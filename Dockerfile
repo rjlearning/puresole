@@ -101,5 +101,5 @@ ENV PORT=4000
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start the application (uses npm start to run migrations then serve)
+# Start the application (runs db:push then starts the server)
 CMD ["npm", "start"]

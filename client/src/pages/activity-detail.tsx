@@ -39,11 +39,13 @@ import {
 import { Activity, sampleActivities } from '@/lib/activity-data';
 import { playChime } from '@/lib/audio';
 import { AmbientMixer } from '@/components/audio/AmbientMixer';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function ActivityDetail() {
   const params = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const [activity, setActivity] = useState<Activity | null>(null);
   const [loading, setLoading] = useState(true);
@@ -84,10 +86,12 @@ export default function ActivityDetail() {
       const res = await fetch(`/api/activities/${id}`, { credentials: 'include' });
       if (!res.ok) throw new Error('Activity not found in API');
       const data = await res.json();
-      setActivity(data.activity);
+
       const durationSeconds = data.activity.duration * 60;
-      setTimeRemaining(durationSeconds);
+      setActivity(data.activity);
       setTotalTime(durationSeconds);
+      restoreSessionState(id, durationSeconds);
+
     } catch (error) {
       console.warn('Failed to fetch activity from API, trying local fallback:', error);
 
@@ -97,8 +101,8 @@ export default function ActivityDetail() {
       if (fallbackActivity) {
         setActivity(fallbackActivity);
         const durationSeconds = fallbackActivity.duration * 60;
-        setTimeRemaining(durationSeconds);
         setTotalTime(durationSeconds);
+        restoreSessionState(id, durationSeconds);
       } else {
         console.error('Activity not found in local fallback either');
         toast({
@@ -110,6 +114,30 @@ export default function ActivityDetail() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const restoreSessionState = (id: string, defaultTime: number) => {
+    const savedSession = localStorage.getItem(`activity_session_${id}`);
+    if (savedSession) {
+      try {
+        const { timeRemaining: savedTime, showGuide: savedGuide, timestamp } = JSON.parse(savedSession);
+        // Only restore if less than 2 hours old (2 * 60 * 60 * 1000)
+        if (Date.now() - timestamp < 7200000) {
+          setTimeRemaining(savedTime);
+          setShowGuide(savedGuide);
+          toast({
+            title: "Session Resumed",
+            description: "Picked up right where you left off.",
+          });
+          return;
+        } else {
+          localStorage.removeItem(`activity_session_${id}`);
+        }
+      } catch (e) {
+        console.error("Failed to parse saved session");
+      }
+    }
+    setTimeRemaining(defaultTime);
   };
 
   // Timer logic
@@ -131,6 +159,20 @@ export default function ActivityDetail() {
 
     return () => clearInterval(interval);
   }, [timerActive, timeRemaining]);
+
+  // Save session state to localStorage
+  useEffect(() => {
+    if (activity && timeRemaining > 0 && timeRemaining !== totalTime) {
+      localStorage.setItem(`activity_session_${activity.id}`, JSON.stringify({
+        timeRemaining,
+        showGuide,
+        timestamp: Date.now()
+      }));
+    } else if (timeRemaining === 0 && showCompletionModal && activity) {
+      // Clear session when completed
+      localStorage.removeItem(`activity_session_${activity.id}`);
+    }
+  }, [timeRemaining, showGuide, activity, totalTime, showCompletionModal]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -190,10 +232,13 @@ export default function ActivityDetail() {
         description: `You earned ${data.points_earned || 10} points!`,
       });
 
-      // Brief delay to show success, then redirect
+      // Invalidate the dashboard's completions cache so it unlocks the next ritual
+      queryClient.invalidateQueries({ queryKey: ["/api/activities/completions/today"] });
+
+      // Brief delay to show success, then redirect to dashboard to close the loop
       setTimeout(() => {
-        setLocation('/activities');
-      }, 1500);
+        setLocation('/dashboard');
+      }, 1200);
 
     } catch (error) {
       console.error('Failed to complete activity:', error);
@@ -236,14 +281,16 @@ export default function ActivityDetail() {
     <div className="min-h-screen bg-background p-6 md:p-8 relative">
 
       <div className="max-w-4xl mx-auto">
-        {/* Header with Back Button */}
+        {/* Header with Back Button and Force Complete */}
         <div className="flex justify-between items-center mb-6">
+          <div /> {/* Removed manual back button to use SmartBackButton */}
+
           <Button
-            variant="ghost"
-            onClick={() => setLocation('/activities')}
-            className="text-muted-foreground hover:text-foreground hover:bg-secondary/50 pl-0"
+            variant="outline"
+            className="border-primary/20 text-primary hover:bg-primary/10 tracking-tight font-semibold rounded-full px-5 shadow-sm"
+            onClick={() => setShowCompletionModal(true)}
           >
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Activities
+            <CheckCircle2 className="mr-2 h-4 w-4" /> Complete Now
           </Button>
         </div>
 
@@ -399,132 +446,137 @@ export default function ActivityDetail() {
           )
         )}
 
-        {/* Activity Animation */}
-        <div className="mb-8 p-6 bg-card rounded-xl border border-border shadow-sm">
-          <ActivityAnimation type={activity.animation_type || 'default'} />
-        </div>
+        {!showGuide && (
+          <div className="mb-8 p-6 bg-card rounded-xl border border-border shadow-sm">
+            <ActivityAnimation type={activity.animation_type || 'default'} />
+          </div>
+        )}
 
         {/* Regular Timer Section for non-interactive activities */}
-        {activity.category !== 'breathing' &&
-          activity.category !== 'meditation' &&
-          !(activity.category === 'grounding' && activity.name.includes('5-4-3-2-1')) &&
-          activity.category !== 'journaling' &&
-          activity.category !== 'somatic' && (
+        {!showGuide && (
+          <div>
+            {activity.category !== 'breathing' &&
+              activity.category !== 'meditation' &&
+              !(activity.category === 'grounding' && activity.name.includes('5-4-3-2-1')) &&
+              activity.category !== 'journaling' &&
+              activity.category !== 'somatic' && (
+                <Card className="bg-card border-border shadow-sm mb-6">
+                  <CardContent className="p-8">
+                    <div className="text-center">
+                      <div className="text-8xl font-mono font-light text-foreground mb-6 tracking-tight">
+                        {formatTime(timeRemaining)}
+                      </div>
+                      <Progress value={progress} className="h-3 mb-8 bg-secondary" indicatorClassName="bg-primary" />
+                      <div className="flex justify-center gap-4 flex-wrap">
+                        {!timerActive && timeRemaining === totalTime && (
+                          <Button
+                            size="lg"
+                            onClick={toggleTimer}
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground min-w-[140px] shadow-md hover:shadow-lg transition-all"
+                          >
+                            <Play className="mr-2 h-5 w-5" /> Start
+                          </Button>
+                        )}
+                        {timerActive && (
+                          <>
+                            <Button
+                              size="lg"
+                              onClick={toggleTimer}
+                              className="bg-accent hover:bg-accent/80 text-accent-foreground min-w-[120px]"
+                            >
+                              <Pause className="mr-2 h-5 w-5" /> Pause
+                            </Button>
+                            <Button
+                              size="lg"
+                              onClick={stopTimer}
+                              variant="outline"
+                              className="border-destructive/30 text-destructive hover:bg-destructive/10 min-w-[120px]"
+                            >
+                              <Square className="mr-2 h-5 w-5" /> Stop
+                            </Button>
+                          </>
+                        )}
+                        {!timerActive && timeRemaining < totalTime && timeRemaining > 0 && (
+                          <>
+                            <Button
+                              size="lg"
+                              onClick={toggleTimer}
+                              className="bg-primary hover:bg-primary/90 text-primary-foreground min-w-[120px]"
+                            >
+                              <Play className="mr-2 h-5 w-5" /> Resume
+                            </Button>
+                            <Button
+                              size="lg"
+                              variant="outline"
+                              onClick={resetTimer}
+                              className="border-border text-muted-foreground hover:bg-secondary min-w-[120px]"
+                            >
+                              <RotateCcw className="mr-2 h-5 w-5" /> Reset
+                            </Button>
+                          </>
+                        )}
+                        <Button
+                          size="lg"
+                          onClick={finishEarly}
+                          variant="secondary"
+                          className="bg-secondary text-secondary-foreground hover:bg-secondary/80 min-w-[120px]"
+                        >
+                          <CheckCircle2 className="mr-2 h-5 w-5" /> Finish
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+            {/* Instructions Section */}
             <Card className="bg-card border-border shadow-sm mb-6">
-              <CardContent className="p-8">
-                <div className="text-center">
-                  <div className="text-8xl font-mono font-light text-foreground mb-6 tracking-tight">
-                    {formatTime(timeRemaining)}
-                  </div>
-                  <Progress value={progress} className="h-3 mb-8 bg-secondary" indicatorClassName="bg-primary" />
-                  <div className="flex justify-center gap-4 flex-wrap">
-                    {!timerActive && timeRemaining === totalTime && (
-                      <Button
-                        size="lg"
-                        onClick={toggleTimer}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground min-w-[140px] shadow-md hover:shadow-lg transition-all"
-                      >
-                        <Play className="mr-2 h-5 w-5" /> Start
-                      </Button>
-                    )}
-                    {timerActive && (
-                      <>
-                        <Button
-                          size="lg"
-                          onClick={toggleTimer}
-                          className="bg-accent hover:bg-accent/80 text-accent-foreground min-w-[120px]"
-                        >
-                          <Pause className="mr-2 h-5 w-5" /> Pause
-                        </Button>
-                        <Button
-                          size="lg"
-                          onClick={stopTimer}
-                          variant="outline"
-                          className="border-destructive/30 text-destructive hover:bg-destructive/10 min-w-[120px]"
-                        >
-                          <Square className="mr-2 h-5 w-5" /> Stop
-                        </Button>
-                      </>
-                    )}
-                    {!timerActive && timeRemaining < totalTime && timeRemaining > 0 && (
-                      <>
-                        <Button
-                          size="lg"
-                          onClick={toggleTimer}
-                          className="bg-primary hover:bg-primary/90 text-primary-foreground min-w-[120px]"
-                        >
-                          <Play className="mr-2 h-5 w-5" /> Resume
-                        </Button>
-                        <Button
-                          size="lg"
-                          variant="outline"
-                          onClick={resetTimer}
-                          className="border-border text-muted-foreground hover:bg-secondary min-w-[120px]"
-                        >
-                          <RotateCcw className="mr-2 h-5 w-5" /> Reset
-                        </Button>
-                      </>
-                    )}
-                    <Button
-                      size="lg"
-                      onClick={finishEarly}
-                      variant="secondary"
-                      className="bg-secondary text-secondary-foreground hover:bg-secondary/80 min-w-[120px]"
-                    >
-                      <CheckCircle2 className="mr-2 h-5 w-5" /> Finish
-                    </Button>
-                  </div>
-                </div>
+              <CardHeader>
+                <CardTitle className="text-xl font-bold text-foreground">How to Do This Activity</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {Array.isArray(activity.instructions) && activity.instructions.length > 0 ? (
+                  <ol className="space-y-4">
+                    {activity.instructions.map((instruction, index) => (
+                      <li key={index} className="flex gap-4 text-foreground/80">
+                        <span className="flex-shrink-0 w-8 h-8 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center font-bold text-sm">
+                          {index + 1}
+                        </span>
+                        <span className="pt-1 leading-relaxed">{instruction}</span>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="text-muted-foreground italic">
+                    Follow the timer and focus on the activity. Take deep breaths and stay present.
+                  </p>
+                )}
               </CardContent>
             </Card>
-          )}
 
-        {/* Instructions Section */}
-        <Card className="bg-card border-border shadow-sm mb-6">
-          <CardHeader>
-            <CardTitle className="text-xl font-bold text-foreground">How to Do This Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {Array.isArray(activity.instructions) && activity.instructions.length > 0 ? (
-              <ol className="space-y-4">
-                {activity.instructions.map((instruction, index) => (
-                  <li key={index} className="flex gap-4 text-foreground/80">
-                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center font-bold text-sm">
-                      {index + 1}
-                    </span>
-                    <span className="pt-1 leading-relaxed">{instruction}</span>
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p className="text-muted-foreground italic">
-                Follow the timer and focus on the activity. Take deep breaths and stay present.
-              </p>
+            {/* Benefits Section */}
+            {Array.isArray(activity.benefits) && activity.benefits.length > 0 && (
+              <Card className="bg-card border-border shadow-sm mb-6">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-xl font-bold text-foreground flex items-center gap-2">
+                    <Star className="h-5 w-5 text-accent-foreground fill-accent" /> Benefits
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {activity.benefits.map((benefit, index) => (
+                      <span
+                        key={index}
+                        className="px-4 py-2 bg-secondary/30 border border-secondary text-secondary-foreground rounded-lg text-sm font-medium"
+                      >
+                        {benefit}
+                      </span>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             )}
-          </CardContent>
-        </Card>
-
-        {/* Benefits Section */}
-        {Array.isArray(activity.benefits) && activity.benefits.length > 0 && (
-          <Card className="bg-card border-border shadow-sm mb-6">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-xl font-bold text-foreground flex items-center gap-2">
-                <Star className="h-5 w-5 text-accent-foreground fill-accent" /> Benefits
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {activity.benefits.map((benefit, index) => (
-                  <span
-                    key={index}
-                    className="px-4 py-2 bg-secondary/30 border border-secondary text-secondary-foreground rounded-lg text-sm font-medium"
-                  >
-                    {benefit}
-                  </span>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          </div>
         )}
 
 
@@ -587,12 +639,12 @@ export default function ActivityDetail() {
               <Button
                 onClick={handleComplete}
                 disabled={submitting}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md"
+                className="flex-1 h-14 rounded-2xl bg-white text-slate-950 font-black text-lg tracking-tight hover:bg-slate-100 shadow-xl active:scale-95 transition-all"
               >
                 {submitting ? (
-                  <>Saving...</>
+                  <>Saving neural data...</>
                 ) : (
-                  <>Save & Earn Points</>
+                  <>Complete & Save ✨</>
                 )}
               </Button>
             </DialogFooter>

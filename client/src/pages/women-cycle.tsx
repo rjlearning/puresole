@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Moon, ChevronLeft, Plus, Check, TrendingUp, Droplets, Zap, Heart, ChevronRight } from 'lucide-react';
+import { Link } from 'wouter';
+import { usePhase } from '@/context/PhaseContext';
+import MeshBackground from "@/components/MeshBackground";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Phase = 'menstrual' | 'follicular' | 'ovulatory' | 'luteal';
@@ -53,8 +56,8 @@ function StarRating({ value, onChange, color }: { value: number; onChange: (v: n
     );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function WomenCyclePage() {
+    const { phase, phaseInfo } = usePhase();
     const [tab, setTab] = useState<'log' | 'phases' | 'history'>('log');
     const [cycleDay, setCycleDay] = useState(1);
     const [cycleLength, setCycleLength] = useState(28);
@@ -87,8 +90,8 @@ export default function WomenCyclePage() {
         }
     }, []);
 
-    const phase = getPhaseForDay(cycleDay);
-    const phaseData = PHASES.find(p => p.id === phase)!;
+    const currentPhase = getPhaseForDay(cycleDay);
+    const currentPhaseData = PHASES.find(p => p.id === currentPhase)!;
 
     const toggleSymptom = (s: string) => {
         setEntry(prev => ({
@@ -121,12 +124,16 @@ export default function WomenCyclePage() {
     ];
 
     return (
-        <div className="min-h-screen pb-24" style={{ background: 'linear-gradient(160deg, #fdf4ff 0%, #f5f3ff 50%, #fff0f5 100%)' }}>
+        <div className="min-h-screen pb-24 relative overflow-hidden text-slate-900">
+            <MeshBackground variant="rose" />
+
             {/* Header */}
-            <div className="px-5 pt-10 pb-4 max-w-2xl mx-auto">
-                <a href="/women" className="flex items-center gap-1.5 text-sm text-purple-400 hover:text-purple-600 mb-5">
-                    <ChevronLeft className="w-4 h-4" /> Women's Section
-                </a>
+            <div className="px-5 pt-10 pb-4 max-w-2xl mx-auto relative z-10">
+                <Link href="/women">
+                    <span className="flex items-center gap-1.5 text-sm text-rose-500 font-bold hover:text-rose-600 mb-5 cursor-pointer">
+                        <ChevronLeft className="w-4 h-4" /> Women's Hub
+                    </span>
+                </Link>
                 <div className="flex items-center gap-3 mb-3">
                     <div className="w-11 h-11 rounded-2xl flex items-center justify-center text-2xl shadow" style={{ background: 'linear-gradient(135deg,#c084fc,#818cf8)' }}>
                         🌙
@@ -138,30 +145,30 @@ export default function WomenCyclePage() {
                 </div>
 
                 {/* Phase pill */}
-                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm font-semibold ${phaseData.bg} ${phaseData.color} mb-4`}>
-                    <span>{phaseData.emoji}</span>
-                    <span>{phaseData.label} Phase</span>
+                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm font-semibold ${currentPhaseData.bg} ${currentPhaseData.color} mb-4`}>
+                    <span>{currentPhaseData.emoji}</span>
+                    <span>{currentPhaseData.label} Phase</span>
                     <span className="text-xs opacity-60">· Day {cycleDay}</span>
                 </div>
 
                 {/* Tabs */}
-                <div className="flex bg-white rounded-2xl p-1 border border-purple-100 shadow-sm gap-1">
+                <div className="flex bg-white/40 backdrop-blur-xl rounded-2xl p-1 border border-rose-100/50 shadow-sm gap-1">
                     {tabs.map(t => (
                         <button key={t.id} onClick={() => setTab(t.id)}
-                            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${tab === t.id ? 'bg-purple-500 text-white shadow' : 'text-purple-400 hover:bg-purple-50'
+                            className={`flex-1 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${tab === t.id ? 'bg-rose-500 text-white shadow-lg' : 'text-slate-500 hover:bg-rose-50'
                                 }`}>{t.label}</button>
                     ))}
                 </div>
             </div>
 
-            <div className="px-5 max-w-2xl mx-auto space-y-4">
+            <div className="px-5 max-w-2xl mx-auto space-y-4 relative z-10">
 
                 {/* ── TAB: LOG ─────────────────────────────────────────────── */}
                 {tab === 'log' && (
                     <>
                         {/* Cycle day selector */}
-                        <div className="bg-white rounded-2xl border border-purple-100 p-4 shadow-sm">
-                            <p className="text-xs font-bold text-purple-500 uppercase tracking-widest mb-3">Where are you in your cycle?</p>
+                        <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] border border-rose-100 p-6 shadow-sm">
+                            <p className="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em] mb-4">Cycle Trajectory</p>
                             <div className="flex items-center gap-3 mb-3">
                                 <button onClick={() => setCycleDayAndSave(Math.max(1, cycleDay - 1))}
                                     className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center hover:bg-purple-100 transition-all">
@@ -191,11 +198,11 @@ export default function WomenCyclePage() {
                             </div>
                             <div className="mt-2">
                                 <div className="h-2 relative">
-                                    <div className="absolute top-0 w-2 h-2 rounded-full bg-purple-600 shadow border-2 border-white transform -translate-x-1/2"
+                                    <div className="absolute top-0 w-2 h-2 rounded-full bg-rose-600 shadow border-2 border-white transform -translate-x-1/2"
                                         style={{ left: `${((cycleDay - 0.5) / cycleLength) * 100}%` }} />
                                 </div>
                             </div>
-                            <p className="text-xs text-center text-purple-300 mt-1">{phaseData.emoji} {phaseData.label}</p>
+                            <p className="text-xs text-center text-rose-300 mt-1">{currentPhaseData.emoji} {currentPhaseData.label}</p>
                             {/* Reset to Day 1 */}
                             <button
                                 onClick={() => setCycleDayAndSave(1)}
@@ -206,22 +213,22 @@ export default function WomenCyclePage() {
                         </div>
 
                         {/* Mood */}
-                        <div className="bg-white rounded-2xl border border-purple-100 p-4 shadow-sm">
-                            <p className="text-xs font-bold text-purple-500 uppercase tracking-widest mb-3">💜 Mood</p>
+                        <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] border border-rose-100 p-6 shadow-sm">
+                            <p className="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em] mb-4">Mood Balance</p>
                             <StarRating value={entry.mood} onChange={v => { setEntry(e => ({ ...e, mood: v })); setSaved(false); }} color="bg-violet-500" />
                             {entry.mood > 0 && <p className="text-xs text-slate-400 mt-2">{MOOD_LABELS[entry.mood]}</p>}
                         </div>
 
                         {/* Energy */}
-                        <div className="bg-white rounded-2xl border border-purple-100 p-4 shadow-sm">
-                            <p className="text-xs font-bold text-purple-500 uppercase tracking-widest mb-3">⚡ Energy</p>
+                        <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] border border-rose-100 p-6 shadow-sm">
+                            <p className="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em] mb-4">Energy Depth</p>
                             <StarRating value={entry.energy} onChange={v => { setEntry(e => ({ ...e, energy: v })); setSaved(false); }} color="bg-amber-500" />
                             {entry.energy > 0 && <p className="text-xs text-slate-400 mt-2">{ENERGY_LABELS[entry.energy]}</p>}
                         </div>
 
                         {/* Symptoms */}
-                        <div className="bg-white rounded-2xl border border-purple-100 p-4 shadow-sm">
-                            <p className="text-xs font-bold text-purple-500 uppercase tracking-widest mb-3">🩺 Symptoms</p>
+                        <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] border border-rose-100 p-6 shadow-sm">
+                            <p className="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em] mb-4">Somatic Markers</p>
                             <div className="flex flex-wrap gap-2">
                                 {SYMPTOMS.map(s => (
                                     <button key={s} onClick={() => toggleSymptom(s)}
@@ -241,9 +248,9 @@ export default function WomenCyclePage() {
                         </div>
 
                         {/* Phase insight */}
-                        <div className={`rounded-2xl border p-4 ${phaseData.bg}`}>
-                            <p className={`text-xs font-bold uppercase tracking-widest mb-1 ${phaseData.color}`}>{phaseData.emoji} Phase insight</p>
-                            <p className="text-sm text-slate-700 leading-relaxed">{phaseData.desc}</p>
+                        <div className={`rounded-2xl border p-4 ${currentPhaseData.bg}`}>
+                            <p className={`text-xs font-bold uppercase tracking-widest mb-1 ${currentPhaseData.color}`}>{currentPhaseData.emoji} Phase insight</p>
+                            <p className="text-sm text-slate-700 leading-relaxed">{currentPhaseData.desc}</p>
                         </div>
 
                         {/* Save */}
