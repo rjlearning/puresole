@@ -100,7 +100,7 @@ export default function MenProtocol() {
                             </div>
                             <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tight leading-none">Evolution Stack</h1>
                         </div>
-                        <p className="text-lg text-slate-400 max-w-2xl font-medium">Precision nutrition & biometric alignment for peak androgenic performance.</p>
+                        <p className="text-lg text-slate-700 max-w-2xl font-medium">Precision nutrition & biometric alignment for peak androgenic performance.</p>
                     </div>
 
                     <div className="flex gap-4 w-full lg:w-auto">
@@ -112,7 +112,7 @@ export default function MenProtocol() {
                             </DialogTrigger>
                             <DialogContent className="bg-slate-900 border-white/10 text-white max-w-md">
                                 <DialogHeader>
-                                    <DialogTitle className="text-xl font-black">Calibration Parameters</DialogTitle>
+                                    <DialogTitle className="text-xl font-black" style={{ color: 'white' }}>Calibration Parameters</DialogTitle>
                                 </DialogHeader>
                                 <form onSubmit={handleSaveBiometrics} className="space-y-4 pt-4">
                                     <div className="grid grid-cols-2 gap-4">
@@ -177,7 +177,7 @@ export default function MenProtocol() {
                                         </Select>
                                     </div>
                                     <Button type="submit" disabled={updateBiometrics.isPending} className="w-full h-12 mt-4 bg-indigo-600 hover:bg-indigo-500 font-bold">
-                                        {updateBiometrics.isPending ? 'Syncing...' : 'Save & Recalibrate'}
+                                        <span className="text-white">{updateBiometrics.isPending ? 'Syncing...' : 'Save & Recalibrate'}</span>
                                     </Button>
                                 </form>
                             </DialogContent>
@@ -273,7 +273,7 @@ export default function MenProtocol() {
                         <div className="p-6 text-center">
                             <div className="inline-flex items-center gap-2 bg-slate-900 px-5 py-2 rounded-full border border-white/5">
                                 <ShieldCheck className="w-4 h-4 text-slate-500" />
-                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Medical Quality Guard</span>
+                                <span className="text-[9px] font-black text-slate-700 uppercase tracking-widest">Medical Quality Guard</span>
                             </div>
                         </div>
                     </div>
@@ -297,11 +297,11 @@ function StatBox({ icon: Icon, label, value, unit, color }: any) {
                 <div className={`p-2 rounded-xl ${colors[color]}`}>
                     <Icon className="w-4 h-4" />
                 </div>
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{label}</span>
+                <span className="text-[9px] font-black text-slate-800 uppercase tracking-widest">{label}</span>
             </div>
             <div className="flex items-baseline gap-1">
                 <span className="text-2xl font-black text-white">{value}</span>
-                <span className="text-[10px] text-slate-600 font-bold uppercase">{unit}</span>
+                <span className="text-[10px] text-slate-500 font-bold uppercase">{unit}</span>
             </div>
         </Card>
     );

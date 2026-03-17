@@ -1,0 +1,138 @@
+
+> puresoul@1.0.0 dev
+> NODE_ENV=development tsx watch server/index.ts
+
+⚠️ AUDIO_ENCRYPTION_KEY not set! Using default key (INSECURE for production)
+12:16:06 PM [express] [WebSocket] Real-time voice socket initialized on namespace /realtime-voice
+12:16:06 PM [express] serving on port 4000
+12:16:06 PM [express] [WebSocket] voice_realtime_sessions table verified/created
+12:16:08 PM [express] GET /api/auth/me 401 in 2ms
+12:16:08 PM [express] GET /api/auth/user 401 in 1ms
+[Auth] Registration Error: error: column "free_access_note" does not exist
+    at /Users/home-aaars/Projects/PureSoul/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async <anonymous> (/Users/home-aaars/Projects/PureSoul/node_modules/src/node-postgres/session.ts:104:19)
+    at async DatabaseStorage.getUserByEmail (/Users/home-aaars/Projects/PureSoul/server/storage.ts:157:20)
+    at async <anonymous> (/Users/home-aaars/Projects/PureSoul/server/multiAuth.ts:308:28) {
+  length: 117,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '306',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3827',
+  routine: 'errorMissingColumn'
+}
+12:16:14 PM [express] POST /api/auth/register 500 in 12ms
+12:16:57 PM [express] POST /api/auth/register 200 in 353ms
+Email sent successfully: {
+  data: null,
+  error: {
+    statusCode: 403,
+    name: 'validation_error',
+    message: 'You can only send testing emails to your own email address (rjappcloud@gmail.com). To send emails to other recipients, please verify a domain at resend.com/domains, and change the `from` address to an email using this domain.'
+  },
+  headers: {
+    'cf-cache-status': 'DYNAMIC',
+    'cf-ray': '9ddd4e1a9db87cf4-EWR',
+    connection: 'keep-alive',
+    'content-encoding': 'br',
+    'content-type': 'application/json',
+    date: 'Tue, 17 Mar 2026 16:16:58 GMT',
+    'ratelimit-limit': '5',
+    'ratelimit-policy': '5;w=1',
+    'ratelimit-remaining': '4',
+    'ratelimit-reset': '1',
+    server: 'cloudflare',
+    'transfer-encoding': 'chunked',
+    'x-resend-daily-quota': '0',
+    'x-resend-monthly-quota': '2'
+  }
+}
+12:21:50 PM [vite] hmr update /src/components/InteractiveEntrance.tsx, /src/index.css?v=MWPVeOsIsdrzMt_Av-roR
+12:23:19 PM [vite] hmr update /src/components/InteractiveEntrance.tsx, /src/index.css?v=MWPVeOsIsdrzMt_Av-roR
+12:35:33 PM [vite] hmr update /src/App.tsx?v=MWPVeOsIsdrzMt_Av-roR, /src/index.css?v=MWPVeOsIsdrzMt_Av-roR
+❌ Queue error: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1652:14)
+        at afterConnectMultiple (node:net:1682:16) {
+      errno: -61,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1652:14)
+        at afterConnectMultiple (node:net:1682:16) {
+      errno: -61,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+❌ Queue error: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1652:14)
+        at afterConnectMultiple (node:net:1682:16) {
+      errno: -61,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1652:14)
+        at afterConnectMultiple (node:net:1682:16) {
+      errno: -61,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+❌ Queue error: AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1122:18)
+    at afterConnectMultiple (node:net:1689:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1652:14)
+        at afterConnectMultiple (node:net:1682:16) {
+      errno: -61,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1652:14)
+        at afterConnectMultiple (node:net:1682:16) {
+      errno: -61,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}

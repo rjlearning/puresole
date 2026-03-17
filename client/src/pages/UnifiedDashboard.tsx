@@ -20,7 +20,8 @@ import {
     ChevronRight,
     ArrowRight,
     ExternalLink,
-    Mic
+    Mic,
+    User
 } from 'lucide-react';
 import { useQuery } from "@tanstack/react-query";
 import type { Assessment, TreatmentPlan } from "@shared/schema";
@@ -258,17 +259,25 @@ export default function UnifiedDashboard() {
                                         return h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening';
                                     })()}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-rose-400">{user?.firstName || 'Friend'}</span>
                                 </h1>
-                                <p className="text-sm text-slate-400 font-medium">
+                                <p className="text-sm text-slate-600 font-medium">
                                     {currentTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                                 </p>
                             </motion.div>
                             <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.1 }}
-                                className="bg-white/80 backdrop-blur-md border border-indigo-100 shadow-sm rounded-full px-4 py-2 flex items-center gap-2 self-start sm:self-auto">
-                                <span className="relative flex h-2 w-2">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                                </span>
-                                <span className="font-bold uppercase tracking-widest text-[9px] text-slate-500">Neural Sync Active</span>
+                                className="flex items-center gap-3 self-start sm:self-auto">
+                                <div className="bg-white/80 backdrop-blur-md border border-indigo-100 shadow-sm rounded-full px-4 py-2 flex items-center gap-2">
+                                    <span className="relative flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                    </span>
+                                    <span className="font-bold uppercase tracking-widest text-[10px] text-slate-700">Neural Sync Active</span>
+                                </div>
+                                
+                                <Link href="/profile">
+                                    <button className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 flex items-center justify-center transition-colors shadow-sm text-indigo-500">
+                                        <User className="w-4 h-4" />
+                                    </button>
+                                </Link>
                             </motion.div>
                         </header>
 
@@ -296,9 +305,9 @@ export default function UnifiedDashboard() {
 
                                         {/* Compact header */}
                                         <div className="flex items-center gap-2 px-4 mb-3">
-                                            <span className="text-[9px] font-black uppercase tracking-[0.18em] text-indigo-400">Daily Calibration</span>
-                                            <div className="flex-1 h-px bg-slate-100" />
-                                            <span className="text-[9px] text-slate-300 font-medium">tap your state</span>
+                                            <span className="text-[9px] text-slate-600 font-bold uppercase tracking-widest text-indigo-500">Daily Calibration</span>
+                                            <div className="flex-1 h-px bg-slate-200" />
+                                            <span className="text-[9px] text-slate-600 font-bold uppercase tracking-widest">tap your state</span>
                                         </div>
 
                                         {/* Compact circle row */}
@@ -312,7 +321,7 @@ export default function UnifiedDashboard() {
                                                     <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center border transition-all ${e.color.replace('rounded-2xl', '')} shadow-sm group-hover:shadow-md`}>
                                                         <span className="text-2xl sm:text-3xl leading-none">{e.emoji}</span>
                                                     </div>
-                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter group-hover:text-slate-600 transition-colors">{e.label}</span>
+                                                    <span className="text-[10px] font-black text-slate-600 uppercase tracking-tighter group-hover:text-slate-800 transition-colors">{e.label}</span>
                                                 </button>
                                             ))}
                                         </div>
@@ -328,7 +337,7 @@ export default function UnifiedDashboard() {
                                                 <span className="text-3xl">{emotionMeta.emoji}</span>
                                             )}
                                             <div>
-                                                <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">You selected</div>
+                                                <div className="text-[10px] font-black uppercase tracking-widest text-slate-600">You selected</div>
                                                 <div className="font-black text-slate-900 text-lg">{emotionMeta?.label}</div>
                                             </div>
                                         </div>
@@ -343,7 +352,7 @@ export default function UnifiedDashboard() {
                                             </div>
                                             <div>
                                                 <div className="font-black text-slate-900 text-sm">Clinical AI Orchestrator</div>
-                                                <div className="text-slate-400 text-xs">Building your personalized protocol</div>
+                                                <div className="text-slate-600 text-xs font-bold">Building your personalized protocol</div>
                                             </div>
                                             <div className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-100">
                                                 <span className="relative flex h-1.5 w-1.5">
@@ -377,7 +386,7 @@ export default function UnifiedDashboard() {
                                                                 <div className="w-2 h-2 bg-slate-400 rounded-full" />
                                                             )}
                                                         </div>
-                                                        <span className={`font-medium transition-colors ${done ? 'text-emerald-700 line-through opacity-70' : active ? 'text-slate-900 font-bold' : 'text-slate-400'}`}>
+                                                        <span className={`font-medium transition-colors ${done ? 'text-emerald-700 line-through opacity-70' : active ? 'text-slate-900 font-bold' : 'text-slate-600'}`}>
                                                             {s}
                                                         </span>
                                                     </motion.div>
@@ -450,10 +459,10 @@ export default function UnifiedDashboard() {
                                                         <div className="bg-indigo-100 rounded-xl w-7 h-7 flex items-center justify-center">
                                                             <Activity className="w-4 h-4 text-indigo-600" />
                                                         </div>
-                                                        <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500">4-Week Clinical Pathway</span>
+                                                        <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600">4-Week Clinical Pathway</span>
                                                     </div>
                                                     <h3 className="text-xl font-black text-slate-900 mb-2 tracking-tight">Your Full Protocol</h3>
-                                                    <p className="text-slate-500 text-sm leading-relaxed">
+                                                    <p className="text-slate-600 text-sm leading-relaxed font-medium">
                                                         Evidence-based weekly modules structured specifically for your emotional state.
                                                     </p>
                                                 </div>
@@ -507,7 +516,7 @@ export default function UnifiedDashboard() {
                                             </div>
                                         ) : (
                                             <>
-                                                <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Your Present Era</div>
+                                                <div className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Your Present Era</div>
                                                 <div className="text-sm font-black text-slate-800 leading-tight truncate">{userSeason?.title || "Season of Discovery"}</div>
                                                 <div className="text-xs text-slate-500 leading-snug line-clamp-1">{userSeason?.description || "Every step forward matters."}</div>
                                             </>
@@ -525,7 +534,7 @@ export default function UnifiedDashboard() {
                                         </div>
                                         <div>
                                             <h3 className="font-black text-slate-900 text-sm">Vocal Journal</h3>
-                                            <p className="text-xs text-slate-400">Record thought</p>
+                                            <p className="text-xs text-slate-600 font-medium">Record thought</p>
                                         </div>
                                     </div>
                                 </Link>
@@ -540,7 +549,7 @@ export default function UnifiedDashboard() {
                                         </div>
                                         <div>
                                             <h3 className="font-black text-slate-900 text-sm">AI Support</h3>
-                                            <p className="text-xs text-slate-400 font-medium">As-needed</p>
+                                            <p className="text-xs text-slate-600 font-medium">As-needed</p>
                                         </div>
                                     </div>
                                 </Link>

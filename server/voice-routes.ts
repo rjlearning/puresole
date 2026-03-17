@@ -5,7 +5,7 @@ import fs from "fs";
 import { db } from "./db";
 import * as schema from "@shared/schema";
 import { eq, desc, asc } from "drizzle-orm";
-import { supabase } from "./supabase";
+
 
 // Configure multer for file uploads
 const uploadDir = path.join(process.cwd(), "uploads", "voice");
@@ -90,25 +90,6 @@ export function registerVoiceRoutes(app: Express) {
 
         let finalAudioUrl = `/uploads/voice/${req.file.filename}`;
 
-        // Upload to Supabase if available
-        if (supabase) {
-          const fileBuffer = fs.readFileSync(req.file.path);
-          const { data, error } = await supabase.storage
-            .from('voice-memos')
-            .upload(`${userId}/${req.file.filename}`, fileBuffer, {
-              contentType: 'audio/webm',
-              upsert: true
-            });
-
-          if (error) {
-            console.error("Supabase upload error:", error);
-          } else if (data) {
-            const { data: { publicUrl } } = supabase.storage
-              .from('voice-memos')
-              .getPublicUrl(data.path);
-            finalAudioUrl = publicUrl;
-          }
-        }
 
         // Save to database
         const [voiceEntry] = await db

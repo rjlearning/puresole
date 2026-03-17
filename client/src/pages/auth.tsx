@@ -148,7 +148,7 @@ export default function AuthPage() {
               </h1>
             </div>
           </a>
-          <p className="text-muted-foreground">
+          <p className="text-slate-600 font-medium">
             {isLogin ? "Welcome back" : "Create your account"}
           </p>
         </div>
@@ -168,9 +168,9 @@ export default function AuthPage() {
 
           {/* Divider */}
           <div className="flex items-center gap-4 my-6">
-            <Separator className="flex-1" />
-            <span className="text-sm text-muted-foreground">or</span>
-            <Separator className="flex-1" />
+            <Separator className="flex-1 bg-slate-200" />
+            <span className="text-sm font-medium text-slate-500">or</span>
+            <Separator className="flex-1 bg-slate-200" />
           </div>
 
           {/* Email/Password Form */}
@@ -400,14 +400,14 @@ export default function AuthPage() {
         </Card>
 
         {/* Footer */}
-        <div className="text-center mt-8 text-sm text-muted-foreground">
+        <div className="text-center mt-8 text-sm text-slate-500 font-medium">
           <p>By continuing, you agree to PureSoul's</p>
           <div className="flex items-center justify-center gap-2 mt-1">
-            <Link href="/terms" className="hover:text-foreground transition-colors">
+            <Link href="/terms" className="text-slate-700 hover:text-slate-900 transition-colors">
               Terms of Service
             </Link>
             <span>·</span>
-            <Link href="/privacy" className="hover:text-foreground transition-colors">
+            <Link href="/privacy" className="text-slate-700 hover:text-slate-900 transition-colors">
               Privacy Policy
             </Link>
           </div>

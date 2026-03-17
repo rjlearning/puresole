@@ -79,13 +79,13 @@ export default function WomenPage() {
                         {/* Global Navigation Links integrated into the hub header */}
                         <div className="hidden md:flex items-center gap-6 mr-4 border-r border-slate-100 pr-6">
                             <Link href="/community">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-rose-500 cursor-pointer transition-colors">World</span>
+                                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest hover:text-rose-500 cursor-pointer transition-colors">World</span>
                             </Link>
                             <Link href="/sos">
-                                <span className="text-[10px] font-black text-rose-400 uppercase tracking-widest hover:text-rose-600 cursor-pointer transition-colors">SOS</span>
+                                <span className="text-[10px] font-black text-rose-600 uppercase tracking-widest hover:text-rose-700 cursor-pointer transition-colors">SOS</span>
                             </Link>
                             <Link href="/settings">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-rose-500 cursor-pointer transition-colors">Settings</span>
+                                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest hover:text-rose-500 cursor-pointer transition-colors">Settings</span>
                             </Link>
                         </div>
 
@@ -127,7 +127,7 @@ export default function WomenPage() {
                             Optimizing for your <br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-purple-500">{phaseInfo.name} phase</span>.
                         </h2>
-                        <p className="text-sm sm:text-lg text-slate-500 max-w-lg font-medium leading-relaxed mb-6">
+                        <p className="text-sm sm:text-lg text-slate-700 max-w-lg font-medium leading-relaxed mb-6">
                             Your biological workspace, structuraly aligned with your cycle for precision recovery and deep physiological insights.
                         </p>
                         <Link href="/phase-select">
@@ -190,7 +190,7 @@ export default function WomenPage() {
                                             <Sparkles className="w-7 h-7 text-indigo-600" />
                                         </div>
                                         <div className="flex flex-col">
-                                            <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Cognitive State</span>
+                                            <span className="text-[10px] font-black text-indigo-700 uppercase tracking-widest">Cognitive State</span>
                                             <h3 className="font-black text-2xl tracking-tight text-slate-900 line-height-tight">Hub Insights</h3>
                                         </div>
                                     </div>
@@ -236,7 +236,7 @@ export default function WomenPage() {
                                         <Droplet className="w-7 h-7 text-rose-500 fill-rose-500" />
                                     </div>
                                     <div className="bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 h-max">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active</span>
+                                        <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Active</span>
                                     </div>
                                 </div>
                                 <div className="mt-6 mb-auto">
@@ -247,7 +247,7 @@ export default function WomenPage() {
                                     <div className="flex -space-x-2">
                                         {[1, 2, 3].map(i => <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-rose-100" />)}
                                     </div>
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Structural tracking</span>
+                                    <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Structural tracking</span>
                                 </div>
                             </div>
                         </Link>
@@ -261,7 +261,7 @@ export default function WomenPage() {
                                     <HeartPulse className="w-6 h-6 text-teal-500" />
                                 </div>
                                 <h3 className="font-black text-slate-900 text-lg mb-1">Bioscan</h3>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-6">{bodyData.sleep}h Sleep Protocol</p>
+                                <p className="text-[10px] text-slate-700 font-bold uppercase tracking-widest mb-6">{bodyData.sleep}h Sleep Protocol</p>
                                 <div className="flex gap-1.5 mt-auto">
                                     {[1, 2, 3, 4, 5].map(i => (
                                         <div key={i} className={`h-2 flex-1 rounded-full ${i <= bodyData.energy ? 'bg-teal-400 shadow-[0_0_8px_rgba(45,212,191,0.4)]' : 'bg-slate-100'}`} />
@@ -278,7 +278,7 @@ export default function WomenPage() {
                                 <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent" />
                                 <Dna className="w-7 h-7 text-amber-400 mb-6 group-hover:rotate-12 transition-transform" />
                                 <h3 className="font-black text-white text-lg mb-1">Metabolic</h3>
-                                <p className="text-[9px] text-amber-500/60 font-black uppercase tracking-widest">Precision Biome Scan</p>
+                                <p className="text-[9px] text-amber-600 font-black uppercase tracking-widest">Precision Biome Scan</p>
                                 <div className="mt-8 flex items-center justify-between">
                                     <div className="flex gap-1.5">
                                         {[1, 2, 3].map(i => <div key={i} className={`w-1.5 h-4 rounded-full ${i === 1 ? 'bg-amber-500' : 'bg-slate-700'}`} />)}
@@ -296,7 +296,7 @@ export default function WomenPage() {
                                 <ClipboardCheck className="w-7 h-7 text-indigo-100 group-hover:text-indigo-400 transition-colors" />
                                 <div>
                                     <h3 className="font-black text-white text-xl tracking-tight leading-tight">Mood Core</h3>
-                                    <p className="text-xs text-indigo-200/60 mt-2 uppercase tracking-widest font-bold">Bio-feedback screening</p>
+                                    <p className="text-xs text-indigo-100 mt-2 uppercase tracking-widest font-bold">Bio-feedback screening</p>
                                 </div>
                             </div>
                         </Link>
@@ -310,7 +310,7 @@ export default function WomenPage() {
                                 <Mic className="w-7 h-7 text-purple-300 group-hover:text-purple-100 transition-colors relative z-10" />
                                 <div className="relative z-10">
                                     <h3 className="font-black text-white text-xl tracking-tight leading-tight">Voice Biomarkers</h3>
-                                    <p className="text-xs text-purple-200/60 mt-2 uppercase tracking-widest font-bold">Vocal Pattern Analysis</p>
+                                    <p className="text-xs text-purple-100 mt-2 uppercase tracking-widest font-bold">Vocal Pattern Analysis</p>
                                 </div>
                             </div>
                         </Link>
@@ -347,10 +347,10 @@ export default function WomenPage() {
                         <ShieldCheck className="w-4 h-4 text-slate-400 group-hover:text-emerald-500 transition-colors" />
                         <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.25em]">Clinical Quality Guard</span>
                     </div>
-                    <p className="max-w-2xl mx-auto text-xs sm:text-sm text-slate-400 italic leading-relaxed font-medium mb-3">
+                    <p className="max-w-2xl mx-auto text-xs sm:text-sm text-slate-700 italic leading-relaxed font-medium mb-3">
                         This environment provides structural support and biological tracking — not a substitute for clinical diagnostics.
                     </p>
-                    <p className="text-[10px] text-slate-300 font-bold uppercase tracking-[0.3em]">&copy; 2024 PureSoul AI Precision Health</p>
+                    <p className="text-[10px] text-slate-600 font-bold uppercase tracking-[0.3em]">&copy; 2024 PureSoul AI Precision Health</p>
                 </footer>
             </main>
         </div>

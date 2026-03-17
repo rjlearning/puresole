@@ -39,7 +39,8 @@
 
     /* Muted: Deep Grays */
     --muted: 222 47% 12%;
-    --muted-foreground: 215.4 16.3% 56.9%;
+    --muted-foreground: 215.4 16.3% 75%;
+    /* Darkened from 56.9% to 75% for better contrast on dark/depth backgrounds, or check intent for light backgrounds */
 
     /* Destructive: Deep Crimson */
     --destructive: 0 84.2% 60.2%;

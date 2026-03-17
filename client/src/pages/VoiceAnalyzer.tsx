@@ -1,21 +1,38 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, Square, ArrowLeft, Brain, Waves, Sparkles, AlertTriangle } from "lucide-react";
+import { Mic, Square, ArrowLeft, Brain, Waves, Sparkles, RefreshCw } from "lucide-react";
+import { io, Socket } from 'socket.io-client';
 import Logo from "@/components/Logo";
 
+interface EmotionUpdate {
+    timestamp: number;
+    primary_emotion: string;
+    emotion_scores: Record<string, number>;
+    valence: number;
+    arousal: number;
+    status?: string;
+}
+
 export default function VoiceAnalyzer() {
-    const { isAuthenticated, isLoading } = useAuth();
+    const { user, isAuthenticated, isLoading } = useAuth();
     const [, setLocation] = useLocation();
     const [isRecording, setIsRecording] = useState(false);
     const [analysisState, setAnalysisState] = useState<'idle' | 'recording' | 'processing' | 'results'>('idle');
     const [vocalVolume, setVocalVolume] = useState(0);
     const [insights, setInsights] = useState<any>(null);
+    const [isConnected, setIsConnected] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const socketRef = useRef<Socket | null>(null);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const audioChunksRef = useRef<Blob[]>([]);
+    const emotionHistoryRef = useRef<EmotionUpdate[]>([]);
+    const stoppedRef = useRef(false);
 
     const audioCtxRef = useRef<AudioContext | null>(null);
     const analyserRef = useRef<AnalyserNode | null>(null);
-    const dataArrayRef = useRef<Uint8Array | null>(null);
     const animationFrameRef = useRef<number>();
     const streamRef = useRef<MediaStream | null>(null);
 
@@ -24,80 +41,209 @@ export default function VoiceAnalyzer() {
         return () => stopRecordingCleanup();
     }, [isLoading, isAuthenticated, setLocation]);
 
+    // Setup socket connection only when recording starts
+    const setupSocket = () => {
+        if (!user) return null;
+        if (socketRef.current) socketRef.current.disconnect();
+
+        const socket = io('/realtime-voice', {
+            query: { userId: user.id },
+            transports: ['websocket', 'polling']
+        });
+
+        socket.on('connect', () => { setIsConnected(true); setError(null); });
+        socket.on('disconnect', () => { setIsConnected(false); });
+        socket.on('error', (err: { message: string }) => { if (!err.message.includes('No active session')) setError(err.message); });
+        
+        socket.on('emotion-update', (update: EmotionUpdate) => {
+            emotionHistoryRef.current.push(update);
+        });
+
+        socketRef.current = socket;
+        return socket;
+    };
+
     const stopRecordingCleanup = () => {
+        stoppedRef.current = true;
         if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') mediaRecorderRef.current.stop();
         if (audioCtxRef.current) audioCtxRef.current.close().catch(console.error);
         if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+        if (socketRef.current) {
+            socketRef.current.emit('end-session');
+            socketRef.current.disconnect();
+            socketRef.current = null;
+        }
         setIsRecording(false);
+        setIsConnected(false);
     };
+
+    const getAudioFeatures = useCallback(() => {
+        const analyserNode = analyserRef.current;
+        if (!analyserNode) return null;
+        const dataArray = new Uint8Array(analyserNode.frequencyBinCount);
+        analyserNode.getByteFrequencyData(dataArray);
+        let sum = 0, weightedSum = 0, freqSum = 0, maxVal = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+            const valNorm = dataArray[i] / 255;
+            sum += valNorm * valNorm;
+            weightedSum += i * valNorm;
+            freqSum += valNorm;
+            if (dataArray[i] > maxVal) maxVal = dataArray[i];
+        }
+        const volume = Math.sqrt(sum / dataArray.length);
+        const spectralCentroid = freqSum > 0 ? (weightedSum / freqSum) / dataArray.length : 0;
+        const spectralFlatness = maxVal > 0 ? (sum / dataArray.length) / (maxVal / 255) : 0;
+        // Also update local visual volume
+        setVocalVolume(Math.min(100, Math.max(0, volume * 100)));
+        animationFrameRef.current = requestAnimationFrame(getAudioFeatures);
+        
+        return { volume, spectralCentroid, spectralFlatness, isSpeaking: volume > 0.04 };
+    }, []);
 
     const startAnalyzer = async () => {
         try {
+            const socket = setupSocket();
+            if (!socket) throw new Error("Could not connect to analysis engine.");
+
+            stoppedRef.current = false;
+            setError(null);
+            emotionHistoryRef.current = [];
+            audioChunksRef.current = [];
+
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
             streamRef.current = stream;
 
+            // Setup audio context for local visualization and feature extraction
             const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
             const analyser = audioCtx.createAnalyser();
-            analyser.fftSize = 256;
-
+            analyser.fftSize = 2048; // Higher res for ML matching
             const source = audioCtx.createMediaStreamSource(stream);
             source.connect(analyser);
 
             audioCtxRef.current = audioCtx;
             analyserRef.current = analyser;
 
-            const bufferLength = analyser.frequencyBinCount;
-            dataArrayRef.current = new Uint8Array(bufferLength);
+            // Start animation loop for visualization and features
+            getAudioFeatures();
+
+            // Setup MediaRecorder for backend streaming
+            const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
+            const mediaRecorder = new MediaRecorder(stream, { mimeType });
+            mediaRecorderRef.current = mediaRecorder;
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0 && socketRef.current && !stoppedRef.current) {
+                    const features = getAudioFeatures();
+                    event.data.arrayBuffer().then(buffer => {
+                        if (!stoppedRef.current && socketRef.current) {
+                            socketRef.current.emit('audio-chunk', { chunk: buffer, timestamp: Date.now(), audioFeatures: features });
+                        }
+                    });
+                    audioChunksRef.current.push(event.data);
+                }
+            };
+
+            socket.emit('start-session', { metadata: { source: 'voice-analyzer' } });
+            await new Promise(resolve => setTimeout(resolve, 500)); // Give socket time to init
+            mediaRecorder.start(500); // 500ms chunks
 
             setIsRecording(true);
             setAnalysisState('recording');
-            updateVolume();
 
-            // Automatically stop and process after 10 seconds for the prototype
+            // Automatically stop and process after 10 seconds
             setTimeout(() => {
-                if (analysisState === 'recording' || isRecording) {
+                if (!stoppedRef.current) {
                     handleStopRecording();
                 }
             }, 10000);
 
         } catch (err) {
             console.error("Microphone access denied or failed", err);
-            alert("Microphone access is required for the Voice Analyzer.");
+            setError("Microphone access is required for the Voice Analyzer.");
         }
-    };
-
-    const updateVolume = () => {
-        if (!analyserRef.current || !dataArrayRef.current) return;
-        analyserRef.current.getByteFrequencyData(dataArrayRef.current as unknown as Uint8Array);
-        let sum = 0;
-        for (let i = 0; i < dataArrayRef.current.length; i++) {
-            sum += dataArrayRef.current[i];
-        }
-        const average = sum / dataArrayRef.current.length;
-        // Normalize to a 0-100 scale roughly
-        setVocalVolume(Math.min(100, Math.max(0, average)));
-        animationFrameRef.current = requestAnimationFrame(updateVolume);
     };
 
     const handleStopRecording = () => {
         stopRecordingCleanup();
         setAnalysisState('processing');
 
-        // Simulate AI processing of the vocal biomarkers
+        // Allow some time for final chunks to process in the backend
         setTimeout(() => {
+            const history = emotionHistoryRef.current;
+            
+            // Calculate final AI state
+            let tone = "Neutral";
+            let cadence = "Measured";
+            let state = "Calm / Balanced";
+            let recType = "Audio Visual";
+            let recTitle = "Grounding Walk";
+            let recDescription = "A brief exercise to center yourself.";
+
+            if (history.length > 0) {
+                // Calculate average arousal and valence
+                const avgArousal = history.reduce((sum, e) => sum + e.arousal, 0) / history.length;
+                const avgValence = history.reduce((sum, e) => sum + e.valence, 0) / history.length;
+                
+                // Find most common primary emotion
+                const emotionCounts = history.reduce((acc, curr) => {
+                    acc[curr.primary_emotion] = (acc[curr.primary_emotion] || 0) + 1;
+                    return acc;
+                }, {} as Record<string, number>);
+                
+                const dominantEmotion = Object.entries(emotionCounts).sort((a, b) => b[1] - a[1])[0][0];
+
+                // Derive natural language tone
+                if (avgArousal > 0.6) {
+                    tone = avgValence < 0 ? "Elevated Tension" : "Excited / Activated";
+                    cadence = "Rapid";
+                } else if (avgArousal < 0.4) {
+                    tone = avgValence < 0 ? "Subdued / Heavy" : "Relaxed / Soft";
+                    cadence = "Slow / Paused";
+                } else {
+                    tone = "Conversational";
+                    cadence = "Steady";
+                }
+
+                // Map dominant emotion to state and recommendation
+                state = dominantEmotion.charAt(0).toUpperCase() + dominantEmotion.slice(1);
+                
+                if (dominantEmotion === 'anxious' || dominantEmotion === 'stressed' || avgArousal > 0.7 && avgValence < 0) {
+                    state = "Anxious / Overstimulated";
+                    recTitle = "Somatic Grounding Cascade";
+                    recDescription = "A specialized sequence unlocked to release the specific tension patterns detected in your vocal chords.";
+                } else if (dominantEmotion === 'sad' || dominantEmotion === 'tired' || avgArousal < 0.4 && avgValence < 0) {
+                    state = "Depleted / Heavy";
+                    recTitle = "Gentle Heart Opening";
+                    recDescription = "A nourishing protocol designed to gently lift energy without overwhelming your nervous system.";
+                } else if (avgArousal > 0.6 && avgValence > 0.3) {
+                    state = "Activated / Joyful";
+                    recTitle = "Peak Energy Anchor";
+                    recDescription = "Capture and anchor this high vibration state into your nervous system memory.";
+                } else {
+                    state = "Calm / Balanced";
+                    recTitle = "Maintenance Breaths";
+                    recDescription = "A quick alignment to maintain your current baseline of calm.";
+                }
+            } else if (error) {
+                 tone = "Analysis Failed";
+                 cadence = "Unknown";
+                 state = "Unable to process";
+            }
+
             setInsights({
-                tone: "Elevated Tension",
-                cadence: "Rapid",
-                emotionalState: "Anxious / Overstimulated",
+                tone,
+                cadence,
+                emotionalState: state,
                 bonusUnlocked: {
-                    title: "Somatic Grounding Cascade",
+                    title: recTitle,
                     duration: "3 Min",
-                    type: "Audio Visual",
-                    description: "A specialized sequence unlocked based on the specific tension patterns detected in your vocal chords."
+                    type: recType,
+                    description: recDescription
                 }
             });
             setAnalysisState('results');
-        }, 2500);
+        }, 1500);
     };
 
     // Visual scaling based on volume

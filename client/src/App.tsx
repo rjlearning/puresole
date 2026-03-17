@@ -43,6 +43,7 @@ const Community = lazy(() => import('./pages/Community'));
 const SafetyPlan = lazy(() => import('./pages/SafetyPlan'));
 const FeaturesHome = lazy(() => import('./pages/FeaturesHome'));
 const Settings = lazy(() => import('./pages/Settings'));
+const AccountProfile = lazy(() => import('./pages/AccountProfile'));
 const Goals = lazy(() => import('./pages/Goals'));
 const UnifiedDashboard = lazy(() => import('./pages/UnifiedDashboard'));
 const Timeline = lazy(() => import('./pages/timeline'));
@@ -344,6 +345,9 @@ function Router() {
             </Route>
             <Route path="/settings">
               <ProtectedRoute><Settings /></ProtectedRoute>
+            </Route>
+            <Route path="/profile">
+              <ProtectedRoute><AccountProfile /></ProtectedRoute>
             </Route>
             <Route path="/voice-insights">
               <ProtectedRoute><VoiceAnalysisDashboard /></ProtectedRoute>

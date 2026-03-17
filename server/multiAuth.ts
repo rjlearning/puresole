@@ -163,6 +163,7 @@ function configureLocalAuth() {
 
       return done(null, user);
     } catch (error) {
+      console.error("[LocalStrategy] Exception during authentication:", error);
       return done(error);
     }
   }));
@@ -349,20 +350,22 @@ export function registerMultiAuthRoutes(app: Express) {
   });
 
   app.post('/api/auth/login', (req, res, next) => {
-    console.log("=== LOGIN ATTEMPT ===", req.body);
+    console.log("=== LOGIN ATTEMPT ===", req.body.email);
     passport.authenticate('local', (err: any, user: any, info: any) => {
-      console.log("Auth result:", { err, user, info });
+      console.log("Auth result:", { err, user: user ? user.id : null, info });
       if (err) {
-        console.error("LOGIN ERROR:", err);
-        return res.status(500).json({ message: 'Authentication error' });
+        console.error("LOGIN PASSPORT ERROR:", err);
+        return res.status(500).json({ message: 'Authentication error', details: String(err) });
       }
       if (!user) {
+        console.log("LOGIN FAILED NO USER:", info);
         return res.status(401).json({ message: info?.message || 'Invalid credentials' });
       }
 
       req.login(user, (loginErr) => {
         if (loginErr) {
-          return res.status(500).json({ message: 'Login failed' });
+          console.error("LOGIN SESSION ERROR:", loginErr);
+          return res.status(500).json({ message: 'Login session failed', details: String(loginErr) });
         }
         // SECURITY: Sanitize user data
         res.json({ user: sanitizeUser(user) });

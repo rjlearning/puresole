@@ -108,10 +108,10 @@ function AIInsightCard() {
                   <div className="w-6 h-6 rounded-full bg-cyan-500/20 flex items-center justify-center shrink-0 mt-0.5">
                     <Brain className="w-3 h-3 text-cyan-400" />
                   </div>
-                  <div>
-                    <span className="text-[8px] font-black uppercase tracking-[0.2em] text-cyan-400">Clinical Recall</span>
-                    <p className="text-[11px] text-slate-400 leading-relaxed font-medium mt-1">
-                      {profile.clinicalSummary}
+                  <div className="flex-1 mt-1 pr-4">
+                    <p className="font-bold text-white text-base leading-tight">Current Protocol</p>
+                    <p className="text-[11px] text-slate-300 leading-relaxed font-medium mt-1">
+                      Daily somatic reset. Recommended based on your recent activity footprint.
                     </p>
                   </div>
                 </div>
@@ -133,18 +133,21 @@ function PlanProgressTicker() {
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-      onClick={() => setLocation('/treatment-plan')}
       className="bg-slate-900/50 border border-slate-800/60 rounded-[2rem] p-5 cursor-pointer hover:border-slate-700 transition-all group"
     >
-      <div className="flex items-center justify-between mb-3">
+      {/* Header Area */}
+      <div className="flex items-center justify-between mb-4">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 mb-0.5">Active Protocol</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 mb-0.5">Active Protocol</p>
           <p className="text-sm font-bold text-white truncate max-w-[200px]">{plan.title || "Wellness Journey"}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-black text-indigo-400">Week {plan.currentWeek ?? 1} / {plan.totalWeeks ?? 8}</span>
-          <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-slate-400 transition-colors" />
-        </div>
+        <button onClick={() => setLocation('/treatment-plan')} className="text-white relative group cursor-pointer flex items-center gap-1">
+          <span className="text-xs font-bold mr-1 tracking-wide relative">
+            View Plan
+            <span className="absolute left-0 bottom-0 top-auto h-[2px] w-0 bg-white group-hover:w-full transition-all duration-300"></span>
+          </span>
+          <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-200 transition-colors" />
+        </button>
       </div>
       <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
         <motion.div
@@ -153,7 +156,7 @@ function PlanProgressTicker() {
           className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-rose-500"
         />
       </div>
-      <p className="text-[10px] text-slate-600 mt-1.5 font-medium">{pct}% complete</p>
+      <p className="text-[10px] text-slate-300 mt-1.5 font-medium">{pct}% complete</p>
     </motion.div>
   );
 }
@@ -293,10 +296,12 @@ export default function AIOrchestratedDashboard() {
                 <span className="font-black text-white text-sm">P</span>
               </div>
             </div>
-            <div>
-              <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none mb-0.5">{getGreeting()}</p>
-              <div className="flex items-center gap-2">
-                <h1 className="text-base font-black text-white leading-none capitalize">{firstName}</h1>
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <p className="text-[9px] text-slate-300 font-bold uppercase tracking-widest leading-none mb-0.5">{getGreeting()}</p>
+                <h1 className="text-3xl font-black text-white leading-none tracking-tight">
+                  {user?.firstName || 'Friend'}
+                </h1>
                 {profile?.archetype && profile.archetype !== 'Establishing Baseline' && (
                   <div className="px-1.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center gap-1 shadow-[0_0_10px_rgba(99,102,241,0.1)]">
                     <div className="w-1 h-1 rounded-full bg-indigo-400 animate-pulse" />
@@ -313,13 +318,15 @@ export default function AIOrchestratedDashboard() {
 
             {/* Menu toggle */}
             <div className="relative">
+              {/* <DropdownMenu>
+              <DropdownMenuTrigger asChild> */}
               <button
                 onClick={() => setShowMenu(m => !m)}
                 className="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center hover:bg-slate-800 transition-all border border-slate-700"
               >
-                <Settings className="w-4 h-4 text-slate-400" />
+                <Settings className="w-4 h-4 text-slate-300" />
               </button>
-
+              {/* </DropdownMenuTrigger> */}
               {/* Dropdown menu */}
               <AnimatePresence>
                 {showMenu && (
@@ -329,13 +336,15 @@ export default function AIOrchestratedDashboard() {
                     exit={{ opacity: 0, scale: 0.92, y: -4 }}
                     className="absolute right-0 top-11 w-44 bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl z-50"
                   >
+                    {/* <DropdownMenuItem asChild> */}
                     <button
                       onClick={() => { setShowMenu(false); setFeedbackOpen(true); }}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-slate-800 transition-colors text-left"
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-200 hover:bg-slate-800 transition-colors text-left"
                     >
-                      <MessageSquare className="w-4 h-4 text-slate-500" />
+                      <MessageSquare className="w-4 h-4 text-slate-300" />
                       Feedback
                     </button>
+                    {/* </DropdownMenuItem> */}
                     <div className="h-px bg-slate-800" />
                     <button
                       onClick={() => { setShowMenu(false); signOut(); }}
@@ -398,7 +407,7 @@ export default function AIOrchestratedDashboard() {
                     </motion.div>
                   </motion.div>
                 </div>
-                <p className="text-xs text-slate-600 font-bold uppercase tracking-widest mt-5">Drag to respond</p>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-5">Drag to respond</p>
               </motion.div>
             )}
 
