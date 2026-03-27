@@ -42,7 +42,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://localhost:5000",
-        "https://puresoul.com",  # Add your production domain
+        "https://puresoul.io",  # Add your production domain
     ],
     allow_credentials=True,
     allow_methods=["*"],
