@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { CheckCircle2, RefreshCw, Brain, Wind, ClipboardList, Trophy, ChevronDown, ChevronUp, Play, Pause, RotateCcw, Check, X } from 'lucide-react';
+import { CheckCircle2, RefreshCw, Brain, Wind, ClipboardList, Trophy, ChevronDown, ChevronUp, Play, Pause, RotateCcw, Check, X, ArrowRight } from 'lucide-react';
 
 // ───────────────────────────────────────────────────────────────────────────────
 //  SECTION 1: BINGO DATA
@@ -594,11 +594,175 @@ function SelfCareSection() {
 }
 
 // ───────────────────────────────────────────────────────────────────────────────
+//  COGNITIVE CHUNKING TOOL
+// ───────────────────────────────────────────────────────────────────────────────
+function CognitiveChunkingSection() {
+    const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+    const [mountain, setMountain] = useState('');
+    const [chunks, setChunks] = useState(['', '', '']);
+    const [saved, setSaved] = useState<{ mountain: string; chunks: string[]; completedAt: number }[]>(() => {
+        try { return JSON.parse(localStorage.getItem('chunking_log') || '[]'); } catch { return []; }
+    });
+
+    const handleChunkChange = (index: number, value: string) => {
+        const newChunks = [...chunks];
+        newChunks[index] = value;
+        setChunks(newChunks);
+    };
+
+    const addChunk = () => {
+        if (chunks.length < 5) setChunks([...chunks, '']);
+    };
+
+    const removeChunk = (index: number) => {
+        if (chunks.length > 1) {
+            const newChunks = chunks.filter((_, i) => i !== index);
+            setChunks(newChunks);
+        }
+    };
+
+    const hasValidChunks = chunks.filter(c => c.trim().length > 0).length > 0;
+
+    const commitAction = () => {
+        const entry = { mountain, chunks: chunks.filter(c => c.trim().length > 0), completedAt: Date.now() };
+        const next = [entry, ...saved].slice(0, 5);
+        setSaved(next);
+        localStorage.setItem('chunking_log', JSON.stringify(next));
+        setStep(4);
+    };
+
+    const restart = () => { setMountain(''); setChunks(['', '', '']); setStep(1); };
+
+    const steps = [
+        { n: 1, label: 'The Mountain', color: 'bg-indigo-400', icon: '⛰️' },
+        { n: 2, label: 'Chunk it', color: 'bg-blue-400', icon: '🔨' },
+        { n: 3, label: 'Focus & Start', color: 'bg-teal-400', icon: '🎯' },
+    ];
+
+    return (
+        <div>
+            {/* Step progress */}
+            <div className="flex gap-2 mb-5">
+                {steps.map(s => (
+                    <div key={s.n} className={`flex-1 flex items-center gap-1.5 px-2 py-1.5 rounded-xl text-xs font-semibold transition-all ${step >= s.n ? `${s.color} text-white` : 'bg-slate-100 text-slate-400'}`}>
+                        <span>{s.icon}</span><span className="hidden sm:inline">{s.label}</span>
+                    </div>
+                ))}
+            </div>
+
+            {step === 1 && (
+                <div className="space-y-4">
+                    <div>
+                        <p className="text-sm font-bold text-slate-700 mb-1">What is the overwhelming task or problem?</p>
+                        <p className="text-xs text-slate-400 mb-3">Name the "mountain". Don't worry about how to solve it yet.</p>
+                        <textarea value={mountain} onChange={e => setMountain(e.target.value)} placeholder="e.g. 'I have to clean my entire apartment before the inspection and I haven't started.'"
+                            className="w-full rounded-xl border-2 border-slate-100 focus:border-indigo-300 outline-none p-3 text-sm text-slate-700 resize-none"
+                            rows={3} />
+                    </div>
+                    <button disabled={!mountain.trim()} onClick={() => setStep(2)}
+                        className="w-full py-3 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-bold disabled:bg-slate-200 transition-all flex items-center justify-center gap-2">
+                        I've named it <ArrowRight className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
+
+            {step === 2 && (
+                <div className="space-y-4">
+                    <div className="bg-indigo-50 rounded-xl p-3 border border-indigo-100">
+                        <p className="text-xs text-indigo-500 font-semibold mb-1">The Mountain:</p>
+                        <p className="text-sm text-indigo-900 italic">"{mountain}"</p>
+                    </div>
+                    <div>
+                        <p className="text-sm font-bold text-slate-700 mb-1">Let's break it down</p>
+                        <p className="text-xs text-slate-400 mb-3">List just the first 2-3 tiny, concrete steps needed to start. Make them so small they are easy to do.</p>
+                        <div className="space-y-2">
+                            {chunks.map((chk, i) => (
+                                <div key={i} className="flex gap-2 items-center">
+                                    <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</div>
+                                    <input type="text" value={chk} onChange={e => handleChunkChange(i, e.target.value)}
+                                        placeholder={`Step ${i + 1} (e.g. 'Get a garbage bag')`}
+                                        className="flex-1 rounded-lg border border-slate-200 focus:border-blue-400 outline-none p-2.5 text-sm text-slate-700" />
+                                    {chunks.length > 1 && (
+                                        <button onClick={() => removeChunk(i)} className="text-slate-300 hover:text-red-400 p-1"><X className="w-4 h-4"/></button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                        {chunks.length < 5 && (
+                            <button onClick={addChunk} className="mt-2 text-xs font-semibold text-blue-500 hover:text-blue-700 px-2 py-1">+ Add another small step</button>
+                        )}
+                    </div>
+                    <button disabled={!hasValidChunks} onClick={() => setStep(3)}
+                        className="w-full py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold disabled:bg-slate-200 transition-all flex items-center justify-center gap-2">
+                        Chunking done <ArrowRight className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
+
+            {step === 3 && (
+                <div className="space-y-6">
+                    <div className="text-center">
+                        <p className="text-sm font-bold text-slate-700 mb-2">Forget the mountain. Forget the rest of the list.</p>
+                        <p className="text-xs text-slate-500 mb-4">Your brain is overwhelmed because it's trying to do everything at once. Focus only on this single action right now.</p>
+                    </div>
+                    
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out bg-gradient-to-br from-teal-400 to-emerald-500 rounded-2xl p-6 text-white text-center shadow-lg relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-full bg-white/10 blur-xl transform scale-150 rounded-full mix-blend-overlay"></div>
+                        <p className="text-xs font-bold text-teal-100 uppercase tracking-widest mb-3 relative z-10">Your Only Target 🎯</p>
+                        <p className="text-xl font-black leading-tight mb-2 relative z-10">{chunks.find(c => c.trim().length > 0)}</p>
+                    </div>
+
+                    <button onClick={commitAction}
+                        className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold transition-all shadow-md">
+                        I commit to doing this now ✓
+                    </button>
+                    
+                    <button onClick={() => setStep(2)} className="w-full text-xs font-semibold text-slate-400 hover:text-slate-600 py-2">
+                        Wait, let me adjust the steps
+                    </button>
+                </div>
+            )}
+
+            {step === 4 && (
+                <div className="space-y-4 text-center py-4">
+                    <CheckCircle2 className="w-12 h-12 text-teal-400 mx-auto mb-2" />
+                    <p className="font-bold text-slate-800">Commitment Made</p>
+                    <p className="text-sm text-slate-500 mt-1 mb-6">Action reduces anxiety. Go tackle that first step. Keep the momentum going for the rest of your chunks!</p>
+                    
+                    <button onClick={restart} className="w-full py-3 rounded-xl border-2 border-indigo-200 text-indigo-600 font-bold hover:bg-indigo-50 transition-all">
+                        Tackle a new mountain
+                    </button>
+                    
+                    {saved.length > 0 && (
+                        <div className="text-left mt-6">
+                            <p className="text-xs text-slate-400 font-semibold uppercase tracking-widest mb-2">Recent Chunkings</p>
+                            <div className="space-y-2">
+                                {saved.slice(0, 3).map((s, i) => (
+                                    <div key={i} className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                        <p className="text-xs text-slate-700 font-bold mb-1">{s.mountain}</p>
+                                        <ul className="text-xs text-slate-500 pl-4 list-disc space-y-0.5">
+                                            {s.chunks.map((chk, j) => (
+                                                <li key={j}>{chk}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ───────────────────────────────────────────────────────────────────────────────
 //  MAIN PAGE
 // ───────────────────────────────────────────────────────────────────────────────
 const SECTIONS = [
     { id: 'bingo', label: 'Wellness Bingo', emoji: '🎯', color: 'from-violet-500 to-pink-500', component: BingoSection },
     { id: 'ants', label: 'CBT Thought Tool', emoji: '🧠', color: 'from-amber-400 to-orange-500', component: ANTsSection },
+    { id: 'chunking', label: 'Cognitive Chunking', emoji: '🪜', color: 'from-indigo-400 to-blue-500', component: CognitiveChunkingSection },
     { id: 'regulate', label: 'Regulation Toolkit', emoji: '🌿', color: 'from-teal-400 to-emerald-500', component: RegulationSection },
     { id: 'selfcare', label: 'Self-Care Checkup', emoji: '💜', color: 'from-rose-400 to-pink-500', component: SelfCareSection },
 ];
@@ -645,16 +809,17 @@ export default function MentalWellnessPage() {
                 </div>
 
                 {/* Quick stats */}
-                <div className="grid grid-cols-3 gap-3 mb-8">
+                <div className="grid grid-cols-2 gap-3 mb-8">
                     {[
                         { label: 'Bingo squares', value: (() => { try { return JSON.parse(localStorage.getItem('bingo_marked') || '[]').length; } catch { return 1; } })(), icon: '🎯' },
                         { label: 'Thoughts reframed', value: (() => { try { return JSON.parse(localStorage.getItem('ants_log') || '[]').length; } catch { return 0; } })(), icon: '🧠' },
+                        { label: 'Tasks chunked', value: (() => { try { return JSON.parse(localStorage.getItem('chunking_log') || '[]').length; } catch { return 0; } })(), icon: '🪜' },
                         { label: 'Self-care areas', value: (() => { try { return Object.keys(JSON.parse(localStorage.getItem('selfcare_scores') || '{}')).length; } catch { return 0; } })(), icon: '💜' },
                     ].map(stat => (
                         <div key={stat.label} className="bg-white rounded-2xl border border-slate-100 p-3 text-center shadow-sm">
                             <p className="text-xl mb-0.5">{stat.icon}</p>
                             <p className="text-2xl font-black text-slate-800">{stat.value}</p>
-                            <p className="text-xs text-slate-400 leading-tight">{stat.label}</p>
+                            <p className="text-[11px] text-slate-400 leading-tight uppercase tracking-wide font-bold">{stat.label}</p>
                         </div>
                     ))}
                 </div>
@@ -674,6 +839,7 @@ export default function MentalWellnessPage() {
                                     <p className="text-xs text-slate-500 leading-snug">
                                         {section.id === 'bingo' && 'Mark off wellness activities. 5 in a row = BINGO 🎉'}
                                         {section.id === 'ants' && 'Catch, challenge & reframe negative thoughts (CBT)'}
+                                        {section.id === 'chunking' && 'Break down overwhelming tasks into small steps'}
                                         {section.id === 'regulate' && 'Guided breathing, grounding & somatic regulation'}
                                         {section.id === 'selfcare' && 'Rate 6 domains with personalised suggestions'}
                                     </p>
