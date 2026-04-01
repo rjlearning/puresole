@@ -94,7 +94,7 @@ export default function ActivitiesPage() {
       case 'advanced':
         return 'text-purple-600 bg-purple-50 border-purple-200';
       default:
-        return 'text-muted-foreground bg-secondary border-border';
+        return 'text-slate-600 bg-slate-100 border-slate-200';
     }
   };
 
@@ -109,7 +109,7 @@ export default function ActivitiesPage() {
               AI Curated Plan
             </Badge>
           ) : (
-            <Badge variant="outline" className="mb-4 px-4 py-2 rounded-full bg-secondary/50 border-0 text-secondary-foreground font-medium tracking-wide">
+            <Badge variant="outline" className="mb-4 px-4 py-2 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 font-medium tracking-wide">
               <Heart className="w-3 h-3 mr-2 text-primary" />
               Wellness Library
             </Badge>
@@ -139,13 +139,13 @@ export default function ActivitiesPage() {
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`px-4 py-2 sm:px-6 sm:py-3 rounded-full whitespace-nowrap transition-all border font-bold text-sm sm:text-md ${selectedCategory === cat.id
                   ? 'bg-primary text-primary-foreground border-primary shadow-xl shadow-primary/10'
-                  : 'bg-card text-muted-foreground hover:bg-secondary/50 border-border hover:border-secondary'
+                  : 'bg-white text-slate-500 hover:bg-indigo-50 border-slate-200 hover:border-indigo-300'
                   }`}
               >
                 <span className="mr-2">{cat.emoji}</span>
                 <span>{cat.name}</span>
                 {cat.count > 0 && (
-                  <span className={`ml-2 text-xs py-0.5 px-2 rounded-full ${selectedCategory === cat.id ? 'bg-white/20 text-white' : 'bg-secondary text-secondary-foreground'}`}>
+                  <span className={`ml-2 text-xs py-0.5 px-2 rounded-full ${selectedCategory === cat.id ? 'bg-white/20 text-white' : 'bg-indigo-50 text-indigo-500 font-bold'}`}>
                     {cat.count}
                   </span>
                 )}
@@ -210,7 +210,7 @@ export default function ActivitiesPage() {
                     <span>Any dur.</span>
                   </div>
 
-                  <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-secondary-foreground font-bold text-sm group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm active:scale-95">
+                  <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 font-bold text-sm group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm active:scale-95">
                     Start Session <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
@@ -245,7 +245,7 @@ export default function ActivitiesPage() {
                 </div>
 
                 {/* Animation Preview */}
-                <div className="mb-3 sm:mb-6 rounded-2xl overflow-hidden bg-gradient-to-br from-slate-50/80 to-slate-100/80 dark:from-slate-900 dark:to-slate-800/80 h-24 sm:h-48 flex items-center justify-center border border-border group-hover:border-primary/30 transition-all activity-preview shadow-inner">
+                <div className="mb-3 sm:mb-6 rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-50/60 to-purple-50/60 dark:from-indigo-900/20 dark:to-purple-900/20 h-24 sm:h-48 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/30 group-hover:border-indigo-200 dark:group-hover:border-indigo-700 transition-all activity-preview shadow-inner">
                   <ActivityAnimation type={activity.animation_type || 'default'} className="scale-75" />
                 </div>
 
@@ -256,7 +256,7 @@ export default function ActivitiesPage() {
                     <span>{activity.duration} min</span>
                   </div>
 
-                  <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-secondary-foreground font-bold text-sm group-hover:bg-primary group-hover:text-primary-foreground transition-all shadow-sm active:scale-95">
+                  <button className="flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 font-bold text-sm group-hover:bg-primary group-hover:text-primary-foreground transition-all shadow-sm active:scale-95">
                     Start Session <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>

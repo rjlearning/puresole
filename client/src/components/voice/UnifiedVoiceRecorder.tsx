@@ -153,7 +153,11 @@ export function UnifiedVoiceRecorder({ onSave, onCancel }: UnifiedVoiceRecorderP
 
     const startRecording = async () => {
         try {
-            if (!socketRef.current?.connected) { toast({ title: "Connecting to server...", variant: "default" }); return; }
+            // If socket isn't connected, allow recording in offline mode (no live emotion analysis)
+            const isOnline = socketRef.current?.connected;
+            if (!isOnline) {
+                toast({ title: "Recording in offline mode", description: "Live emotion analysis unavailable, but you can still record and save.", variant: "default" });
+            }
             stoppedRef.current = false; setError(null); setEmotionHistory([]); setCurrentEmotion(null); setRecordingDuration(0); audioChunksRef.current = [];
 
             // If starting diagnostic mode, clear previous single samples
@@ -170,22 +174,32 @@ export function UnifiedVoiceRecorder({ onSave, onCancel }: UnifiedVoiceRecorderP
             const mediaRecorder = new MediaRecorder(stream, { mimeType });
             mediaRecorderRef.current = mediaRecorder;
             mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0 && socketRef.current && !stoppedRef.current) {
-                    const features = getAudioFeatures();
-                    event.data.arrayBuffer().then(buffer => {
-                        if (!stoppedRef.current && socketRef.current) {
-                            socketRef.current.emit('audio-chunk', { chunk: buffer, timestamp: Date.now(), audioFeatures: features });
-                        }
-                    });
+                if (event.data.size > 0) {
                     audioChunksRef.current.push(event.data);
+                    if (socketRef.current?.connected && !stoppedRef.current) {
+                        const features = getAudioFeatures();
+                        event.data.arrayBuffer().then(buffer => {
+                            if (!stoppedRef.current && socketRef.current?.connected) {
+                                socketRef.current.emit('audio-chunk', { chunk: buffer, timestamp: Date.now(), audioFeatures: features });
+                            }
+                        });
+                    }
                 }
             };
             mediaRecorder.onstop = () => stream.getTracks().forEach(track => track.stop());
-            socketRef.current.emit('start-session', { metadata: { userAgent: navigator.userAgent } });
-            await new Promise(resolve => setTimeout(resolve, 500));
+            if (isOnline) {
+                socketRef.current!.emit('start-session', { metadata: { userAgent: navigator.userAgent } });
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
             mediaRecorder.start(500);
             setIsRecording(true);
-        } catch (err: any) { setError('Could not access microphone'); }
+        } catch (err: any) {
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                setError('Microphone permission denied. Please allow mic access in your browser settings.');
+            } else {
+                setError('Could not access microphone');
+            }
+        }
     };
 
     const stopRecording = () => {
@@ -382,10 +396,12 @@ export function UnifiedVoiceRecorder({ onSave, onCancel }: UnifiedVoiceRecorderP
                     <button
                         id="vocal-mirror-record-btn"
                         onClick={isRecording ? stopRecording : startRecording}
-                        disabled={!isConnected}
+                        disabled={false}
                         className={`relative w-14 h-14 sm:w-20 sm:h-20 rounded-full flex items-center justify-center transition-all transform hover:scale-105 shadow-2xl border-4 ${isRecording
                             ? 'bg-rose-500 hover:bg-rose-600 border-rose-400/50 animate-pulse'
-                            : 'bg-indigo-600 hover:bg-indigo-700 border-indigo-400/50'
+                            : isConnected
+                                ? 'bg-indigo-600 hover:bg-indigo-700 border-indigo-400/50'
+                                : 'bg-slate-600 hover:bg-slate-500 border-slate-500/50'
                             }`}
                     >
                         {isRecording ? <MicOff className="w-6 h-6 sm:w-8 sm:h-8 text-white" /> : <Mic className="w-6 h-6 sm:w-8 sm:h-8 text-white" />}
