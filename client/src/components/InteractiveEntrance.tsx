@@ -305,6 +305,20 @@ export default function InteractiveEntrance() {
             >
               Start Check-in
             </button>
+
+            {/* Returning user sign-in */}
+            <div style={{ marginTop: "1.5rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
+              <span style={{ color: "#64748b", fontSize: "0.875rem" }}>Already have an account?</span>
+              <Link href="/auth">
+                <span style={{
+                  color: "#818CF8", fontWeight: 800, fontSize: "0.875rem",
+                  textDecoration: "underline", textUnderlineOffset: "3px", cursor: "pointer",
+                  letterSpacing: "0.02em"
+                }}>
+                  Sign In
+                </span>
+              </Link>
+            </div>
           </motion.div>
         );
 
@@ -494,12 +508,27 @@ export default function InteractiveEntrance() {
             <p className="text-slate-400 text-lg mb-10 leading-relaxed">
               We're here whenever you're ready to go deeper into your biological and mental clarity.
             </p>
-            <button
-              onClick={() => { setStep("welcome"); setEmotion(null); setContext(null); setIntensity(5); }}
-              className="text-indigo-400 font-black underline decoration-2 underline-offset-4 hover:text-indigo-300 transition-colors"
-            >
-              Return Home
-            </button>
+            <div className="flex flex-col gap-4">
+              <Link href="/auth">
+                <button
+                  className="w-full h-14 rounded-full font-black text-white text-base tracking-wide hover:scale-[1.02] transition-all"
+                  style={{ background: "linear-gradient(135deg,#818CF8,#F472B6)" }}
+                >
+                  Create Free Account
+                </button>
+              </Link>
+              <Link href="/auth">
+                <button className="w-full h-12 rounded-full font-black text-slate-300 text-sm border border-white/10 bg-white/5 hover:bg-white/10 hover:text-white transition-all">
+                  Sign In to Existing Account
+                </button>
+              </Link>
+              <button
+                onClick={() => { setStep("welcome"); setEmotion(null); setContext(null); setIntensity(5); }}
+                className="text-slate-500 text-xs font-black uppercase tracking-widest hover:text-slate-300 transition-colors mt-2"
+              >
+                Try Again
+              </button>
+            </div>
           </motion.div>
         );
 
