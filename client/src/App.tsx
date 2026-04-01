@@ -54,6 +54,7 @@ const WomenCheckinPage = lazy(() => import('./pages/women-checkin'));
 const WomenCyclePage = lazy(() => import('./pages/women-cycle'));
 const WomenBodyPage = lazy(() => import('./pages/women-body'));
 const WomenRelationshipsPage = lazy(() => import('./pages/women-relationships'));
+const WomenPmsPmddPage = lazy(() => import('./pages/women-pms-pmdd'));
 const MentalWellnessPage = lazy(() => import('./pages/mental-wellness'));
 const PostpartumOnboarding = lazy(() => import('./pages/PostpartumOnboarding'));
 const MetabolicPanel = lazy(() => import('./pages/MetabolicPanel'));
@@ -289,6 +290,9 @@ function Router() {
             </Route>
             <Route path="/women/relationships">
               <ProtectedRoute><WomenRelationshipsPage /></ProtectedRoute>
+            </Route>
+            <Route path="/women/pms-pmdd">
+              <ProtectedRoute><WomenPmsPmddPage /></ProtectedRoute>
             </Route>
             {/* Men's Section */}
             <Route path="/men">

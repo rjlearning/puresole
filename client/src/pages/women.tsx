@@ -316,6 +316,25 @@ export default function WomenPage() {
                         </Link>
                     </motion.div>
 
+                    {/* PMS / PMDD */}
+                    <motion.div variants={itemVariants} className="sm:col-span-2 lg:col-span-3">
+                        <Link href="/women/pms-pmdd">
+                            <div className="h-full min-h-[180px] rounded-[2.5rem] bg-gradient-to-br from-rose-500 to-purple-600 p-7 text-white cursor-pointer hover:scale-[1.02] transition-all shadow-xl flex flex-col justify-between group relative overflow-hidden">
+                                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(255,255,255,0.12),transparent_60%)]" />
+                                <div className="flex items-center gap-3 relative z-10">
+                                    <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-lg shrink-0">🌸</div>
+                                    <div className="bg-white/20 px-3 py-1 rounded-full">
+                                        <span className="text-[9px] font-black text-white uppercase tracking-[0.2em]">Cycle Support</span>
+                                    </div>
+                                </div>
+                                <div className="relative z-10">
+                                    <h3 className="font-black text-white text-xl tracking-tight leading-tight">PMS & PMDD</h3>
+                                    <p className="text-xs text-rose-100 mt-2 font-semibold leading-snug">Understand, track & manage premenstrual symptoms</p>
+                                </div>
+                            </div>
+                        </Link>
+                    </motion.div>
+
                     {/* Partners - Wide */}
                     <motion.div variants={itemVariants} className="sm:col-span-2 lg:col-span-6">
                         <Link href="/women/relationships">
