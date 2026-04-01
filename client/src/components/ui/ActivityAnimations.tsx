@@ -14,7 +14,7 @@ export function ActivityAnimation({ type, className = '' }: ActivityAnimationPro
     switch (type) {
         case 'breathing':
             return (
-                <div className={`${containerClass} bg-gradient-to-br from-teal-50/50 to-emerald-50/50`}>
+                <div className={`${containerClass} bg-gradient-to-br from-teal-50/50 to-emerald-50/50 dark:from-teal-900/20 dark:to-emerald-900/20`}>
                     {/* Breathing: Expanding/Contracting Circle - Teal/Sage */}
                     <motion.div
                         className="w-32 h-32 rounded-full bg-teal-200/40 border-2 border-teal-300/50 backdrop-blur-sm relative z-10 flex items-center justify-center"
@@ -45,7 +45,7 @@ export function ActivityAnimation({ type, className = '' }: ActivityAnimationPro
 
         case 'meditation':
             return (
-                <div className={`${containerClass} bg-gradient-to-br from-indigo-50/50 to-violet-50/50`}>
+                <div className={`${containerClass} bg-gradient-to-br from-indigo-50/50 to-violet-50/50 dark:from-indigo-900/20 dark:to-violet-900/20`}>
                     {/* Meditation: Floating/Glowing Orb - Indigo/Lavender */}
                     <motion.div
                         className="relative"
@@ -95,7 +95,7 @@ export function ActivityAnimation({ type, className = '' }: ActivityAnimationPro
 
         case 'movement':
             return (
-                <div className={`${containerClass} bg-gradient-to-br from-cyan-50/50 to-blue-50/50`}>
+                <div className={`${containerClass} bg-gradient-to-br from-cyan-50/50 to-blue-50/50 dark:from-cyan-900/20 dark:to-blue-900/20`}>
                     {/* Movement: Flowing Line/Path - Cyan/Blue */}
                     <svg className="w-full h-full absolute inset-0" viewBox="0 0 200 100" preserveAspectRatio="none">
                         <motion.path
@@ -141,7 +141,7 @@ export function ActivityAnimation({ type, className = '' }: ActivityAnimationPro
 
         case 'grounding':
             return (
-                <div className={`${containerClass} bg-gradient-to-br from-emerald-50/50 to-stone-100/50`}>
+                <div className={`${containerClass} bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-900/20 dark:to-orange-900/20`}>
                     {/* Grounding: Stacked Stones / Stability */}
                     <div className="flex flex-col items-center gap-1">
                         <motion.div
@@ -165,7 +165,7 @@ export function ActivityAnimation({ type, className = '' }: ActivityAnimationPro
 
         case 'somatic':
             return (
-                <div className={`${containerClass} bg-gradient-to-br from-emerald-50/50 to-teal-50/50`}>
+                <div className={`${containerClass} bg-gradient-to-br from-emerald-50/50 to-teal-50/50 dark:from-emerald-900/20 dark:to-teal-900/20`}>
                     {/* Somatic: Pulsing Wave/Vibration */}
                     <div className="flex items-center gap-2">
                         {[1, 2, 3, 4, 3, 2, 1].map((h, i) => (
@@ -187,7 +187,7 @@ export function ActivityAnimation({ type, className = '' }: ActivityAnimationPro
 
         case 'journaling':
             return (
-                <div className={`${containerClass} bg-gradient-to-br from-orange-50/50 to-pink-50/50`}>
+                <div className={`${containerClass} bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-900/20 dark:to-purple-900/20`}>
                     {/* Voice Waves */}
                     <div className="flex items-center gap-1.5 h-16">
                         {[1, 2, 3, 4, 5, 4, 3, 2, 1].map((h, i) => (
@@ -209,7 +209,7 @@ export function ActivityAnimation({ type, className = '' }: ActivityAnimationPro
 
         default: // Default/Fallack
             return (
-                <div className={`${containerClass} bg-gradient-to-br from-slate-100 to-slate-200`}>
+                <div className={`${containerClass} bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-900/20 dark:to-purple-900/20`}>
                     <motion.div
                         className="w-full h-full absolute inset-0 bg-gradient-to-r from-blue-400/5 to-purple-400/5"
                         animate={{ opacity: [0.5, 0.8, 0.5] }}

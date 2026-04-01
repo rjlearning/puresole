@@ -183,10 +183,10 @@ export default function ActivitiesPage() {
                 onClick={() => setLocation('/voice-journal')}
               >
                 <div className="flex items-start justify-between mb-3 sm:mb-6">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-indigo-50 flex items-center justify-center text-2xl sm:text-3xl group-hover:bg-indigo-100 transition-colors duration-300">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/40 flex items-center justify-center text-2xl sm:text-3xl group-hover:bg-indigo-100 dark:group-hover:bg-indigo-800/60 transition-colors duration-300">
                     🎙️
                   </div>
-                  <Badge className="text-indigo-600 bg-indigo-50 border-indigo-200 border-0 px-3 py-1 rounded-full uppercase text-xs tracking-wider font-bold">
+                  <Badge className="text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/40 border-indigo-200 dark:border-indigo-800 border-0 px-3 py-1 rounded-full uppercase text-xs tracking-wider font-bold">
                     Featured
                   </Badge>
                 </div>
@@ -200,7 +200,7 @@ export default function ActivitiesPage() {
                   </p>
                 </div>
 
-                <div className="mb-3 sm:mb-6 rounded-2xl overflow-hidden bg-indigo-50/50 h-24 sm:h-48 flex items-center justify-center border border-border group-hover:border-indigo-200 transition-colors activity-preview">
+                <div className="mb-3 sm:mb-6 rounded-2xl overflow-hidden bg-indigo-50/50 dark:bg-indigo-900/20 h-24 sm:h-48 flex items-center justify-center border border-border group-hover:border-indigo-200 dark:group-hover:border-indigo-700 transition-colors activity-preview">
                   <ActivityAnimation type="journaling" className="scale-75" />
                 </div>
 
