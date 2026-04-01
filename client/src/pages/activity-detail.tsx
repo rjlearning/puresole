@@ -254,21 +254,34 @@ export default function ActivityDetail() {
 
   const progress = totalTime > 0 ? ((totalTime - timeRemaining) / totalTime) * 100 : 0;
 
+  const getGradientClass = () => {
+    if (!activity) return 'bg-gradient-to-br from-slate-50 to-slate-100';
+    switch (activity.category) {
+      case 'breathing': return 'bg-gradient-to-br from-teal-50 via-emerald-50 to-cyan-50';
+      case 'meditation': return 'bg-gradient-to-br from-fuchsia-50 via-purple-50 to-pink-50';
+      case 'grounding': return 'bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50';
+      case 'journaling': return 'bg-gradient-to-br from-indigo-50 via-violet-50 to-purple-50';
+      case 'somatic': return 'bg-gradient-to-br from-emerald-50 via-teal-50 to-sky-50';
+      default: return 'bg-gradient-to-br from-slate-50 to-slate-100';
+    }
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+      <div className="min-h-screen bg-gradient-to-br from-violet-50 to-fuchsia-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (!activity) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <Card className="bg-slate-900 border-slate-800">
-          <CardContent className="p-8 text-center">
-            <p className="text-white text-xl mb-4">Activity not found</p>
-            <Button onClick={() => setLocation('/activities')} className="bg-purple-500 hover:bg-purple-600">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+        <Card className="bg-white border-slate-200 shadow-xl">
+          <CardContent className="p-8 text-center max-w-sm">
+            <div className="text-4xl mb-4">🌱</div>
+            <p className="text-slate-800 font-bold text-xl mb-6">Activity not found</p>
+            <Button onClick={() => setLocation('/activities')} className="bg-primary hover:bg-primary/90 w-full rounded-xl">
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Activities
             </Button>
           </CardContent>
@@ -278,7 +291,7 @@ export default function ActivityDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6 md:p-8 relative">
+    <div className={`min-h-screen ${getGradientClass()} p-6 md:p-8 relative transition-colors duration-1000`}>
 
       <div className="max-w-4xl mx-auto">
         {/* Header with Back Button and Force Complete */}
