@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { useAuth } from '@/hooks/useAuth';
-import { Mic, MicOff, Activity, Wifi, WifiOff, AlertTriangle, ChevronRight, Save, X, RefreshCw, HeartPulse, Sparkles } from 'lucide-react';
+import { Mic, MicOff, Activity, RefreshCw, HeartPulse, Sparkles, Clock } from 'lucide-react';
 import { LiveEmotionTimeline } from '@/components/voice/LiveEmotionTimeline';
 import { AuraWave } from '@/components/voice/AuraWave';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -48,7 +47,6 @@ interface UnifiedVoiceRecorderProps {
 }
 
 export function UnifiedVoiceRecorder({ onSave, onCancel }: UnifiedVoiceRecorderProps) {
-    const { user } = useAuth();
     const { toast } = useToast();
 
     const [isRecording, setIsRecording] = useState(false);
@@ -73,10 +71,12 @@ export function UnifiedVoiceRecorder({ onSave, onCancel }: UnifiedVoiceRecorderP
     const stoppedRef = useRef(false);
 
     useEffect(() => {
-        if (!user) return;
+        // Initialize socket connection — attempt regardless of auth state
         const socket = io('/realtime-voice', {
-            query: { userId: user.id },
-            transports: ['websocket', 'polling']
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
         });
         socket.on('connect', () => { setIsConnected(true); setError(null); });
         socket.on('disconnect', () => { setIsConnected(false); if (isRecording) stopRecording(); });
@@ -91,7 +91,7 @@ export function UnifiedVoiceRecorder({ onSave, onCancel }: UnifiedVoiceRecorderP
             socket.disconnect();
             if (audioContextRef.current) try { audioContextRef.current.close(); } catch (_) { }
         };
-    }, [user, isRecording]);
+    }, [isRecording]);
 
     useEffect(() => {
         if (isRecording) {
