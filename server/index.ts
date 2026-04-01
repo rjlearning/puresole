@@ -59,7 +59,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       scriptSrc: ["'self'", "'unsafe-inline'", "https://js.stripe.com", "https://static.cloudflareinsights.com"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'"],
+      connectSrc: ["'self'", "wss:", "ws:"],
       fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
       mediaSrc: ["'self'", "https://cdn.pixabay.com"],
       objectSrc: ["'none'"],

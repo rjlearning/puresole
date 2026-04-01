@@ -77,30 +77,32 @@ export function initializeRealtimeVoiceSocket(httpServer: HTTPServer): SocketIOS
   realtimeVoiceNamespace.on('connection', async (socket: Socket) => {
     log(`[WebSocket] Client connected: ${socket.id}`);
 
-    // Extract userId from handshake query or authentication
-    const userId = socket.handshake.query.userId as string;
+    // Extract userId from handshake query — optional at connection time.
+    // userId may not be available until auth resolves, so we accept connections
+    // without it and allow it to be supplied at session-start time.
+    let userId = socket.handshake.query.userId as string | undefined;
 
-    if (!userId) {
-      log(`[WebSocket] Connection rejected: No userId provided`);
-      socket.emit('error', { message: 'Authentication required' });
-      socket.disconnect();
-      return;
+    if (userId) {
+      log(`[WebSocket] Authenticated user at connect: ${userId}`);
+    } else {
+      log(`[WebSocket] Client connected without userId — will authenticate per-session: ${socket.id}`);
     }
 
-    log(`[WebSocket] Authenticated user: ${userId}`);
-
     // Handle session start
-    socket.on('start-session', async (data: { metadata?: any }) => {
+    socket.on('start-session', async (data: { metadata?: any; userId?: string }) => {
       try {
         const sessionId = uuidv4();
         const startedAt = new Date();
+
+        // Allow userId to be supplied at session-start if not available at connect time
+        const effectiveUserId = data?.userId || userId || 'anonymous';
 
         // Create session in database
         await pool.query(`
           INSERT INTO voice_realtime_sessions (
             id, user_id, started_at, status, metadata
           ) VALUES ($1, $2, $3, 'active', $4)
-        `, [sessionId, userId, startedAt, JSON.stringify(data.metadata || {})]);
+        `, [sessionId, effectiveUserId, startedAt, JSON.stringify(data?.metadata || {})]);
 
         // Create audio chunk processor for this session
         const chunkProcessor = createAudioChunkProcessor({
@@ -114,7 +116,7 @@ export function initializeRealtimeVoiceSocket(httpServer: HTTPServer): SocketIOS
         // Store session in memory
         activeSessions.set(socket.id, {
           sessionId,
-          userId,
+          userId: effectiveUserId,
           startedAt,
           audioChunks: [],
           emotions: [],
@@ -124,7 +126,7 @@ export function initializeRealtimeVoiceSocket(httpServer: HTTPServer): SocketIOS
           latestFeatures: null
         });
 
-        log(`[WebSocket] Session started: ${sessionId} for user ${userId}`);
+        log(`[WebSocket] Session started: ${sessionId} for user ${effectiveUserId}`);
 
         socket.emit('session-started', {
           sessionId,
