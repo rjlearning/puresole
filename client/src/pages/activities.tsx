@@ -99,7 +99,7 @@ export default function ActivitiesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50/50 via-background to-purple-50/50 dark:from-slate-950 dark:via-background dark:to-indigo-950/20 text-foreground pb-20">
       <div className="container mx-auto px-3 sm:px-4 pt-4 sm:pt-12">
         {/* Header */}
         <div className="mb-5 sm:mb-12">
@@ -164,8 +164,8 @@ export default function ActivitiesPage() {
 
         {/* Activities Grid */}
         {!loading && displayActivities.length === 0 && (
-          <div className="p-16 text-center border-dashed border-2 border-border bg-card rounded-3xl">
-            <div className="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="p-16 text-center border-dashed border-2 border-indigo-200 dark:border-indigo-900/40 bg-indigo-50/40 dark:bg-indigo-950/20 rounded-3xl">
+            <div className="w-20 h-20 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
               <Heart className="w-8 h-8 text-primary" />
             </div>
             <h3 className="text-2xl font-bold text-foreground mb-2">No activities found</h3>
@@ -226,7 +226,7 @@ export default function ActivitiesPage() {
               >
                 {/* Header */}
                 <div className="flex items-start justify-between mb-3 sm:mb-6">
-                  <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-secondary/30 flex items-center justify-center text-2xl sm:text-3xl group-hover:bg-secondary/60 transition-colors duration-300`}>
+                  <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center text-2xl sm:text-3xl group-hover:from-primary/10 group-hover:to-primary/20 transition-all duration-300 shadow-sm`}>
                     {activity.icon_emoji}
                   </div>
                   <Badge className={`${getDifficultyColor(activity.difficulty)} border-0 px-3 py-1 rounded-full uppercase text-xs tracking-wider font-bold`}>
@@ -245,7 +245,7 @@ export default function ActivitiesPage() {
                 </div>
 
                 {/* Animation Preview */}
-                <div className="mb-3 sm:mb-6 rounded-2xl overflow-hidden bg-secondary/10 h-24 sm:h-48 flex items-center justify-center border border-border group-hover:border-primary/20 transition-colors activity-preview">
+                <div className="mb-3 sm:mb-6 rounded-2xl overflow-hidden bg-gradient-to-br from-slate-50/80 to-slate-100/80 dark:from-slate-900 dark:to-slate-800/80 h-24 sm:h-48 flex items-center justify-center border border-border group-hover:border-primary/30 transition-all activity-preview shadow-inner">
                   <ActivityAnimation type={activity.animation_type || 'default'} className="scale-75" />
                 </div>
 
