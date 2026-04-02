@@ -109,6 +109,11 @@ export default function MenBioscanPage() {
             <div className="max-w-2xl mx-auto px-5 pt-12 sm:pt-20">
 
                 <div className="flex items-center gap-4 mb-10">
+                    <Link href="/men">
+                        <button className="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors shrink-0">
+                            <ChevronLeft className="w-5 h-5" />
+                        </button>
+                    </Link>
                     <div className="w-14 h-14 rounded-[1.5rem] bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shadow-lg">
                         <HeartPulse className="w-7 h-7 text-cyan-400" />
                     </div>
