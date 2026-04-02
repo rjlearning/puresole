@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,6 +80,16 @@ export default function PostpartumOnboarding() {
         <div className="min-h-screen bg-slate-950 p-6 flex items-center justify-center font-sans overflow-x-hidden relative">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-950 to-rose-900/20" />
             <Card className="max-w-2xl w-full p-8 shadow-2xl shadow-indigo-500/10 border border-white/5 bg-slate-900/60 backdrop-blur-xl relative z-10 rounded-[2rem]">
+
+                {/* Back to Women's Hub */}
+                <div className="mb-6">
+                    <Link href="/women">
+                        <button className="inline-flex items-center gap-2 text-slate-400 hover:text-white text-xs font-black uppercase tracking-widest transition-colors">
+                            <ChevronLeft className="w-4 h-4" />
+                            Women's Hub
+                        </button>
+                    </Link>
+                </div>
 
                 {/* Progress bar */}
                 <div className="flex justify-between mb-12">

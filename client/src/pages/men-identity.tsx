@@ -42,6 +42,11 @@ export default function MenIdentityPage() {
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-16 gap-8">
                     <div>
                         <div className="flex items-center gap-4 mb-3">
+                            <Link href="/men">
+                                <button className="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition-colors shrink-0">
+                                    <ChevronLeft className="w-5 h-5" />
+                                </button>
+                            </Link>
                             <div className="bg-indigo-500/10 p-2.5 rounded-2xl border border-indigo-500/20">
                                 <Fingerprint className="w-7 h-7 text-indigo-400" />
                             </div>
